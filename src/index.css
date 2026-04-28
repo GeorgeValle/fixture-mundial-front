@@ -1,0 +1,117 @@
+:root {
+  --color-bg: #f3f6f8;
+  --color-surface: #ffffff;
+  --color-surface-soft: #eef4f1;
+  --color-primary: #06152f;
+  --color-primary-soft: #0c2554;
+  --color-red: #d7193f;
+  --color-cyan: #00b8d4;
+  --color-magenta: #b51f7b;
+  --color-gold: #f2b632;
+  --color-green: #1f9d63;
+  --color-text: #06152f;
+  --color-muted: #5f6f82;
+  --color-border: rgba(6, 21, 47, 0.14);
+  --color-glass: rgba(255, 255, 255, 0.72);
+  --shadow-soft: 0 18px 45px rgba(6, 21, 47, 0.14);
+  --shadow-card: 0 12px 30px rgba(6, 21, 47, 0.11);
+  --radius-lg: 28px;
+  --radius-md: 18px;
+  --radius-pill: 999px;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.35rem;
+  --font-size-2xl: 2rem;
+  --font-size-3xl: clamp(2.5rem, 7vw, 5rem);
+  --duration-fast: 160ms;
+  --duration-base: 240ms;
+  --z-sticky: 20;
+
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 8% 8%, color-mix(in srgb, var(--color-cyan) 20%, transparent), transparent 28rem),
+    radial-gradient(circle at 92% 0%, color-mix(in srgb, var(--color-red) 12%, transparent), transparent 24rem),
+    radial-gradient(circle at 88% 88%, color-mix(in srgb, var(--color-green) 10%, transparent), transparent 28rem),
+    linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface-soft) 52%, #f9f3e6 100%);
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  content: '';
+  opacity: 0.44;
+  background-image:
+    linear-gradient(var(--color-border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-border) 1px, transparent 1px);
+  background-size: 88px 88px;
+  mask-image: linear-gradient(180deg, #000000 0%, transparent 72%);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 72%, white);
+  outline-offset: 3px;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+}

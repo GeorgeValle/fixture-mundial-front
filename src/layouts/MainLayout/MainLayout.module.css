@@ -1,0 +1,42 @@
+.shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.shell::before,
+.shell::after {
+  position: fixed;
+  z-index: -1;
+  width: 22rem;
+  height: 22rem;
+  border-radius: var(--radius-pill);
+  content: '';
+  filter: blur(18px);
+  opacity: 0.34;
+}
+
+.shell::before {
+  top: 8rem;
+  left: -10rem;
+  background: radial-gradient(circle, var(--color-cyan), transparent 68%);
+}
+
+.shell::after {
+  right: -12rem;
+  bottom: 2rem;
+  background: radial-gradient(circle, var(--color-gold), transparent 66%);
+}
+
+.content {
+  width: min(1180px, calc(100% - var(--space-6)));
+  margin: 0 auto;
+  padding: var(--space-8) 0 var(--space-12);
+}
+
+@media (min-width: 768px) {
+  .content {
+    width: min(1180px, calc(100% - var(--space-12)));
+    padding-top: var(--space-10);
+  }
+}

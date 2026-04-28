@@ -1,0 +1,92 @@
+.card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(238, 244, 241, 0.84)),
+    var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.card::before {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.42) 45%,
+    transparent 76%
+  );
+  animation: shimmer 1.35s ease-in-out infinite;
+  transform: translateX(-100%);
+}
+
+.match {
+  padding: var(--space-5);
+}
+
+.large {
+  min-height: 14rem;
+  padding: var(--space-7);
+  border-radius: var(--radius-lg);
+}
+
+.row {
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+.header,
+.title,
+.line {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, rgba(6, 21, 47, 0.1), rgba(0, 184, 212, 0.14));
+}
+
+.header {
+  width: 34%;
+  height: 0.7rem;
+  margin-bottom: var(--space-4);
+}
+
+.title {
+  width: 72%;
+  height: 1.15rem;
+  margin-bottom: var(--space-5);
+}
+
+.lines {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.line {
+  width: 100%;
+  height: 0.8rem;
+}
+
+.line:nth-child(2) {
+  width: 82%;
+}
+
+.line:nth-child(3) {
+  width: 58%;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card::before {
+    animation: none;
+  }
+}

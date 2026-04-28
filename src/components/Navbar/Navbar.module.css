@@ -1,0 +1,456 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: grid;
+  padding: var(--space-4);
+  background:
+    linear-gradient(135deg, rgba(6, 21, 47, 0.96), rgba(12, 37, 84, 0.9)),
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-cyan) 24%, transparent), transparent 18rem),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-red) 22%, transparent), transparent 18rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-surface) 16%, transparent);
+  box-shadow: 0 16px 36px rgba(6, 21, 47, 0.22);
+  backdrop-filter: blur(18px);
+}
+
+.brandPanel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.eyebrow {
+  margin: 0 0 var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-cyan);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.45rem, 5vw, 2.55rem);
+  line-height: 1;
+  color: var(--color-surface);
+}
+
+.subtitle {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-sm);
+  color: color-mix(in srgb, var(--color-surface) 72%, var(--color-cyan));
+}
+
+.menuDock {
+  position: relative;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+}
+
+.ballButton {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  width: 4.75rem;
+  height: 4.75rem;
+  padding: var(--space-2);
+  place-items: center;
+  cursor: pointer;
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.92), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.88), rgba(238, 244, 241, 0.68));
+  border: 1px solid color-mix(in srgb, var(--color-surface) 38%, transparent);
+  border-radius: var(--radius-pill);
+  box-shadow:
+    0 18px 32px rgba(0, 0, 0, 0.24),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.36);
+  transition:
+    box-shadow var(--duration-base) ease,
+    transform var(--duration-base) ease,
+    border-color var(--duration-base) ease;
+}
+
+.ballButton::after {
+  position: absolute;
+  right: -0.12rem;
+  bottom: 0.44rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  background: var(--color-red);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-pill);
+  content: '';
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-red) 20%, transparent);
+}
+
+.ballButton:hover,
+.ballButton:focus-visible {
+  border-color: color-mix(in srgb, var(--color-cyan) 70%, transparent);
+  box-shadow:
+    0 22px 42px rgba(0, 184, 212, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.42);
+  transform: translateY(-2px);
+}
+
+.ballButtonOpen {
+  border-color: color-mix(in srgb, var(--color-gold) 72%, transparent);
+}
+
+.ball {
+  position: relative;
+  display: block;
+  width: 3.34rem;
+  height: 3.34rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 50%, var(--color-primary) 0 10%, transparent 11%),
+    linear-gradient(32deg, transparent 39%, var(--color-primary) 40% 43%, transparent 44%),
+    linear-gradient(148deg, transparent 39%, var(--color-primary) 40% 43%, transparent 44%),
+    conic-gradient(
+      from 22deg,
+      var(--color-surface),
+      color-mix(in srgb, var(--color-cyan) 20%, var(--color-surface)),
+      var(--color-surface),
+      color-mix(in srgb, var(--color-green) 24%, var(--color-surface)),
+      var(--color-surface),
+      color-mix(in srgb, var(--color-red) 18%, var(--color-surface)),
+      var(--color-surface)
+    );
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 -10px 18px rgba(6, 21, 47, 0.16);
+  transform: rotate(0deg) translateZ(0);
+  transition: transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.ballButtonOpen .ball {
+  transform: rotate(360deg) translateZ(0);
+}
+
+.ball::before,
+.ball::after,
+.ballCore {
+  position: absolute;
+  content: '';
+}
+
+.ball::before {
+  inset: 20% 10%;
+  border-top: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  border-radius: 50%;
+  transform: rotate(24deg);
+}
+
+.ball::after {
+  inset: 10% 20%;
+  border-left: 2px solid var(--color-primary);
+  border-right: 2px solid var(--color-primary);
+  border-radius: 50%;
+  transform: rotate(24deg);
+}
+
+.ballCore {
+  top: 50%;
+  left: 50%;
+  width: 0.62rem;
+  height: 0.62rem;
+  background: var(--color-primary);
+  border-radius: var(--radius-pill);
+  transform: translate(-50%, -50%);
+}
+
+.nav {
+  position: absolute;
+  top: calc(100% + var(--space-3));
+  left: 0;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-2);
+  width: min(18.5rem, calc(100vw - var(--space-8)));
+  padding: var(--space-4);
+  visibility: hidden;
+  pointer-events: none;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(238, 244, 241, 0.92)),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-cyan) 18%, transparent), transparent 12rem);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  opacity: 0;
+  transform: translateY(-0.9rem) scaleY(0.72);
+  transform-origin: top left;
+  transition:
+    opacity var(--duration-base) ease,
+    transform 300ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility var(--duration-base) ease;
+  backdrop-filter: blur(18px);
+}
+
+.nav::before {
+  width: 3.2rem;
+  height: 0.28rem;
+  background: linear-gradient(90deg, var(--color-red), var(--color-cyan), var(--color-green));
+  border-radius: var(--radius-pill);
+  content: '';
+}
+
+.navOpen {
+  visibility: visible;
+  pointer-events: auto;
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+}
+
+.menuKicker {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-red);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 3rem;
+  padding: 0 var(--space-4);
+  color: var(--color-primary-soft);
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  opacity: 0;
+  transform: translateX(-0.6rem);
+  transition:
+    color var(--duration-fast) ease,
+    background-color var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    opacity var(--duration-base) ease,
+    transform var(--duration-base) ease;
+  transition-delay: calc(var(--item-index) * 34ms);
+}
+
+.link::after {
+  width: 0.52rem;
+  height: 0.52rem;
+  background: var(--color-cyan);
+  border-radius: var(--radius-pill);
+  content: '';
+  opacity: 0.55;
+}
+
+.navOpen .link {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.link:hover,
+.link:focus-visible {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-cyan) 14%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-cyan) 42%, transparent);
+  transform: translateX(0.2rem);
+}
+
+.active {
+  color: var(--color-surface);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-soft));
+  border-color: transparent;
+  box-shadow: 0 10px 22px rgba(6, 21, 47, 0.22);
+}
+
+.active::after {
+  background: var(--color-red);
+  opacity: 1;
+}
+
+@media (min-width: 760px) {
+  .header {
+    padding: var(--space-5) var(--space-8);
+  }
+
+  .brandPanel {
+    gap: var(--space-5);
+  }
+
+  .ballButton {
+    width: 5rem;
+    height: 5rem;
+  }
+
+  .ball {
+    width: 3.55rem;
+    height: 3.55rem;
+  }
+
+  .nav {
+    width: 19rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ball,
+  .ballButton,
+  .nav,
+  .link {
+    transition-duration: 0.01ms;
+  }
+}
+/* Premium yellow-card menu refinement */
+.menuOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(0, 184, 212, 0.16), transparent 34%),
+    rgba(6, 21, 47, 0.18);
+  backdrop-filter: blur(2px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.menuOverlayOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.brandPanel {
+  position: relative !important;
+  z-index: 60 !important;
+}
+
+.menuDock {
+  position: relative !important;
+  z-index: 65 !important;
+}
+
+.nav {
+  z-index: 70 !important;
+  overflow: hidden !important;
+  color: var(--color-primary) !important;
+  background:
+    linear-gradient(160deg, rgba(255, 250, 225, 0.98) 0%, rgba(255, 229, 142, 0.98) 54%, rgba(244, 196, 74, 0.98) 100%) !important;
+  border: 1px solid rgba(151, 99, 8, 0.42) !important;
+  box-shadow:
+    0 30px 70px rgba(6, 21, 47, 0.28),
+    0 12px 24px rgba(151, 99, 8, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78) !important;
+}
+
+.nav::before {
+  content: '' !important;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, var(--color-red), var(--color-gold), var(--color-green), var(--color-cyan)),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.32), transparent 42%);
+  background-size:
+    100% 4px,
+    100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.95;
+}
+
+.nav::after {
+  content: '' !important;
+  position: absolute;
+  right: 1.1rem;
+  top: 1.05rem;
+  width: 2.1rem;
+  height: 0.45rem;
+  border-radius: var(--radius-pill);
+  background: rgba(6, 21, 47, 0.18);
+  box-shadow: 0 0.72rem 0 rgba(6, 21, 47, 0.1);
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+.menuKicker {
+  position: relative;
+  color: rgba(6, 21, 47, 0.72) !important;
+  letter-spacing: 0.14em !important;
+}
+
+.link {
+  position: relative;
+  min-height: 44px !important;
+  padding-left: 2.25rem !important;
+  color: var(--color-primary) !important;
+  background: rgba(255, 255, 255, 0.46) !important;
+  border: 1px solid rgba(6, 21, 47, 0.1) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64) !important;
+}
+
+.link::before {
+  content: '' !important;
+  position: absolute;
+  left: 0.9rem;
+  top: 50%;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: rgba(6, 21, 47, 0.24);
+  transform: translateY(-50%);
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.link:hover {
+  color: var(--color-primary) !important;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border-color: rgba(6, 21, 47, 0.2) !important;
+  box-shadow: 0 10px 20px rgba(6, 21, 47, 0.1) !important;
+}
+
+.link:hover::before {
+  background: var(--color-red);
+  box-shadow: 0 0 0 4px rgba(215, 25, 63, 0.14);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.linkActive {
+  color: #fff !important;
+  background:
+    linear-gradient(135deg, rgba(6, 21, 47, 0.98), rgba(12, 37, 84, 0.98)) !important;
+  border-color: rgba(6, 21, 47, 0.7) !important;
+  box-shadow:
+    0 14px 28px rgba(6, 21, 47, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+.linkActive::before {
+  background: var(--color-cyan);
+  box-shadow: 0 0 0 4px rgba(0, 184, 212, 0.18);
+}
+
+.link:focus-visible {
+  outline: 3px solid var(--color-cyan);
+  outline-offset: 4px;
+}
+
+@media (max-width: 520px) {
+  .nav {
+    width: min(21rem, calc(100vw - 2rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .menuOverlay,
+  .link,
+  .link::before {
+    transition: none;
+  }
+}
