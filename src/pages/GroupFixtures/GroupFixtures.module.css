@@ -1,0 +1,134 @@
+.page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.hero,
+.stateCard,
+.summaryCard {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(238, 245, 255, 0.88)),
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--color-cyan) 18%, transparent), transparent 18rem),
+    var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-6);
+  padding: var(--space-6);
+}
+
+.hero::before {
+  position: absolute;
+  right: -8rem;
+  bottom: -12rem;
+  width: 24rem;
+  height: 24rem;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 12%, transparent);
+  border-radius: var(--radius-pill);
+  content: '';
+}
+
+.hero > label {
+  position: relative;
+  z-index: 1;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.kicker {
+  margin: 0;
+  color: var(--color-magenta);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  max-width: 13ch;
+  margin: 0;
+  color: var(--color-primary);
+  font-size: clamp(2rem, 5vw, 4rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.description,
+.stateText {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-md);
+  line-height: 1.75;
+}
+
+.stateCard {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.stateHeader {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.stateTitle {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  line-height: 1.15;
+}
+
+.errorState {
+  border-color: color-mix(in srgb, var(--color-red) 28%, var(--color-border));
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(255, 238, 242, 0.9)),
+    var(--color-surface);
+}
+
+.fixtures {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.summaryCard {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-5) var(--space-6);
+}
+
+.matchList {
+  display: grid;
+  gap: var(--space-4);
+}
+
+@media (max-width: 760px) {
+  .hero {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    padding: var(--space-5);
+  }
+
+  .stateCard,
+  .summaryCard {
+    padding: var(--space-5);
+  }
+}

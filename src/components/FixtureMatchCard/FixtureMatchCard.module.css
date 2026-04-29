@@ -1,0 +1,212 @@
+.card {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(238, 244, 241, 0.88)),
+    var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.38rem;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green), var(--color-gold));
+  content: '';
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-left: var(--space-2);
+}
+
+.stage,
+.status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.7rem;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stage {
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-cyan) 16%, white);
+}
+
+.status {
+  color: var(--color-primary-soft);
+  background: color-mix(in srgb, var(--color-gold) 22%, white);
+}
+
+.matchRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.team {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.left {
+  justify-items: start;
+  text-align: left;
+}
+
+.right {
+  justify-items: end;
+  text-align: right;
+}
+
+.logoFrame {
+  display: grid;
+  width: 3.4rem;
+  height: 3.4rem;
+  place-items: center;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 10px 20px rgba(6, 21, 47, 0.1);
+}
+
+.logo {
+  width: 74%;
+  height: 74%;
+  object-fit: contain;
+}
+
+.logoPlaceholder {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: var(--color-primary);
+  font-weight: 900;
+  background: color-mix(in srgb, var(--color-cyan) 16%, white);
+}
+
+.teamName {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-md);
+  font-weight: 900;
+  color: var(--color-primary);
+}
+
+.scoreBox {
+  display: grid;
+  min-width: 5.7rem;
+  min-height: 4rem;
+  place-items: center;
+  padding: var(--space-2) var(--space-3);
+  color: var(--color-primary);
+  background:
+    linear-gradient(135deg, rgba(6, 21, 47, 0.96), rgba(12, 37, 84, 0.94)),
+    var(--color-primary);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 30px rgba(6, 21, 47, 0.22);
+}
+
+.score {
+  color: var(--color-surface);
+  font-size: var(--font-size-2xl);
+  font-weight: 950;
+  letter-spacing: -0.04em;
+  white-space: nowrap;
+}
+
+.pendingScore {
+  color: color-mix(in srgb, var(--color-gold) 72%, white);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.penalties {
+  justify-self: center;
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-magenta) 12%, white);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+}
+
+.details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.details div {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.details dt {
+  color: var(--color-magenta);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.details dd {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: var(--space-4);
+  }
+
+  .matchRow {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .team,
+  .left,
+  .right {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .scoreBox {
+    order: 2;
+    width: min(100%, 11rem);
+  }
+
+  .right {
+    order: 3;
+  }
+}
