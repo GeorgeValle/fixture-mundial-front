@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { ROUTES } from '../constants/routes'
 import MainLayout from '../layouts/MainLayout/MainLayout'
 import Home from '../pages/Home/Home'
+import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
 import PlaceholderPage from '../pages/PlaceholderPage/PlaceholderPage'
 
 function AppRoutes() {
@@ -9,15 +10,7 @@ function AppRoutes() {
     <MainLayout>
       <Routes>
         <Route element={<Home />} path={ROUTES.home} />
-        <Route
-          element={
-            <PlaceholderPage
-              description="Consultá los partidos de cada grupo, fechas, sedes y marcadores."
-              title="Fixture de grupos"
-            />
-          }
-          path={ROUTES.fixture}
-        />
+        <Route element={<GroupFixtures />} path={ROUTES.fixture} />
         <Route
           element={
             <PlaceholderPage

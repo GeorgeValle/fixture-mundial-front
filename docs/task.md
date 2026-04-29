@@ -2,7 +2,11 @@
 
 ## Current Mode
 
-Build Mode in Codex without runtime commands. The user validated WSL manually in their own terminal, but the internal Codex shell still must not run `node`, `pnpm`, install, build, lint, test, or dev commands for this task.
+Build Mode for the user-approved Bloque 3 Group Fixtures implementation.
+
+Codex implemented application code and tests for Bloque 3, but final build, lint and test validation remain pending manual execution by the user in their WSL terminal.
+
+The user validated WSL manually in their own terminal, but the internal Codex shell still must not run `node`, `pnpm`, install, build, lint, test, or dev commands for this task.
 
 ## Execution Rule
 
@@ -447,17 +451,122 @@ Placement constraints:
 - Do not replace the current hero.
 - The match card must be the first functional section below the hero.
 
-## Bloque 3
+## Bloque 3 — Group Fixtures
 
-- 3.1 Pending — implement Home with `/api/matches/schedule/daily`.
-- 3.2 Pending — show `today` and, if empty, show `next`.
-- 3.3 Pending — create “qué hace la app” and “cómo usarla” sections.
+Status: Complete and manually validated from the user's WSL terminal.
+
+### Scope
+
+- Replace the `/grupos` placeholder route with a real Group Fixtures page.
+- Fetch the full match fixture from the backend and filter by selected group.
+- Render exactly the 6 group-stage matches for the selected group when data is available.
+- Keep the existing React + Vite + JavaScript + CSS Modules architecture.
+- Do not install dependencies; current dependencies already include Axios, React Router DOM, Redux Toolkit, Zod, Vitest, RTL and MSW.
+
+### Backend contract
+
+- Endpoint: `GET /api/matches`.
+- Backend source of truth: `docs/API-Backend-Mundial-2026.md` and `docs/group-fixtures.md`.
+- Expected behavior: returns the complete fixture ordered by date.
+- Expected populated fields per match:
+  - `homeTeam` object with at least `_id`, `name`, `shieldUrl`, `group`.
+  - `awayTeam` object with at least `_id`, `name`, `shieldUrl`, `group`.
+  - `stadium` object with at least `_id`, `name`, `city`, `country` when available.
+  - `date`, `stage`, `status`, `homeScore`, `awayScore`, `homePenaltyScore`, `awayPenaltyScore`.
+- Group filtering rule from docs: filter matches by `stage = "GRUPO X"` where `X` is the selected group letter A-L.
+- Assumption to verify during implementation: `stage` values are Spanish uppercase strings like `GRUPO A`. If the backend returns a different stage format, document it before changing the frontend contract.
+
+### Files created
+
+- `src/services/matches/matchesService.js`
+  - Use the existing `axiosClient`.
+  - Export a function such as `getMatches()` that calls `/api/matches`.
+  - Do not call Axios directly from presentational components.
+- `src/schemas/matchSchema.js`
+  - Add Zod schemas/helpers for the backend match shape when needed.
+  - Keep schema tolerant of nullable scores and optional populated fields.
+- `src/constants/groups.js`
+  - Define approved group options A-L and labels.
+- `src/components/GroupSelector/GroupSelector.jsx`
+- `src/components/GroupSelector/GroupSelector.module.css`
+  - Accessible labelled select for group choice.
+- `src/components/FixtureMatchCard/FixtureMatchCard.jsx`
+- `src/components/FixtureMatchCard/FixtureMatchCard.module.css`
+  - Presentational fixture card with team flags/logos, names, score/placeholder, date/time and stadium.
+- `src/pages/GroupFixtures/GroupFixtures.jsx`
+- `src/pages/GroupFixtures/GroupFixtures.module.css`
+  - Page-level loading/error/empty/data orchestration.
+- `src/pages/GroupFixtures/GroupFixtures.test.jsx`
+  - RTL + MSW behavioral tests for this page.
+
+### Files modified
+
+- `src/routes/AppRoutes.jsx`
+  - Replace the `/grupos` `PlaceholderPage` element with `GroupFixtures`.
+- `docs/task.md`
+  - Keep this plan and update status after implementation and manual validation.
+
+### Implementation completed
+
+1. Create the match service and optional Zod schema/normalizer for the documented backend shape.
+2. Create group constants A-L and filtering helpers if the logic would otherwise clutter the page.
+3. Build `GroupSelector` as a controlled accessible select with visible label.
+4. Build `FixtureMatchCard` as a presentational CSS Module component:
+   - Render Cloudinary/team `shieldUrl` images with useful `alt` text.
+   - Render team names.
+   - Render scores only when `homeScore` and `awayScore` are not `null`/`undefined`.
+   - Render a friendly placeholder such as `Por jugarse` or `—` when scores are missing.
+   - Render formatted date/time via existing `dateAdapter` helpers.
+   - Render stadium name/city when available.
+5. Build `GroupFixtures` page:
+   - Default selected group: `A`.
+   - Fetch once from `matchesService.getMatches()` on mount.
+   - Store page-local loading, error and matches state unless global Redux state is specifically needed.
+   - Sort selected group matches with existing `sortMatchesByDate`.
+   - Use existing `SkeletonList` while loading.
+   - Use the existing 7-second delayed-loading pattern and dispatch `openFeedbackModal` if the request exceeds the threshold.
+   - Use the existing normalized app error from `axiosClient`; call the existing logger only if an error is not already normalized/logged by the interceptor.
+   - Show a friendly inline error state; do not expose technical backend messages directly to users.
+6. Wire `/grupos` to the new page in `AppRoutes`.
+7. Ask the user to manually run WSL validation after implementation:
+   - `which node`
+   - `which pnpm`
+   - `type -a node`
+   - `type -a pnpm`
+   - `pnpm run build`
+   - `pnpm run lint`
+   - `pnpm run test`
+
+### Tests added
+
+- Use Vitest + React Testing Library + MSW.
+- Test initial render:
+  - Page title/intro renders.
+  - Group selector renders with accessible label and default group A.
+- Test loading state:
+  - Mock a pending or delayed `GET /api/matches`.
+  - Verify skeleton/loading status is visible.
+- Test successful render:
+  - Mock a mixed fixture response containing at least 6 `GRUPO A` matches and at least one other group.
+  - Verify only selected group matches render.
+  - Verify group matches are ordered by date.
+- Test group change:
+  - Change selector from A to B using `userEvent`.
+  - Verify the rendered cards update to the 6 `GRUPO B` matches.
+- Test nullable scores:
+  - Include matches with `homeScore: null` and `awayScore: null`.
+  - Verify friendly score placeholder is shown instead of `null`.
+- Test API error:
+  - Mock `GET /api/matches` failure.
+  - Verify a friendly error state is visible.
+  - Verify `FeedbackModal` appears after the 7-second threshold.
+  - Verify an invalid API payload also renders the friendly error state.
 
 ## Bloque 4
 
-- 4.1 Pending — implement Group Fixtures.
-- 4.2 Pending — selector de grupo A-L.
-- 4.3 Pending — renderizar 6 partidos por grupo con escudos, estadio y marcador.
+- 4.1 Pending — implement Home with `/api/matches/schedule/daily` if still required after Group Fixtures.
+- 4.2 Pending — show `today` and, if empty, show `next`.
+- 4.3 Pending — create “qué hace la app” and “cómo usarla” sections.
 
 ## Bloque 5
 
@@ -485,3 +594,280 @@ Placement constraints:
 - 8.1 Pending — write page documentation.
 - 8.2 Pending — review minimum coverage for slices, utils and pages.
 - 8.3 Pending — consolidate decisions in Engram memory.
+
+### Bloque 3 Implementation Summary
+
+Implemented files:
+
+- `src/services/matches/matchesService.js` — fetches `GET /api/matches` through the existing `axiosClient`.
+- `src/schemas/matchSchema.js` — validates/parses the documented populated match shape with nullable scores.
+- `src/constants/groups.js` — defines group options A-L and the `GRUPO X` stage helper.
+- `src/components/GroupSelector/GroupSelector.jsx` and `.module.css` — accessible group selector.
+- `src/components/FixtureMatchCard/FixtureMatchCard.jsx` and `.module.css` — responsive football fixture card with shields, teams, score placeholder, date/time and stadium.
+- `src/pages/GroupFixtures/GroupFixtures.jsx` and `.module.css` — `/grupos` page with backend loading, group filtering, empty/error states, skeletons and delayed-loading feedback modal.
+- `src/pages/GroupFixtures/GroupFixtures.test.jsx` — RTL/MSW tests for the new page behavior.
+
+Modified files:
+
+- `src/routes/AppRoutes.jsx` — `/grupos` now renders `GroupFixtures` instead of the placeholder page.
+- `docs/task.md` — updated Bloque 3 status and notes.
+
+Manual validation complete:
+
+The user manually ran the final validation from WSL and all checks passed:
+
+- `pnpm run build` passed.
+- `pnpm run lint` passed.
+- `pnpm run test` passed with 8 test files and 23 tests.
+
+Bloque 3 is complete.
+
+### Bloque 3 Manual Validation Attempt
+
+The user manually ran validation from WSL after the first Bloque 3 implementation.
+
+Observed runtime/package state:
+
+- `which pnpm` resolved to `/home/yorch/.nvm/versions/node/v24.14.0/bin/pnpm`.
+- `type -a pnpm` listed the Linux-native pnpm first and the Windows pnpm second.
+
+Observed validation results:
+
+- `pnpm run build` passed.
+- `pnpm run test` passed with 8 test files and 23 tests.
+- `pnpm run lint` failed with `react-hooks/set-state-in-effect` in `src/pages/GroupFixtures/GroupFixtures.jsx` because the effect synchronously called `setIsLoading(true)` and `setHasError(false)`.
+
+Fix applied after the failed lint attempt:
+
+- Removed the redundant synchronous state resets from the initial `useEffect` in `src/pages/GroupFixtures/GroupFixtures.jsx`.
+- The page already initializes `isLoading` as `true` and `hasError` as `false`, so the removed calls were unnecessary for the current mount-only fetch flow.
+
+Manual validation after this fix is complete. The user reran `pnpm run build`, `pnpm run lint`, and `pnpm run test`; all passed.
+
+### Bloque 3 Final Manual Validation
+
+The user reran final validation from WSL after the lint fix and all checks passed:
+
+- `pnpm run build` passed.
+- `pnpm run lint` passed with no reported errors.
+- `pnpm run test` passed with 8 test files and 23 tests.
+
+Bloque 3 Group Fixtures is complete and manually validated.
+
+### Bloque 3 Follow-up Fixes
+
+Applied two post-validation fixes requested by the user:
+
+- `src/schemas/matchSchema.js`: `parseMatchesResponse` now accepts the backend wrapper `{ status: "success", data: [...] }` by reading `payload.data` when it is an array, while preserving support for direct arrays and `payload.matches`.
+- `src/pages/GroupFixtures/GroupFixtures.module.css`: the decorative `.hero::before` pseudo-element now has `pointer-events: none`, and `.hero > label` is positioned above it with `position: relative` and `z-index: 1` so the group selector remains clickable.
+
+Manual validation for these follow-up fixes is complete; the user ran build, lint and tests manually and all passed.
+
+### Bloque 3 Follow-up Manual Validation
+
+The user manually validated the follow-up fixes from WSL and all checks passed:
+
+- `pnpm run build` passed.
+- `pnpm run lint` passed with no reported errors.
+- `pnpm run test` passed with 8 test files and 23 tests.
+
+The backend wrapper parsing fix and selector layering fix are complete and manually validated.
+
+### Bloque 3 Validation Notes
+
+User confirmed the stderr logs shown during `GroupFixtures.test.jsx` are expected because those tests intentionally validate API error handling and invalid payload handling. They do not represent test failures.
+
+## Bloque 4 Planning — Group Standings / Posiciones
+
+Status: Plan Mode only. No application code has been written for this block.
+
+### Scope conflict documented
+
+The current `docs/task.md` previously listed Bloque 4 as Home daily schedule work:
+
+- `GET /api/matches/schedule/daily`
+- show `today` and `next`
+- add Home informational sections
+
+The user has now proposed Bloque 4 as the Group Standings page at `/posiciones`. This differs from the current block numbering, where Group Standings was previously listed as Bloque 5.
+
+Before Build Mode, the project needs an explicit approval that Bloque 4 is being re-scoped/reordered to implement Group Standings at `/posiciones`.
+
+### Backend contract diagnosis
+
+Documented endpoint:
+
+- `GET /api/standings`
+
+Administrative endpoint, out of scope unless explicitly approved:
+
+- `POST /api/standings/:group`
+
+Source documents:
+
+- `docs/group-standings.md`
+- `docs/API-Backend-Mundial-2026.md`
+- `docs/project-requirements.md`
+
+Current backend documentation confirms:
+
+- The backend calculates standings through `StandingsService`.
+- The frontend should not recalculate standings when backend standings are available.
+- Backend sorting criteria are:
+  1. points descending
+  2. goal difference descending
+  3. goals for descending
+- `GET /api/standings` returns the 12 groups A-L.
+- `position` and `qualifiedTo` should be rendered when present.
+
+Unclear backend details that must be confirmed before implementation:
+
+- Exact `GET /api/standings` response wrapper:
+  - direct array
+  - `{ status: "success", data: [...] }`
+  - `{ standings: [...] }`
+  - object keyed by group letter
+  - another shape
+- Exact group object shape:
+  - group field name (`group`, `name`, `letter`, etc.)
+  - rows field name (`standings`, `teams`, `table`, etc.)
+- Exact row/stat field names for:
+  - matches played / PJ
+  - wins / PG
+  - draws / PE
+  - losses / PP
+  - goals for / GF
+  - goals against / GC
+  - goal difference / DG
+  - points / Pts
+- Whether team data appears as `team` nested object or row-level team fields.
+
+### Implementation rule if approved
+
+If the response contract is confirmed, implement the standings page using backend-calculated standings as the source of truth.
+
+Do not calculate standings from matches in this block unless the user explicitly confirms that the backend does not provide calculated rows.
+
+If backend standings are unavailable but matches are available, the proposed fallback would be a separate future adapter that derives group standings from `GET /api/matches` by:
+
+1. filtering `FINISHED` group-stage matches by `stage = "GRUPO X"`
+2. aggregating PJ, PG, PE, PP, GF, GC, DG and Pts per team
+3. sorting by points, goal difference, goals for and team name
+
+That fallback is not approved for implementation yet.
+
+### Proposed files to create
+
+Data layer:
+
+- `src/services/standings/standingsService.js`
+  - exports `getStandings()`
+  - calls `axiosClient.get('/api/standings')`
+  - parses with `parseStandingsResponse`
+  - logs schema/payload failures as `standingsService`
+
+- `src/schemas/standingsSchema.js`
+  - defines tolerant Zod schemas for group standings and row/team data
+  - accepts only the confirmed backend wrappers once known
+  - uses `.passthrough()` for backend extras
+
+Utilities:
+
+- `src/utils/standingsAdapter.js`
+  - derives stable keys and display labels
+  - maps `qualifiedTo` labels without inventing business meaning
+  - preserves backend order
+
+Page/components:
+
+- `src/pages/GroupStandings/GroupStandings.jsx`
+- `src/pages/GroupStandings/GroupStandings.module.css`
+- `src/pages/GroupStandings/GroupStandings.test.jsx`
+- `src/components/StandingsGroupCard/StandingsGroupCard.jsx`
+- `src/components/StandingsGroupCard/StandingsGroupCard.module.css`
+- `src/components/StandingsTable/StandingsTable.jsx`
+- `src/components/StandingsTable/StandingsTable.module.css`
+- Optional if needed for clarity:
+  - `src/components/QualificationBadge/QualificationBadge.jsx`
+  - `src/components/QualificationBadge/QualificationBadge.module.css`
+
+Files to modify:
+
+- `src/routes/AppRoutes.jsx`
+  - replace the `/posiciones` placeholder with `GroupStandings`
+- `docs/task.md`
+  - update status after implementation and manual validation
+
+### Proposed UI behavior
+
+- Show a page hero for Tablas / Posiciones.
+- Prefer a 12-group card grid because `docs/group-standings.md` acceptance says all 12 groups should be visible.
+- If a single-group selector is still required by the user, add it as a filter/jump control rather than the only visible data mode.
+- Render semantic tables with columns:
+  - Posición
+  - Equipo
+  - PJ
+  - PG
+  - PE
+  - PP
+  - GF
+  - GC
+  - DG
+  - Pts
+  - Clasificación
+- Render shields/flags from backend `shieldUrl` when available.
+- Render incomplete groups with available rows and a small incomplete-state message.
+- Empty global response: show friendly empty state.
+- API failure or invalid payload: show friendly error state and use the global feedback flow when appropriate.
+- Loading: reuse `SkeletonList` / skeleton card pattern.
+- Delayed loading: reuse `DELAYED_LOADING_THRESHOLD_MS`, `setGlobalLoading`, `setDelayedLoading`, and `openFeedbackModal`.
+- Preserve backend order; do not recalculate or reorder unless backend contract explicitly requires frontend sorting.
+
+### Proposed state architecture
+
+- Use local page state for fetched standings, loading and error.
+- Use Redux `uiSlice` only for global loading/delayed-loading/feedback modal.
+- Do not create a standings Redux slice unless future routes need shared standings state.
+
+### Proposed tests
+
+Use Vitest + React Testing Library + MSW.
+
+Minimum tests:
+
+- initial render of `/posiciones` page content
+- loading skeleton/state
+- successful rendering of standings tables
+- group selector/filter or all-groups rendering, depending on final approved UI
+- backend order is preserved when backend provides calculated rows
+- if frontend sorting is explicitly required, test points, goal difference, goals for and name tiebreakers
+- empty standings response shows friendly empty state
+- incomplete group renders available rows without crashing
+- API failure shows friendly error and does not expose technical backend text
+- invalid payload shows friendly error
+- delayed loading opens `FeedbackModal` after 7 seconds if the request is still pending
+
+### Manual validation after implementation
+
+The user will manually run from WSL:
+
+```bash
+which node
+which pnpm
+type -a node
+type -a pnpm
+pnpm run build
+pnpm run lint
+pnpm run test
+```
+
+Codex must not run final validation commands.
+
+### Blockers before Build Mode
+
+Build Mode should not start until the user confirms:
+
+1. Bloque 4 is officially re-scoped from Home daily schedule to Group Standings `/posiciones`.
+2. The exact `GET /api/standings` response shape, including wrapper and stat field names.
+3. Whether `/posiciones` must show all 12 group cards, a selector-filtered single group, or both.
+4. Whether `POST /api/standings/:group` is out of scope for this page. Recommended: out of scope.
