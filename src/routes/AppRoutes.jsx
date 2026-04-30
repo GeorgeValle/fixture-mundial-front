@@ -3,6 +3,7 @@ import { ROUTES } from '../constants/routes'
 import MainLayout from '../layouts/MainLayout/MainLayout'
 import Home from '../pages/Home/Home'
 import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
+import GroupStandings from '../pages/GroupStandings/GroupStandings'
 import PlaceholderPage from '../pages/PlaceholderPage/PlaceholderPage'
 
 function AppRoutes() {
@@ -11,15 +12,7 @@ function AppRoutes() {
       <Routes>
         <Route element={<Home />} path={ROUTES.home} />
         <Route element={<GroupFixtures />} path={ROUTES.fixture} />
-        <Route
-          element={
-            <PlaceholderPage
-              description="Seguí las posiciones de cada grupo según los resultados oficiales."
-              title="Tablas de posiciones"
-            />
-          }
-          path={ROUTES.standings}
-        />
+        <Route element={<GroupStandings />} path={ROUTES.standings} />
         <Route
           element={
             <PlaceholderPage
