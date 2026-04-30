@@ -1,3 +1,14 @@
+import { useEffect, useState } from 'react'
+import { useDispatch } from 'react-redux'
+import DailyScheduleCard from '../../components/DailyScheduleCard/DailyScheduleCard'
+import {
+  openFeedbackModal,
+  setDelayedLoading,
+  setGlobalLoading,
+} from '../../features/ui/uiSlice'
+import { getDailySchedule } from '../../services/matches/matchesService'
+import { getTodayISODate } from '../../utils/dateAdapter'
+import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
 import styles from './Home.module.css'
 
 const featureCards = [
@@ -22,6 +33,72 @@ const featureCards = [
 ]
 
 function Home() {
+  const dispatch = useDispatch()
+  const [dailySchedule, setDailySchedule] = useState(null)
+  const [isDailyScheduleLoading, setIsDailyScheduleLoading] = useState(true)
+  const [hasDailyScheduleError, setHasDailyScheduleError] = useState(false)
+
+  useEffect(() => {
+    let isActive = true
+    let didShowDelayedFeedback = false
+
+    dispatch(setGlobalLoading(true))
+    dispatch(setDelayedLoading(false))
+
+    const delayedLoadingTimer = window.setTimeout(() => {
+      if (!isActive) {
+        return
+      }
+
+      didShowDelayedFeedback = true
+      dispatch(setDelayedLoading(true))
+      dispatch(
+        openFeedbackModal({
+          title: 'El calendario está tardando un poco',
+          message:
+            'El backend puede demorar unos segundos en responder. Seguimos intentando cargar los partidos del día.',
+          variant: 'info',
+        }),
+      )
+    }, DELAYED_LOADING_THRESHOLD_MS)
+
+    getDailySchedule(getTodayISODate())
+      .then((schedule) => {
+        if (!isActive) {
+          return
+        }
+
+        setDailySchedule(schedule)
+      })
+      .catch(() => {
+        if (!isActive) {
+          return
+        }
+
+        setHasDailyScheduleError(true)
+      })
+      .finally(() => {
+        if (!isActive) {
+          return
+        }
+
+        window.clearTimeout(delayedLoadingTimer)
+        setIsDailyScheduleLoading(false)
+        dispatch(setGlobalLoading(false))
+
+        if (didShowDelayedFeedback) {
+          dispatch(setDelayedLoading(false))
+        }
+      })
+
+    return () => {
+      isActive = false
+      window.clearTimeout(delayedLoadingTimer)
+      dispatch(setGlobalLoading(false))
+      dispatch(setDelayedLoading(false))
+    }
+  }, [dispatch])
+
   return (
     <section className={styles.page}>
       <div className={styles.hero}>
@@ -60,6 +137,12 @@ function Home() {
           </div>
         </div>
       </div>
+
+      <DailyScheduleCard
+        hasError={hasDailyScheduleError}
+        isLoading={isDailyScheduleLoading}
+        schedule={dailySchedule}
+      />
 
       <div className={styles.grid}>
         {featureCards.map((card) => (

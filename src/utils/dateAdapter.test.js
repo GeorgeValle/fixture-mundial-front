@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   formatDisplayDate,
   formatDisplayTime,
+  formatScheduleCalendarDate,
   getTodayISODate,
   isMatchStarted,
   isPastMatch,
@@ -19,6 +20,22 @@ describe('dateAdapter', () => {
   it('returns safe labels for invalid dates', () => {
     expect(formatDisplayDate(null)).toBe('Fecha por confirmar')
     expect(formatDisplayTime('not-a-date')).toBe('Hora por confirmar')
+  })
+
+  it('formats schedule calendar dates with a friendly Spanish label', () => {
+    expect(formatScheduleCalendarDate('2026-06-11')).toBe('jueves, 11 de junio de 2026')
+  })
+
+  it('formats schedule ISO dates without shifting to the previous day', () => {
+    expect(formatScheduleCalendarDate('2026-06-11T00:00:00.000Z')).toBe(
+      'jueves, 11 de junio de 2026',
+    )
+  })
+
+  it('returns an empty label for invalid schedule calendar dates', () => {
+    expect(formatScheduleCalendarDate(null)).toBe('')
+    expect(formatScheduleCalendarDate('not-a-date')).toBe('')
+    expect(formatScheduleCalendarDate('2026-02-31')).toBe('')
   })
 
   it('returns the current local ISO date without time', () => {

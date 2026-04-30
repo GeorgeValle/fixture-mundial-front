@@ -49,3 +49,35 @@ Mostrar cards pequeñas por grupo con tabla de posiciones.
 ## Aceptación
 - Se ven los 12 grupos
 - La tabla no recalcula en frontend si el backend ya la entrega ordenada
+
+## Future Implementation Notes
+
+Bloque 5 has not started.
+
+Before implementation, confirm the exact backend response shape for `GET /api/standings`, including:
+
+- Response wrapper shape.
+- Group field names.
+- Row/stat field names for PJ, PG, PE, PP, GF, GC, DG and Pts.
+- Whether team data is nested under `team` or provided as row-level fields.
+
+Implementation constraints:
+
+- Use backend-calculated standings as the source of truth.
+- Do not recalculate standings in the frontend if backend standings are available.
+- Do not use `POST /api/standings/:group` unless explicitly approved.
+- Preserve backend order unless a confirmed contract requires frontend sorting.
+- Add loading, empty, error and delayed-loading states.
+- Add tests for rendering, empty/incomplete data, API failure and invalid payload handling.
+
+Likely files when approved:
+
+- `src/services/standings/standingsService.js`
+- `src/schemas/standingsSchema.js`
+- `src/pages/GroupStandings/GroupStandings.jsx`
+- `src/pages/GroupStandings/GroupStandings.module.css`
+- `src/pages/GroupStandings/GroupStandings.test.jsx`
+- `src/components/StandingsGroupCard/StandingsGroupCard.jsx`
+- `src/components/StandingsGroupCard/StandingsGroupCard.module.css`
+- `src/components/StandingsTable/StandingsTable.jsx`
+- `src/components/StandingsTable/StandingsTable.module.css`

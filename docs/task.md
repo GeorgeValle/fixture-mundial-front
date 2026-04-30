@@ -1,855 +1,95 @@
-# Task Plan
+# Project Task Board
 
-## Current Mode
+## Current Status
 
-Build Mode for the user-approved Bloque 3 Group Fixtures implementation.
+- Current block: Bloque 4 final follow-up completed.
+- Last completed block: Bloque 4 — Home Daily Schedule.
+- Next recommended task: Confirm backend response shape for `GET /api/standings` before starting Bloque 5.
+- Manual validation status: Bloque 4 and its final `nextDate` follow-up passed Codex WSL build, lint and test validation.
 
-Codex implemented application code and tests for Bloque 3, but final build, lint and test validation remain pending manual execution by the user in their WSL terminal.
+## Critical Execution Rules
 
-The user validated WSL manually in their own terminal, but the internal Codex shell still must not run `node`, `pnpm`, install, build, lint, test, or dev commands for this task.
-
-## Execution Rule
-
-All tasks must be executed through the Orchestrator Agent defined in `AGENTS.md`.
-
-Before starting any task:
-
-- Read `project-requirements.md`.
-- Read this `task.md`.
-- Read the relevant page-specific MD.
-- Search Engram MCP for related project memory.
-- Delegate to the correct subagent.
+- Use the Orchestrator Agent from `AGENTS.md`.
+- Read `docs/project-requirements.md`.
+- Read the relevant page-specific MD before changing any page.
+- Read `DESIGN.md` before making visual, layout, or shared UI component changes.
+- Keep page-specific logic in the page-specific MD.
 - Add or update tests when behavior changes.
-- Request QA review before marking the task complete.
-
-A task is not complete until implementation, documentation, tests and QA review are aligned.
-
-## Runtime Status
-
-### User-validated external WSL runtime
-
-The user reported these values from their own WSL terminal:
-
-- `which node` → `/home/yorch/.nvm/versions/node/v24.14.0/bin/node`
-- `which pnpm` → `/home/yorch/.nvm/versions/node/v24.14.0/bin/pnpm`
-- `node -v` → `v24.14.0`
-- `pnpm -v` → `10.33.0`
-
-### Codex execution constraint
-
-- Codex internal shell may still resolve Windows paths incorrectly.
-- For this task, do not run package-manager commands, project scripts, build, lint, test, or dev commands from Codex.
-- The user will run dependency installation and validation commands manually in their own WSL terminal and share results back.
-
-## Current Repository Status
-
-### Existing root files and folders
-
-- Existing Vite app files:
-  - `package.json`
-  - `pnpm-lock.yaml`
-  - `vite.config.js`
-  - `vitest.config.js`
-  - `index.html`
-  - `eslint.config.js`
-  - `.gitignore`
-  - `README.md`
-- Existing project instructions:
-  - `AGENTS.md`
-  - `docs/task.md`
-  - `docs/project-requirements.md`
-  - `docs/API-Backend-Mundial-2026.md`
-- Existing documentation files:
-  - `docs/home.md`
-  - `docs/group-fixtures.md`
-  - `docs/group-standings.md`
-  - `docs/knockout-stage.md`
-  - `docs/prediction-fixture.md`
-- Existing folders now used by the base architecture:
-  - `.codex/`
-  - `docs/`
-  - `public/`
-  - `src/`
-  - `src/app/`
-  - `src/components/`
-  - `src/constants/`
-  - `src/features/`
-  - `src/layouts/`
-  - `src/pages/`
-  - `src/routes/`
-  - `src/services/`
-  - `src/test/`
-
-### Scripts available in `package.json`
-
-- `dev`: `vite`
-- `build`: `vite build`
-- `lint`: `eslint .`
-- `preview`: `vite preview`
-- `test`: `vitest run`
-- `test:watch`: `vitest`
-
-### Declared installed dependencies
-
-Runtime dependencies declared in `package.json`:
-
-- `react` `^19.2.5`
-- `react-dom` `^19.2.5`
-- `react-router-dom` `^7.14.2`
-- `@reduxjs/toolkit` `^2.11.2`
-- `react-redux` `^9.2.0`
-- `axios` `^1.15.2`
-- `zod` `^4.3.6`
-
-Development dependencies declared in `package.json`:
-
-- `@eslint/js` `^10.0.1`
-- `@testing-library/jest-dom` `^6.9.1`
-- `@testing-library/react` `^16.3.2`
-- `@testing-library/user-event` `^14.6.1`
-- `@types/react` `^19.2.14`
-- `@types/react-dom` `^19.2.3`
-- `@vitejs/plugin-react` `^6.0.1`
-- `eslint` `^10.2.1`
-- `eslint-plugin-react-hooks` `^7.1.1`
-- `eslint-plugin-react-refresh` `^0.5.2`
-- `globals` `^17.5.0`
-- `jsdom` `^29.1.0`
-- `msw` `^2.13.6`
-- `vite` `^8.0.10`
-- `vitest` `^4.1.5`
-
-### Missing approved dependencies
-
-Core app dependencies still missing from `package.json`:
-
-- None for Bloque 1 base architecture.
-
-Testing dependencies still missing from `package.json`:
-
-- None for Bloque 1 base testing setup.
-
-Optional future form dependencies not yet needed:
-
-- `react-hook-form`
-- `@hookform/resolvers`
-
-## Manual Validation Results
-
-The user ran the following commands manually from their WSL terminal and all passed:
-
-- `pnpm run build` ✅
-- `pnpm run lint` ✅
-- `pnpm run test` ✅
-
-Observed successful results:
-
-- Production build completed successfully with Vite.
-- ESLint completed with no errors.
-- Vitest completed with 2 test files and 3 tests passing.
-
-## Bloque 1 Progress
-
-### Implemented in this task
-
-- Connected real React Router DOM through `BrowserRouter`, `Routes`, `Route`, and `NavLink`.
-- Replaced the placeholder store with a real Redux Toolkit store in `src/app/store.js`.
-- Replaced the placeholder `uiSlice` with a real `createSlice` implementation and exported selectors/actions.
-- Connected the React Redux `Provider` in `src/main.jsx`.
-- Added `src/services/api/axiosClient.js` with base URL, timeout, JSON headers, and response error normalization.
-- Completed `src/services/errors/errorAdapter.js` to normalize Axios/backend errors.
-- Added `src/services/errors/errorLogger.js` for dev console logging plus localStorage persistence.
-- Connected the global `FeedbackModal` to Redux state and close action.
-- Added placeholder routed pages so the Navbar navigates without breaking.
-- Added basic Vitest + jsdom + React Testing Library setup.
-- Added MSW node server bootstrap and handlers scaffold.
-- Added baseline tests for `uiSlice` and `FeedbackModal`.
-- Added `test` and `test:watch` scripts to `package.json`.
-
-### Pending after Bloque 1
-
-- Connect real feature services/pages on top of this base shell.
-- Add route-level pages for group detail, team detail, stadium detail, and match detail when their scopes begin.
-- Add the first environment documentation for `VITE_API_BASE_URL`.
-
-## Risks and Constraints
-
-- `axiosClient` is ready but not yet consumed by page-level services.
-- `FeedbackModal` is wired globally, but no business flow dispatches it yet.
-- `README.md` is still the default Vite template documentation and remains pending for later docs work.
-- `docs/pages/` still does not exist; page docs remain directly under `docs/`.
-- Backend URL configuration must still be provided through `VITE_API_BASE_URL` in the user environment.
-
-## Next Recommended Build Mode Task
-
-After Bloque 1 validation:
-
-1. Start Bloque 1.2/1.3 integration work by adding service modules that use `axiosClient`.
-2. Begin feature-specific page implementation for Home daily schedule and delayed-loading modal behavior.
-3. Add the first environment documentation for `VITE_API_BASE_URL`.
-4. Prepare the first backend-driven Home data flow and loading states.
-
-## Bloque 1
-
-- 1.1 Complete — configured the existing Vite + React app with React Router DOM and Redux Toolkit and validated it manually in WSL.
-- 1.2 Complete — configured `axiosClient` with baseURL from `VITE_API_BASE_URL`, timeout, headers, and response interceptors and validated the build/lint/test baseline manually in WSL.
-- 1.3 Complete — created errorAdapter, errorLogger and global FeedbackModal and validated the current baseline manually in WSL.
-- 1.4 Complete — configured Vitest, React Testing Library, MSW and test setup and validated the current baseline manually in WSL.
-
-
-## Visual Refresh Before Bloque 2
-
-A visual refresh was applied before starting functional Bloque 2 work. This is a UI polish pass only and does not close Bloque 2.
-
-Manual validation after the refresh passed in the user's WSL terminal:
-
-- `pnpm run build` ✅
-- `pnpm run lint` ✅
-- `pnpm run test` ✅
-
-Observed successful results:
-
-- Production build completed successfully with Vite.
-- ESLint completed with no errors.
-- Vitest completed with 2 test files and 3 tests passing.
-
-Scope completed:
-
-- Added global design tokens for the tournament-inspired custom palette.
-- Improved the app background with light gradients, abstract field-grid texture and soft glow details.
-- Redesigned the sticky header and navigation with a glass surface, pill links and clear active state.
-- Redesigned the Home hero with portfolio-ready copy, badges, chips and CSS-only abstract football/field visuals.
-- Redesigned visible cards and placeholder pages with stronger hierarchy, accent bars, softer shadows and rounded surfaces.
-- Refreshed FeedbackModal styling to match the new identity.
-
-Constraints preserved:
-
-- No official FIFA assets, logos, mascot, trophy, ball, or World Cup branding were used.
-- No endpoints, services, Redux logic, business logic, data fetching, or architecture from Bloque 1 were changed.
-- CSS Modules remain the styling pattern.
-- Bloque 2 remains pending functional implementation and validation.
-
-
-## Scope Alignment Before Bloque 2 Functional Work
-
-Manual validation after the alignment passed in the user's WSL terminal:
-
-- `pnpm run build` ✅
-- `pnpm run lint` ✅
-- `pnpm run test` ✅
-
-Observed successful results:
-
-- Production build completed successfully with Vite.
-- ESLint completed with no errors.
-- Vitest completed with 2 test files and 3 tests passing.
-
-A documentation and navigation alignment pass was applied before continuing with functional Bloque 2 work.
-
-Scope aligned:
-
-- `AGENTS.md` now reflects Redux Toolkit/React Redux/testing stack as required, with MSW defined for API mocking when needed.
-- Routing docs now align with the approved primary navigation: `/`, `/grupos`, `/posiciones`, `/eliminatorias`, `/predicciones`.
-- `docs/project-requirements.md` now references the correct project name `fixture-mundial-front` and documents primary vs future/optional navigation scope.
-- `Navbar` and route constants now show only approved primary entries.
-- `AppRoutes` now prioritizes approved primary pages and keeps `/partidos`, `/equipos`, `/estadios` as optional/future placeholders.
-
-Constraints preserved:
-
-- No dependency changes.
-- No API/fetch integration changes.
-- No business logic changes.
-- Bloque 2 remains pending functional implementation.
-
-
-## Copy Alignment Cleanup Before Bloque 2 Functional Work
-
-Manual validation after the copy cleanup passed in the user's WSL terminal:
-
-- `pnpm run build` ✅
-- `pnpm run lint` ✅
-- `pnpm run test` ✅
-
-Observed successful results:
-
-- Production build completed successfully with Vite.
-- ESLint completed with no errors.
-- Vitest completed with 2 test files and 3 tests passing.
-
-A copy-alignment cleanup was applied to remove remnants of the previous navigation scope from visible UI text.
-
-Scope adjusted:
-
-- Home hero title and hero chips now match the approved core navigation scope (`Fixture`, `Tablas`, `Eliminatorias`, `Predicciones`).
-- Home feature-card copy was updated to remove internal/development wording and old-scope emphasis.
-- `PlaceholderPage` kicker changed from internal-style wording to portfolio-ready wording.
-- Primary placeholder route descriptions were aligned exactly with current roadmap copy for `/grupos`, `/posiciones`, `/eliminatorias`, and `/predicciones`.
-
-Constraints preserved:
-
-- No logic or data-layer changes.
-- No backend integration or fetch changes.
-- Optional future routes (`/partidos`, `/equipos`, `/estadios`) remain outside main navigation scope.
-- Bloque 2 remains pending functional implementation.
-
-
-## Football Menu Navbar Visual Experiment Before Bloque 2
-
-A visual interaction update was applied to the Navbar before functional Bloque 2 work.
-
-Scope adjusted:
-
-- Replaced the previous horizontal navbar with a CSS-only football ball button that opens/closes the primary menu.
-- Added local Navbar state for open/closed visual state only.
-- Added Escape-key closing and outside-click closing.
-- Preserved the approved primary navigation entries: `/`, `/grupos`, `/posiciones`, `/eliminatorias`, `/predicciones`.
-- Kept `/partidos`, `/equipos`, and `/estadios` out of the primary Navbar.
-- Added simple React Testing Library coverage for menu open/close, Escape, and outside click behavior.
-
-Constraints preserved:
-
-- No Redux changes for this local visual state.
-- No API/fetch/backend integration changes.
-- No business logic changes.
-- No official FIFA assets or external images were used; the ball is CSS-only.
-- Bloque 2 remains pending functional implementation.
-
-Manual validation:
-
-- `pnpm run build` passed on WSL.
-- `pnpm run lint` passed on WSL.
-- `pnpm run test` passed on WSL.
-- Current test suite: 3 files passed, 5 tests passed.
-
-## Header Branding Ball Integration Before Bloque 2
-
-A follow-up visual identity update integrated the CSS-only football menu ball as the main header brand element.
-
-Scope adjusted:
-
-- Replaced the previous abstract header isotype with the CSS football menu button.
-- Integrated the ball next to `Fixture Mundial 2026` so it works as both brand mark and menu trigger.
-- Preserved the vertical menu with the approved primary entries: Inicio, Fixture, Tablas, Eliminatorias and Predicciones.
-- Kept Partidos, Equipos and Estadios out of the primary Navbar.
-- Adjusted global color tokens toward a sportier tournament-inspired identity using deep navy, red, green, cyan and light surfaces.
-- Retouched header/menu styling while keeping CSS Modules and the existing visual refresh.
-
-Constraints preserved:
-
-- No official FIFA branding, logo, trophy, mascot, official ball design, or external image assets.
-- No Redux, services, routes, Axios, backend integration, or business logic changes.
-- No Bloque 2 functional implementation.
-- Bloque 2 remains pending functional work.
-
-Manual validation:
-
-- `pnpm run build` passed on WSL.
-- `pnpm run lint` passed on WSL.
-- `pnpm run test` passed on WSL.
-- Current test suite: 3 files passed, 5 tests passed.
-
-## Yellow Card Premium Menu Refinement Before Bloque 2
-
-A visual refinement was applied to the CSS football Navbar dropdown before functional Bloque 2 work.
-
-Scope adjusted:
-
-- Kept the CSS football as the menu trigger.
-- Added a subtle overlay behind the open menu to improve contrast against the hero/background.
-- Redesigned the dropdown panel as a premium yellow-card-inspired floating card.
-- Improved panel border, depth, shadow and warm yellow surface treatment.
-- Adjusted menu links for stronger contrast, clearer hover/focus states and a stronger active state.
-- Preserved the approved primary navigation entries: Inicio, Fixture, Tablas, Eliminatorias and Predicciones.
-- Kept Partidos, Equipos and Estadios out of the primary Navbar.
-
-Constraints preserved:
-
-- No official branding, external images or protected assets.
-- No Redux, services, routes, Axios, backend integration or business logic changes.
-- No Bloque 2 functional implementation.
-- Bloque 2 remains pending functional work.
-
-Manual validation:
-
-- `pnpm run build` passed on WSL.
-- `pnpm run lint` passed on WSL.
-- `pnpm run test` passed on WSL.
-- Current test suite: 3 files passed, 5 tests passed.
-
-## Bloque 2
-
-- Status: Complete and manually validated from the user's WSL terminal.
-- Manual validation confirmed:
-  - `pnpm run build` passed.
-  - `pnpm run lint` passed.
-  - `pnpm run test` passed.
-  - Current test suite: 7 files passed, 15 tests passed.
-- 2.1 Visual refresh applied before Bloque 2; functional layout behavior remains pending for feature-specific implementation.
-- 2.2 Complete — created native JavaScript date utilities with `dateAdapter` and validated manually in WSL.
-- 2.3 Complete — created reusable CSS Module skeleton loaders and validated manually in WSL.
-- 2.4 Complete — UI slice keeps modal/global loading/delayed loading state, exposes selectors and was validated manually in WSL.
-
-### Bloque 2 Functional Shared Foundation
-
-Implemented before Home backend integration:
-
-- Added `src/utils/dateAdapter.js` with helpers for display dates, display times, local ISO today, match sorting and match start/past checks.
-- Added `src/utils/delayedLoading.js` with the shared 7-second delayed-loading threshold helper.
-- Added reusable skeleton components:
-  - `src/components/SkeletonCard/SkeletonCard.jsx`
-  - `src/components/SkeletonList/SkeletonList.jsx`
-- Kept skeleton styles encapsulated with CSS Modules.
-- Extended `uiSlice` selectors for global loading and delayed loading state.
-- Kept `FeedbackModal` ready for real delayed-loading and error flows.
-- Added tests for date utilities, delayed-loading helper, skeleton components and UI selectors.
-
-Confirmed ready for the next block:
-
-- `dateAdapter`
-- `delayedLoading` helper
-- `SkeletonCard`
-- `SkeletonList`
-- `uiSlice` actions and selectors for global loading and delayed loading.
-
-Constraints preserved:
-
-- No real backend fetch was added.
-- No backend integration was started.
-- No routes, Navbar, hero or visual refresh work was changed.
-- No dependencies were installed.
-- No Bloque 2 completion until the user validates manually.
-
-Manual validation:
-
-- `pnpm run build` passed on WSL.
-- `pnpm run lint` passed on WSL.
-- `pnpm run test` passed on WSL.
-- Current test suite: 7 files passed, 15 tests passed.
-
-## Bloque 3 Home Layout Direction
-
-The current Home hero must remain the primary presentation section.
-
-Approved Home structure for Bloque 3:
-
-1. Current visual hero.
-2. `DailyScheduleCard` immediately below the hero:
-   - Title: `Partidos de hoy`.
-   - If `today` is empty, show `Próxima fecha disponible`.
-   - Render up to 8 matches.
-   - Show skeleton while loading.
-   - Trigger `FeedbackModal` when loading exceeds 7 seconds.
-   - Show friendly error state if the request fails.
-   - Show empty state when both `today` and `next` are empty.
-3. Section: `Qué hace la app`.
-4. Section: `Cómo usarla`.
-
-Placement constraints:
-
-- Do not put matches inside the header.
-- Do not put matches inside the Navbar.
-- Do not replace the current hero.
-- The match card must be the first functional section below the hero.
-
-## Bloque 3 — Group Fixtures
-
-Status: Complete and manually validated from the user's WSL terminal.
-
-### Scope
-
-- Replace the `/grupos` placeholder route with a real Group Fixtures page.
-- Fetch the full match fixture from the backend and filter by selected group.
-- Render exactly the 6 group-stage matches for the selected group when data is available.
-- Keep the existing React + Vite + JavaScript + CSS Modules architecture.
-- Do not install dependencies; current dependencies already include Axios, React Router DOM, Redux Toolkit, Zod, Vitest, RTL and MSW.
-
-### Backend contract
-
-- Endpoint: `GET /api/matches`.
-- Backend source of truth: `docs/API-Backend-Mundial-2026.md` and `docs/group-fixtures.md`.
-- Expected behavior: returns the complete fixture ordered by date.
-- Expected populated fields per match:
-  - `homeTeam` object with at least `_id`, `name`, `shieldUrl`, `group`.
-  - `awayTeam` object with at least `_id`, `name`, `shieldUrl`, `group`.
-  - `stadium` object with at least `_id`, `name`, `city`, `country` when available.
-  - `date`, `stage`, `status`, `homeScore`, `awayScore`, `homePenaltyScore`, `awayPenaltyScore`.
-- Group filtering rule from docs: filter matches by `stage = "GRUPO X"` where `X` is the selected group letter A-L.
-- Assumption to verify during implementation: `stage` values are Spanish uppercase strings like `GRUPO A`. If the backend returns a different stage format, document it before changing the frontend contract.
-
-### Files created
-
-- `src/services/matches/matchesService.js`
-  - Use the existing `axiosClient`.
-  - Export a function such as `getMatches()` that calls `/api/matches`.
-  - Do not call Axios directly from presentational components.
-- `src/schemas/matchSchema.js`
-  - Add Zod schemas/helpers for the backend match shape when needed.
-  - Keep schema tolerant of nullable scores and optional populated fields.
-- `src/constants/groups.js`
-  - Define approved group options A-L and labels.
-- `src/components/GroupSelector/GroupSelector.jsx`
-- `src/components/GroupSelector/GroupSelector.module.css`
-  - Accessible labelled select for group choice.
-- `src/components/FixtureMatchCard/FixtureMatchCard.jsx`
-- `src/components/FixtureMatchCard/FixtureMatchCard.module.css`
-  - Presentational fixture card with team flags/logos, names, score/placeholder, date/time and stadium.
-- `src/pages/GroupFixtures/GroupFixtures.jsx`
-- `src/pages/GroupFixtures/GroupFixtures.module.css`
-  - Page-level loading/error/empty/data orchestration.
-- `src/pages/GroupFixtures/GroupFixtures.test.jsx`
-  - RTL + MSW behavioral tests for this page.
-
-### Files modified
-
-- `src/routes/AppRoutes.jsx`
-  - Replace the `/grupos` `PlaceholderPage` element with `GroupFixtures`.
-- `docs/task.md`
-  - Keep this plan and update status after implementation and manual validation.
-
-### Implementation completed
-
-1. Create the match service and optional Zod schema/normalizer for the documented backend shape.
-2. Create group constants A-L and filtering helpers if the logic would otherwise clutter the page.
-3. Build `GroupSelector` as a controlled accessible select with visible label.
-4. Build `FixtureMatchCard` as a presentational CSS Module component:
-   - Render Cloudinary/team `shieldUrl` images with useful `alt` text.
-   - Render team names.
-   - Render scores only when `homeScore` and `awayScore` are not `null`/`undefined`.
-   - Render a friendly placeholder such as `Por jugarse` or `—` when scores are missing.
-   - Render formatted date/time via existing `dateAdapter` helpers.
-   - Render stadium name/city when available.
-5. Build `GroupFixtures` page:
-   - Default selected group: `A`.
-   - Fetch once from `matchesService.getMatches()` on mount.
-   - Store page-local loading, error and matches state unless global Redux state is specifically needed.
-   - Sort selected group matches with existing `sortMatchesByDate`.
-   - Use existing `SkeletonList` while loading.
-   - Use the existing 7-second delayed-loading pattern and dispatch `openFeedbackModal` if the request exceeds the threshold.
-   - Use the existing normalized app error from `axiosClient`; call the existing logger only if an error is not already normalized/logged by the interceptor.
-   - Show a friendly inline error state; do not expose technical backend messages directly to users.
-6. Wire `/grupos` to the new page in `AppRoutes`.
-7. Ask the user to manually run WSL validation after implementation:
-   - `which node`
-   - `which pnpm`
-   - `type -a node`
-   - `type -a pnpm`
-   - `pnpm run build`
-   - `pnpm run lint`
-   - `pnpm run test`
-
-### Tests added
-
-- Use Vitest + React Testing Library + MSW.
-- Test initial render:
-  - Page title/intro renders.
-  - Group selector renders with accessible label and default group A.
-- Test loading state:
-  - Mock a pending or delayed `GET /api/matches`.
-  - Verify skeleton/loading status is visible.
-- Test successful render:
-  - Mock a mixed fixture response containing at least 6 `GRUPO A` matches and at least one other group.
-  - Verify only selected group matches render.
-  - Verify group matches are ordered by date.
-- Test group change:
-  - Change selector from A to B using `userEvent`.
-  - Verify the rendered cards update to the 6 `GRUPO B` matches.
-- Test nullable scores:
-  - Include matches with `homeScore: null` and `awayScore: null`.
-  - Verify friendly score placeholder is shown instead of `null`.
-- Test API error:
-  - Mock `GET /api/matches` failure.
-  - Verify a friendly error state is visible.
-  - Verify `FeedbackModal` appears after the 7-second threshold.
-  - Verify an invalid API payload also renders the friendly error state.
-
-## Bloque 4
-
-- 4.1 Pending — implement Home with `/api/matches/schedule/daily` if still required after Group Fixtures.
-- 4.2 Pending — show `today` and, if empty, show `next`.
-- 4.3 Pending — create “qué hace la app” and “cómo usarla” sections.
-
-## Bloque 5
-
-- 5.1 Pending — implement Group Standings.
-- 5.2 Pending — renderizar cards por grupo.
-- 5.3 Pending — mostrar posiciones 1, 2 y 3 según backend.
-- 5.4 Pending — integrar refresh/reload tras cambios de resultados oficiales.
-
-## Bloque 6
-
-- 6.1 Pending — implement Knockout Stage with placeholders.
-- 6.2 Pending — create bracket skeleton adapter for matches 73-104.
-- 6.3 Pending — mark view as “en construcción” if qualified teams are missing.
-
-## Bloque 7
-
-- 7.1 Pending — implement Prediction Fixture.
-- 7.2 Pending — save predictions in localStorage.
-- 7.3 Pending — lock editing if the match already started or finished.
-- 7.4 Pending — calculate scoring derived from official results.
-- 7.5 Pending — add printing with `window.print()`.
-
-## Bloque 8
-
-- 8.1 Pending — write page documentation.
-- 8.2 Pending — review minimum coverage for slices, utils and pages.
-- 8.3 Pending — consolidate decisions in Engram memory.
-
-### Bloque 3 Implementation Summary
-
-Implemented files:
-
-- `src/services/matches/matchesService.js` — fetches `GET /api/matches` through the existing `axiosClient`.
-- `src/schemas/matchSchema.js` — validates/parses the documented populated match shape with nullable scores.
-- `src/constants/groups.js` — defines group options A-L and the `GRUPO X` stage helper.
-- `src/components/GroupSelector/GroupSelector.jsx` and `.module.css` — accessible group selector.
-- `src/components/FixtureMatchCard/FixtureMatchCard.jsx` and `.module.css` — responsive football fixture card with shields, teams, score placeholder, date/time and stadium.
-- `src/pages/GroupFixtures/GroupFixtures.jsx` and `.module.css` — `/grupos` page with backend loading, group filtering, empty/error states, skeletons and delayed-loading feedback modal.
-- `src/pages/GroupFixtures/GroupFixtures.test.jsx` — RTL/MSW tests for the new page behavior.
-
-Modified files:
-
-- `src/routes/AppRoutes.jsx` — `/grupos` now renders `GroupFixtures` instead of the placeholder page.
-- `docs/task.md` — updated Bloque 3 status and notes.
-
-Manual validation complete:
-
-The user manually ran the final validation from WSL and all checks passed:
-
-- `pnpm run build` passed.
-- `pnpm run lint` passed.
-- `pnpm run test` passed with 8 test files and 23 tests.
-
-Bloque 3 is complete.
-
-### Bloque 3 Manual Validation Attempt
-
-The user manually ran validation from WSL after the first Bloque 3 implementation.
-
-Observed runtime/package state:
-
-- `which pnpm` resolved to `/home/yorch/.nvm/versions/node/v24.14.0/bin/pnpm`.
-- `type -a pnpm` listed the Linux-native pnpm first and the Windows pnpm second.
-
-Observed validation results:
-
-- `pnpm run build` passed.
-- `pnpm run test` passed with 8 test files and 23 tests.
-- `pnpm run lint` failed with `react-hooks/set-state-in-effect` in `src/pages/GroupFixtures/GroupFixtures.jsx` because the effect synchronously called `setIsLoading(true)` and `setHasError(false)`.
-
-Fix applied after the failed lint attempt:
-
-- Removed the redundant synchronous state resets from the initial `useEffect` in `src/pages/GroupFixtures/GroupFixtures.jsx`.
-- The page already initializes `isLoading` as `true` and `hasError` as `false`, so the removed calls were unnecessary for the current mount-only fetch flow.
-
-Manual validation after this fix is complete. The user reran `pnpm run build`, `pnpm run lint`, and `pnpm run test`; all passed.
-
-### Bloque 3 Final Manual Validation
-
-The user reran final validation from WSL after the lint fix and all checks passed:
-
-- `pnpm run build` passed.
-- `pnpm run lint` passed with no reported errors.
-- `pnpm run test` passed with 8 test files and 23 tests.
-
-Bloque 3 Group Fixtures is complete and manually validated.
-
-### Bloque 3 Follow-up Fixes
-
-Applied two post-validation fixes requested by the user:
-
-- `src/schemas/matchSchema.js`: `parseMatchesResponse` now accepts the backend wrapper `{ status: "success", data: [...] }` by reading `payload.data` when it is an array, while preserving support for direct arrays and `payload.matches`.
-- `src/pages/GroupFixtures/GroupFixtures.module.css`: the decorative `.hero::before` pseudo-element now has `pointer-events: none`, and `.hero > label` is positioned above it with `position: relative` and `z-index: 1` so the group selector remains clickable.
-
-Manual validation for these follow-up fixes is complete; the user ran build, lint and tests manually and all passed.
-
-### Bloque 3 Follow-up Manual Validation
-
-The user manually validated the follow-up fixes from WSL and all checks passed:
-
-- `pnpm run build` passed.
-- `pnpm run lint` passed with no reported errors.
-- `pnpm run test` passed with 8 test files and 23 tests.
-
-The backend wrapper parsing fix and selector layering fix are complete and manually validated.
-
-### Bloque 3 Validation Notes
-
-User confirmed the stderr logs shown during `GroupFixtures.test.jsx` are expected because those tests intentionally validate API error handling and invalid payload handling. They do not represent test failures.
-
-## Bloque 4 Planning — Group Standings / Posiciones
-
-Status: Plan Mode only. No application code has been written for this block.
-
-### Scope conflict documented
-
-The current `docs/task.md` previously listed Bloque 4 as Home daily schedule work:
-
-- `GET /api/matches/schedule/daily`
-- show `today` and `next`
-- add Home informational sections
-
-The user has now proposed Bloque 4 as the Group Standings page at `/posiciones`. This differs from the current block numbering, where Group Standings was previously listed as Bloque 5.
-
-Before Build Mode, the project needs an explicit approval that Bloque 4 is being re-scoped/reordered to implement Group Standings at `/posiciones`.
-
-### Backend contract diagnosis
-
-Documented endpoint:
-
-- `GET /api/standings`
-
-Administrative endpoint, out of scope unless explicitly approved:
-
-- `POST /api/standings/:group`
-
-Source documents:
-
-- `docs/group-standings.md`
-- `docs/API-Backend-Mundial-2026.md`
-- `docs/project-requirements.md`
-
-Current backend documentation confirms:
-
-- The backend calculates standings through `StandingsService`.
-- The frontend should not recalculate standings when backend standings are available.
-- Backend sorting criteria are:
-  1. points descending
-  2. goal difference descending
-  3. goals for descending
-- `GET /api/standings` returns the 12 groups A-L.
-- `position` and `qualifiedTo` should be rendered when present.
-
-Unclear backend details that must be confirmed before implementation:
-
-- Exact `GET /api/standings` response wrapper:
-  - direct array
-  - `{ status: "success", data: [...] }`
-  - `{ standings: [...] }`
-  - object keyed by group letter
-  - another shape
-- Exact group object shape:
-  - group field name (`group`, `name`, `letter`, etc.)
-  - rows field name (`standings`, `teams`, `table`, etc.)
-- Exact row/stat field names for:
-  - matches played / PJ
-  - wins / PG
-  - draws / PE
-  - losses / PP
-  - goals for / GF
-  - goals against / GC
-  - goal difference / DG
-  - points / Pts
-- Whether team data appears as `team` nested object or row-level team fields.
-
-### Implementation rule if approved
-
-If the response contract is confirmed, implement the standings page using backend-calculated standings as the source of truth.
-
-Do not calculate standings from matches in this block unless the user explicitly confirms that the backend does not provide calculated rows.
-
-If backend standings are unavailable but matches are available, the proposed fallback would be a separate future adapter that derives group standings from `GET /api/matches` by:
-
-1. filtering `FINISHED` group-stage matches by `stage = "GRUPO X"`
-2. aggregating PJ, PG, PE, PP, GF, GC, DG and Pts per team
-3. sorting by points, goal difference, goals for and team name
-
-That fallback is not approved for implementation yet.
-
-### Proposed files to create
-
-Data layer:
-
-- `src/services/standings/standingsService.js`
-  - exports `getStandings()`
-  - calls `axiosClient.get('/api/standings')`
-  - parses with `parseStandingsResponse`
-  - logs schema/payload failures as `standingsService`
-
-- `src/schemas/standingsSchema.js`
-  - defines tolerant Zod schemas for group standings and row/team data
-  - accepts only the confirmed backend wrappers once known
-  - uses `.passthrough()` for backend extras
-
-Utilities:
-
-- `src/utils/standingsAdapter.js`
-  - derives stable keys and display labels
-  - maps `qualifiedTo` labels without inventing business meaning
-  - preserves backend order
-
-Page/components:
-
-- `src/pages/GroupStandings/GroupStandings.jsx`
-- `src/pages/GroupStandings/GroupStandings.module.css`
-- `src/pages/GroupStandings/GroupStandings.test.jsx`
-- `src/components/StandingsGroupCard/StandingsGroupCard.jsx`
-- `src/components/StandingsGroupCard/StandingsGroupCard.module.css`
-- `src/components/StandingsTable/StandingsTable.jsx`
-- `src/components/StandingsTable/StandingsTable.module.css`
-- Optional if needed for clarity:
-  - `src/components/QualificationBadge/QualificationBadge.jsx`
-  - `src/components/QualificationBadge/QualificationBadge.module.css`
-
-Files to modify:
-
-- `src/routes/AppRoutes.jsx`
-  - replace the `/posiciones` placeholder with `GroupStandings`
-- `docs/task.md`
-  - update status after implementation and manual validation
-
-### Proposed UI behavior
-
-- Show a page hero for Tablas / Posiciones.
-- Prefer a 12-group card grid because `docs/group-standings.md` acceptance says all 12 groups should be visible.
-- If a single-group selector is still required by the user, add it as a filter/jump control rather than the only visible data mode.
-- Render semantic tables with columns:
-  - Posición
-  - Equipo
-  - PJ
-  - PG
-  - PE
-  - PP
-  - GF
-  - GC
-  - DG
-  - Pts
-  - Clasificación
-- Render shields/flags from backend `shieldUrl` when available.
-- Render incomplete groups with available rows and a small incomplete-state message.
-- Empty global response: show friendly empty state.
-- API failure or invalid payload: show friendly error state and use the global feedback flow when appropriate.
-- Loading: reuse `SkeletonList` / skeleton card pattern.
-- Delayed loading: reuse `DELAYED_LOADING_THRESHOLD_MS`, `setGlobalLoading`, `setDelayedLoading`, and `openFeedbackModal`.
-- Preserve backend order; do not recalculate or reorder unless backend contract explicitly requires frontend sorting.
-
-### Proposed state architecture
-
-- Use local page state for fetched standings, loading and error.
-- Use Redux `uiSlice` only for global loading/delayed-loading/feedback modal.
-- Do not create a standings Redux slice unless future routes need shared standings state.
-
-### Proposed tests
-
-Use Vitest + React Testing Library + MSW.
-
-Minimum tests:
-
-- initial render of `/posiciones` page content
-- loading skeleton/state
-- successful rendering of standings tables
-- group selector/filter or all-groups rendering, depending on final approved UI
-- backend order is preserved when backend provides calculated rows
-- if frontend sorting is explicitly required, test points, goal difference, goals for and name tiebreakers
-- empty standings response shows friendly empty state
-- incomplete group renders available rows without crashing
-- API failure shows friendly error and does not expose technical backend text
-- invalid payload shows friendly error
-- delayed loading opens `FeedbackModal` after 7 seconds if the request is still pending
-
-### Manual validation after implementation
-
-The user will manually run from WSL:
+- Codex must not run runtime commands if WSL toolchain is not guaranteed.
+- The user performs final manual validation from WSL.
+
+## Block Checklist
+
+### Bloque 1 — Base Architecture
+- [x] Router configured.
+- [x] Redux Toolkit configured.
+- [x] Axios client configured.
+- [x] Global error/feedback base configured.
+- [x] Base tests configured.
+
+### Bloque 2 — Shared UI Foundation
+- [x] Date utilities.
+- [x] Skeleton loaders.
+- [x] Delayed loading helpers.
+- [x] Shared UI state selectors.
+
+### Bloque 3 — Group Fixtures
+- [x] `/grupos` page implemented.
+- [x] Group selector implemented.
+- [x] Fixture match cards implemented.
+- [x] Backend match parsing implemented.
+- [x] Tests added and manually validated.
+
+### Bloque 4 — Home Daily Schedule
+- [x] Daily schedule endpoint integrated.
+- [x] Today/next fallback implemented.
+- [x] Loading, delayed loading, empty and error states implemented.
+- [x] Tests added and manually validated.
+- [x] Follow-up completed: format `nextDate` with a friendly Spanish/Argentina date format.
+
+### Bloque 5 — Group Standings
+- [ ] Confirm backend response shape for `GET /api/standings`.
+- [ ] Implement standings service/schema.
+- [ ] Implement `/posiciones` page.
+- [ ] Render standings cards/tables by group.
+- [ ] Add loading, empty, error and delayed-loading states.
+- [ ] Add tests.
+- [ ] User manual validation.
+
+### Bloque 6 — Knockout Stage
+- [ ] Implement bracket skeleton.
+- [ ] Handle missing qualified teams.
+- [ ] Add tests.
+- [ ] User manual validation.
+
+### Bloque 7 — Prediction Fixture
+- [ ] Implement prediction flow.
+- [ ] Persist predictions in localStorage.
+- [ ] Lock predictions after match start.
+- [ ] Calculate score from official results.
+- [ ] Add print support.
+- [ ] Add tests.
+- [ ] User manual validation.
+
+### Bloque 8 — Documentation and Final Review
+- [ ] Review page documentation.
+- [ ] Review test coverage.
+- [ ] Consolidate project decisions.
+- [ ] Prepare README/portfolio documentation.
+
+## Page Documentation Index
+
+- Home: `docs/home.md`
+- Group fixtures: `docs/group-fixtures.md`
+- Group standings: `docs/group-standings.md`
+- Knockout stage: `docs/knockout-stage.md`
+- Prediction fixture: `docs/prediction-fixture.md`
+- Design system: `DESIGN.md`
+- Backend API: `docs/API-Backend-Mundial-2026.md`
+
+## Manual Validation Checklist
+
+The user runs from WSL:
 
 ```bash
 which node
@@ -860,14 +100,3 @@ pnpm run build
 pnpm run lint
 pnpm run test
 ```
-
-Codex must not run final validation commands.
-
-### Blockers before Build Mode
-
-Build Mode should not start until the user confirms:
-
-1. Bloque 4 is officially re-scoped from Home daily schedule to Group Standings `/posiciones`.
-2. The exact `GET /api/standings` response shape, including wrapper and stat field names.
-3. Whether `/posiciones` must show all 12 group cards, a selector-filtered single group, or both.
-4. Whether `POST /api/standings/:group` is out of scope for this page. Recommended: out of scope.
