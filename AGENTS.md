@@ -87,6 +87,8 @@ Do not place all CSS in a single global stylesheet.
 
 Global CSS must be minimal and reserved for reset rules, root variables, font smoothing, body defaults, and shared base styles.
 
+Before making global visual changes, shared component visual changes, page layout redesigns, or reusable UI pattern changes, agents must read `DESIGN.md` and keep the work aligned with the documented design system.
+
 ## Language Rules
 
 Code, folder names, function names, component names, and technical documentation should be written in English.
@@ -105,28 +107,46 @@ Agents must assume the project path is inside Linux, for example:
 
 - `/home/yorch/projects/apps/fixture-mundial-front`
 
-Before running install, dev, build, test, lint, or dependency commands, agents must verify the runtime:
+Before running install, dev, build, test, lint, preview, or dependency commands, agents must prepare and verify the WSL runtime.
+
+When `node` or `pnpm` is not already available from the Linux-native toolchain, Codex should load nvm first in the same shell that will run the command:
+
+```bash
+source ~/.nvm/nvm.sh
+nvm use 24
+```
+
+After preparing the shell, agents must run the required verification commands:
 
 - `which node`
 - `which pnpm`
+- `type -a node`
+- `type -a pnpm`
 
-Both commands must resolve to Linux-native WSL paths.
+The active paths from `which` must resolve to Linux-native WSL paths.
 
-Valid examples:
+Expected active paths for this project:
+
+- `/home/yorch/.nvm/versions/node/v24.14.0/bin/node`
+- `/home/yorch/.nvm/versions/node/v24.14.0/bin/pnpm`
+
+Other valid Linux-native examples:
 
 - `/home/yorch/.nvm/versions/node/.../bin/node`
 - `/home/yorch/.nvm/versions/node/.../bin/pnpm`
 
-Invalid examples:
+Invalid active paths:
 
 - `/mnt/c/Users/...`
 - Windows `node.exe`
 - Windows `pnpm.exe`
-- Any path pointing to `AppData/Roaming/npm`
+- Any active path pointing to `AppData/Roaming/npm`
 
-If `node` or `pnpm` resolves to a Windows path, agents must stop immediately and report the environment issue.
+A Windows `pnpm` path appearing as a secondary result in `type -a pnpm` is acceptable only if `which pnpm` resolves first to the Linux-native pnpm path.
 
-Agents must not run package commands when the runtime is mixed between WSL and Windows.
+If `which node` or `which pnpm` resolves under `/mnt/c/`, agents must stop and report the environment issue before running install, dev, build, lint, test, preview, or dependency commands.
+
+Agents must not run package commands when the active runtime is mixed between WSL and Windows.
 
 ## Package Manager Policy
 
@@ -614,10 +634,14 @@ Use QA Mode after implementation.
 
 Required checks:
 
+- Prepare the shell with `source ~/.nvm/nvm.sh` and `nvm use 24` when needed.
 - `which node`
 - `which pnpm`
-- `pnpm run build` when scripts exist and WSL runtime is valid
-- `pnpm run lint` when scripts exist and WSL runtime is valid
+- `type -a node`
+- `type -a pnpm`
+- `pnpm run build` when scripts exist and the active WSL toolchain has been verified correctly.
+- `pnpm run lint` when scripts exist and the active WSL toolchain has been verified correctly.
+- `pnpm run test` when scripts exist and the active WSL toolchain has been verified correctly.
 - Manual review of folder structure
 - Manual review of CSS Module compliance
 - Manual review of forbidden dependencies

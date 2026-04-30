@@ -1,4 +1,5 @@
 const DEFAULT_LOCALE = 'es-AR'
+const CALENDAR_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})/
 
 function toDate(value) {
   if (value instanceof Date) {
@@ -32,6 +33,41 @@ export function formatDisplayDate(value, locale = DEFAULT_LOCALE) {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
+  }).format(date)
+}
+
+export function formatScheduleCalendarDate(value, locale = DEFAULT_LOCALE) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return ''
+  }
+
+  const match = value.match(CALENDAR_DATE_PATTERN)
+
+  if (!match) {
+    return ''
+  }
+
+  const [, yearValue, monthValue, dayValue] = match
+  const year = Number(yearValue)
+  const month = Number(monthValue)
+  const day = Number(dayValue)
+  const date = new Date(Date.UTC(year, month - 1, day))
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return ''
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
   }).format(date)
 }
 

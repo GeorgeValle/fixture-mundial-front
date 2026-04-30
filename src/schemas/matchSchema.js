@@ -48,6 +48,14 @@ export const matchSchema = z
 
 export const matchesSchema = z.array(matchSchema)
 
+export const dailyScheduleSchema = z
+  .object({
+    today: matchesSchema,
+    next: matchesSchema,
+    nextDate: z.string().nullable().optional(),
+  })
+  .passthrough()
+
 export function parseMatchesResponse(payload) {
   const candidateMatches = Array.isArray(payload)
     ? payload
@@ -61,4 +69,19 @@ export function parseMatchesResponse(payload) {
   }
 
   return result.data
+}
+
+export function parseDailyScheduleResponse(payload) {
+  const candidateSchedule = payload?.data ?? payload
+  const result = dailyScheduleSchema.safeParse(candidateSchedule)
+
+  if (!result.success) {
+    throw new Error('Invalid daily schedule response shape')
+  }
+
+  return {
+    today: result.data.today,
+    next: result.data.next,
+    nextDate: result.data.nextDate ?? null,
+  }
 }
