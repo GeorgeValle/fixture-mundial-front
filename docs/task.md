@@ -2,10 +2,10 @@
 
 ## Current Status
 
-- Current block: Bloque 4 final follow-up completed.
+- Current block: Bloque 5 — Group Standings view selector implemented; pending final validation review.
 - Last completed block: Bloque 4 — Home Daily Schedule.
-- Next recommended task: Confirm backend response shape for `GET /api/standings` before starting Bloque 5.
-- Manual validation status: Bloque 4 and its final `nextDate` follow-up passed Codex WSL build, lint and test validation.
+- Next recommended task: User visual/manual validation review for Bloque 5 standings view modes.
+- Manual validation status: Bloque 5 passed Codex WSL build, lint and test validation; user manual validation may still be performed.
 
 ## Critical Execution Rules
 
@@ -48,12 +48,12 @@
 - [x] Follow-up completed: format `nextDate` with a friendly Spanish/Argentina date format.
 
 ### Bloque 5 — Group Standings
-- [ ] Confirm backend response shape for `GET /api/standings`.
-- [ ] Implement standings service/schema.
-- [ ] Implement `/posiciones` page.
-- [ ] Render standings cards/tables by group.
-- [ ] Add loading, empty, error and delayed-loading states.
-- [ ] Add tests.
+- [x] Confirm backend response shape for `GET /api/standings`.
+- [x] Implement standings service/schema.
+- [x] Implement `/posiciones` page.
+- [x] Render standings cards/tables by group.
+- [x] Add loading, empty, error and delayed-loading states.
+- [x] Add tests.
 - [ ] User manual validation.
 
 ### Bloque 6 — Knockout Stage
