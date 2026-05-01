@@ -4,6 +4,7 @@ import MainLayout from '../layouts/MainLayout/MainLayout'
 import Home from '../pages/Home/Home'
 import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
 import GroupStandings from '../pages/GroupStandings/GroupStandings'
+import KnockoutStage from '../pages/KnockoutStage/KnockoutStage'
 import PlaceholderPage from '../pages/PlaceholderPage/PlaceholderPage'
 
 function AppRoutes() {
@@ -13,15 +14,7 @@ function AppRoutes() {
         <Route element={<Home />} path={ROUTES.home} />
         <Route element={<GroupFixtures />} path={ROUTES.fixture} />
         <Route element={<GroupStandings />} path={ROUTES.standings} />
-        <Route
-          element={
-            <PlaceholderPage
-              description="Visualizá el camino hacia la final con cruces y placeholders actualizables."
-              title="Eliminatorias"
-            />
-          }
-          path={ROUTES.knockout}
-        />
+        <Route element={<KnockoutStage />} path={ROUTES.knockout} />
         <Route
           element={
             <PlaceholderPage
