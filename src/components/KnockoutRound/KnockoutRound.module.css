@@ -1,0 +1,46 @@
+.round {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.roundHeader {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-2) var(--space-4);
+  justify-content: space-between;
+  padding: 0 var(--space-1);
+}
+
+.kicker {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--color-magenta);
+  font-size: var(--font-size-xs);
+  font-weight: 950;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.roundTitle {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+}
+
+.countBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.8rem;
+  padding: 0 var(--space-3);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-cyan) 14%, white);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+}
+
+.matchList {
+  display: grid;
+  gap: var(--space-4);
+}

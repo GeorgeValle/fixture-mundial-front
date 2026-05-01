@@ -2,10 +2,10 @@
 
 ## Current Status
 
-- Current block: Bloque 5 — Group Standings view selector implemented; pending final validation review.
-- Last completed block: Bloque 4 — Home Daily Schedule.
-- Next recommended task: User visual/manual validation review for Bloque 5 standings view modes.
-- Manual validation status: Bloque 5 passed Codex WSL build, lint and test validation; user manual validation may still be performed.
+- Current block: Bloque 6 — Knockout Stage implemented; pending user manual validation.
+- Last completed block: Bloque 5 — Group Standings.
+- Next recommended task: User visual/manual validation review for `/eliminatorias`.
+- Manual validation status: Bloque 5 was visually/manually approved by the user before starting Bloque 6, so Bloque 6 can formally begin.
 
 ## Critical Execution Rules
 
@@ -54,13 +54,26 @@
 - [x] Render standings cards/tables by group.
 - [x] Add loading, empty, error and delayed-loading states.
 - [x] Add tests.
-- [ ] User manual validation.
+- [x] User manual validation.
+- [x] Note: Bloque 5 was approved visually/manually by the user before starting Bloque 6.
 
 ### Bloque 6 — Knockout Stage
-- [ ] Implement bracket skeleton.
-- [ ] Handle missing qualified teams.
-- [ ] Add tests.
+- [x] Review knockout documentation and skeleton source.
+- [x] Create local knockout skeleton data.
+- [x] Implement backend/skeleton merge strategy.
+- [x] Implement `/eliminatorias` page.
+- [x] Implement round selector.
+- [x] Implement bracket, round, and match-card components.
+- [x] Render visible UI labels in Spanish.
+- [x] Handle loading, delayed loading, error, empty/skeleton, and partial-data states.
+- [x] Add adapter and render tests.
+- [x] Run `pnpm run build`.
+- [x] Run `pnpm run lint`.
+- [x] Run `pnpm run test`.
+- [x] Document page-specific decisions in `docs/knockout-stage.md`.
 - [ ] User manual validation.
+
+Note: detailed Knockout Stage rules, backend/skeleton merge behavior, UI labels, validation results, and backlog notes are documented in `docs/knockout-stage.md`.
 
 ### Bloque 7 — Prediction Fixture
 - [ ] Implement prediction flow.
