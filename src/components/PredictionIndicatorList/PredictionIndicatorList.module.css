@@ -1,0 +1,32 @@
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-3);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-green) 14%, white);
+  border: 1px solid color-mix(in srgb, var(--color-green) 34%, white);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+}
+
+.check {
+  display: grid;
+  width: 1rem;
+  height: 1rem;
+  place-items: center;
+  color: white;
+  background: var(--color-green);
+  border-radius: var(--radius-pill);
+  font-size: 0.7rem;
+}

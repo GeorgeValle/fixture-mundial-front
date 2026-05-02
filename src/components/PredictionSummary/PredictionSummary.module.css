@@ -1,0 +1,78 @@
+.summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.summary > div {
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-4);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(239, 247, 244, 0.86)),
+    var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.label {
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.helpButton {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: 1.65rem;
+  height: 1.65rem;
+  place-items: center;
+  color: var(--color-surface);
+  background: linear-gradient(135deg, var(--color-primary-soft), var(--color-cyan));
+  border: 0;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.helpButton:hover,
+.helpButton:focus-visible {
+  transform: translateY(-1px);
+}
+
+.helpButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 42%, transparent);
+  outline-offset: 3px;
+}
+
+.summary strong {
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
+  font-weight: 950;
+}
+
+@media (max-width: 960px) {
+  .summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .summary {
+    grid-template-columns: 1fr;
+  }
+}
