@@ -6,6 +6,7 @@ import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
 import GroupStandings from '../pages/GroupStandings/GroupStandings'
 import KnockoutStage from '../pages/KnockoutStage/KnockoutStage'
 import PlaceholderPage from '../pages/PlaceholderPage/PlaceholderPage'
+import PredictionFixture from '../pages/PredictionFixture/PredictionFixture'
 
 function AppRoutes() {
   return (
@@ -15,15 +16,7 @@ function AppRoutes() {
         <Route element={<GroupFixtures />} path={ROUTES.fixture} />
         <Route element={<GroupStandings />} path={ROUTES.standings} />
         <Route element={<KnockoutStage />} path={ROUTES.knockout} />
-        <Route
-          element={
-            <PlaceholderPage
-              description="Armá tus pronósticos, guardalos localmente y comparalos con los resultados."
-              title="Predicciones"
-            />
-          }
-          path={ROUTES.predictions}
-        />
+        <Route element={<PredictionFixture />} path={ROUTES.predictions} />
 
         <Route
           element={

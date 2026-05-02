@@ -1,0 +1,95 @@
+.panel {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, rgba(6, 21, 47, 0.94), rgba(12, 37, 84, 0.9)),
+    var(--color-primary);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.kicker,
+.title,
+.text,
+.note,
+.detectedTitle,
+.detectedText {
+  margin: 0;
+}
+
+.kicker {
+  color: var(--color-gold);
+  font-size: var(--font-size-xs);
+  font-weight: 950;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.title {
+  color: white;
+  font-size: var(--font-size-xl);
+  font-weight: 950;
+}
+
+.text,
+.note,
+.detectedText {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+}
+
+.note {
+  padding-top: var(--space-2);
+  color: color-mix(in srgb, var(--color-gold) 75%, white);
+}
+
+.detectedMatches {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: var(--radius-md);
+}
+
+.detectedTitle {
+  color: white;
+  font-size: var(--font-size-sm);
+  font-weight: 950;
+}
+
+.matchList {
+  display: grid;
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.matchList li {
+  display: grid;
+  grid-template-columns: minmax(7rem, 0.8fr) minmax(0, 1.4fr) minmax(7rem, 0.8fr);
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-3);
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+}
+
+.matchList strong {
+  color: white;
+  font-weight: 950;
+}
+
+@media (max-width: 760px) {
+  .matchList li {
+    grid-template-columns: 1fr;
+  }
+}

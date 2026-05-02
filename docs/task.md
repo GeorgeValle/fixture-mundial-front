@@ -2,10 +2,10 @@
 
 ## Current Status
 
-- Current block: Bloque 6 — Knockout Stage implemented; pending user manual validation.
-- Last completed block: Bloque 5 — Group Standings.
-- Next recommended task: User visual/manual validation review for `/eliminatorias`.
-- Manual validation status: Bloque 5 was visually/manually approved by the user before starting Bloque 6, so Bloque 6 can formally begin.
+- Current block: Bloque 8 — Documentation and Final Review.
+- Last completed block: Bloque 7 — Prediction Fixture.
+- Next recommended task: review documentation, test coverage, README, portfolio summary and final branding polish.
+- Manual validation status: Bloque 7 was manually validated by the user and approved.
 
 ## Critical Execution Rules
 
@@ -71,18 +71,75 @@
 - [x] Run `pnpm run lint`.
 - [x] Run `pnpm run test`.
 - [x] Document page-specific decisions in `docs/knockout-stage.md`.
-- [ ] User manual validation.
+- [x] User manual validation.
 
 Note: detailed Knockout Stage rules, backend/skeleton merge behavior, UI labels, validation results, and backlog notes are documented in `docs/knockout-stage.md`.
 
 ### Bloque 7 — Prediction Fixture
-- [ ] Implement prediction flow.
-- [ ] Persist predictions in localStorage.
-- [ ] Lock predictions after match start.
-- [ ] Calculate score from official results.
-- [ ] Add print support.
-- [ ] Add tests.
-- [ ] User manual validation.
+- [x] Review `docs/prediction-fixture.md`.
+- [x] Review `docs/API-Backend-Mundial-2026.md`.
+- [x] Confirm public match endpoints used by Prediction Fixture.
+- [x] Define localStorage model for predictions.
+- [x] Implement user name capture.
+- [x] Implement prediction cards for group-stage matches.
+- [x] Keep knockout predictions closed until real knockout matches exist.
+- [x] Prevent predictions over placeholders or skeleton-only knockout matches.
+- [x] Implement prediction locking by match `status`.
+- [x] Implement prediction locking by match `date`.
+- [x] Implement group-stage scoring.
+- [x] Implement knockout scoring.
+- [x] Implement penalty prediction validation.
+- [ ] Implement penalty prediction fields for knockout ties.
+- [x] Compare user prediction against official result when match is finished.
+- [x] Show user prediction and official result in finished matches.
+- [x] Show points obtained per match.
+- [x] Show success indicators for matched conditions.
+- [x] Implement corrupt localStorage safe parsing/reset support.
+- [x] Handle corrupt localStorage with guided reset.
+- [x] Add print support with `window.print()`.
+- [x] Add tests for scoring, locking, localStorage and validation.
+- [x] Add tests for UI states.
+- [x] Add tests for print.
+- [x] Run `pnpm run build`.
+- [x] Run `pnpm run lint`.
+- [x] Run `pnpm run test`.
+- [x] User manual validation.
+
+Sub-block 7.1 — Prediction Core implemented the storage model, storage service,
+schemas, locking utilities, scoring utilities, prediction validation and unit tests.
+Validation for this sub-block passed with `pnpm run build`, `pnpm run lint` and
+`TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` on the WSL Node 24 toolchain.
+
+Sub-block 7.2 — Prediction UI Base implemented `/predicciones`, user name capture,
+group-stage prediction cards, localStorage editing, locked states, finished-match
+comparison, points, success indicators, knockout-closed panel, corrupt-storage
+guided reset, loading/delayed-loading/error/empty states and UI tests. The print
+flow, final polish and manual validation remain pending. Validation for this
+sub-block passed with `pnpm run build`, `pnpm run lint` and
+`TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`.
+
+Follow-up UI polish: added a group filter selector and adjusted visible copy for
+`/predicciones`. Manual validation remains pending for Bloque 7.3.
+
+Sub-block 7.3 added print support, print tests and final UI polish for
+`/predicciones`. Validation passed with `pnpm run build`, `pnpm run lint` and
+`TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`. User manual validation remains
+pending.
+
+Follow-up 7.4 added reset controls to clear editable predictions by selected
+group or all groups while preserving locked predictions.
+
+Follow-up 7.5 improved prediction summary by phase, added scoring help modals,
+knockout phase filter, custom reset confirmation modals and print layout polish.
+
+Follow-up 7.5.1 added browser-safe score input validation, participant name
+validation and replaced technical knockout copy with user-friendly text.
+
+Bloque 7 was manually validated by the user and approved. Penalty prediction
+fields for knockout ties are deferred until real knockout matches are available
+from the backend.
+
+Note: detailed Prediction Fixture rules, scoring behavior, locking rules, and backend data requirements belong in `docs/prediction-fixture.md`, not in this task board.
 
 ### Bloque 8 — Documentation and Final Review
 - [ ] Review page documentation.
