@@ -1,177 +1,198 @@
 # Project Requirements
 
-## Page Agent Contract
+## Propósito
 
-This document is the source of truth for this page.
+Este documento resume el alcance, stack, restricciones y reglas generales de `fixture-mundial-front`.
 
-Any agent working on this page must read:
+No reemplaza al README ni a los documentos específicos por página. Para detalles de implementación, consultar:
 
-1. `project-requirements.md`
-2. `task.md`
-3. this page document
-4. `docs/API-Backend-Mundial-2026.md` when backend data is involved
+- `docs/home.md`
+- `docs/group-fixtures.md`
+- `docs/group-standings.md`
+- `docs/knockout-stage.md`
+- `docs/prediction-fixture.md`
+- `docs/api-contract.md`
 
-The page implementation must follow the task IDs assigned in `task.md`.
+## Objetivo del proyecto
 
-Behavior changes require tests.
+Construir el frontend de una app de portfolio para visualizar fixture, posiciones, eliminatorias y predicciones personales del Mundial 2026.
 
-## Objetivo
-Construir el frontend del proyecto `fixture-mundial-front` para visualizar el fixture oficial, standings, eliminatorias y predicciones personales del Mundial 2026.
+El backend existente provee datos de la base de datos. El frontend presenta esos datos, valida respuestas cuando corresponde y mantiene predicciones del usuario en estado local del navegador.
 
-## Technical Stack
+## Stack actual
 
-- React + Vite.
-- JavaScript only.
-- CSS Modules by component.
-- Redux Toolkit for global state.
-- Axios for backend requests.
-- React Hook Form + Zod for validation.
-- Vitest + React Testing Library + MSW for tests.
-- pnpm only.
-- No TypeScript migration.
-- No Tailwind.
+- React.
+- Vite.
+- JavaScript.
+- CSS Modules.
+- Axios.
+- React Router DOM.
+- Redux Toolkit.
+- React Redux.
+- Zod.
+- Vitest.
+- React Testing Library.
+- MSW.
+- pnpm.
+
+## Restricciones técnicas
+
+- No TypeScript.
+- No Tailwind CSS.
 - No Bootstrap.
-- No UI frameworks.
+- No Material UI, Chakra UI, Styled Components, Emotion ni frameworks UI.
+- No npm ni yarn.
+- No recrear ni re-scaffoldear el proyecto Vite.
+- No hardcodear URLs productivas en servicios.
+- No commitear secretos.
 
+## Configuración de backend
 
-## Navegación principal aprobada
+La URL base se configura con:
 
-- Inicio → `/`
-- Fixture → `/grupos`
-- Tablas → `/posiciones`
-- Eliminatorias → `/eliminatorias`
-- Predicciones → `/predicciones`
+```text
+VITE_API_BASE_URL
+```
 
-## Páginas futuras/opcionales
+Ejemplo:
 
-Estas rutas quedan fuera del Navbar principal por ahora:
+```env
+VITE_API_BASE_URL=http://localhost:3000
+```
 
-- Partidos → `/partidos`
-- Equipos → `/equipos`
-- Estadios → `/estadios`
+El cliente Axios centralizado vive en:
 
-## Backend Base URL
+```text
+src/services/api/axiosClient.js
+```
 
-The frontend must consume the backend API from:
+## Rutas principales implementadas
 
-`https://world-cup-2026-back.onrender.com`
+| Ruta | Sección | Estado |
+| --- | --- | --- |
+| `/` | Home | Implementada |
+| `/grupos` | Fixture de grupos | Implementada |
+| `/posiciones` | Tabla de posiciones | Implementada |
+| `/eliminatorias` | Eliminatorias | Implementada |
+| `/predicciones` | Predicciones | Implementada |
 
-Backend documentation lives in:
+## Rutas futuras/opcionales
 
-`docs/API-Backend-Mundial-2026.md`
+Estas rutas existen como secciones futuras/opcionales y no forman parte del Navbar principal:
 
-## Data Rules
+| Ruta | Sección |
+| --- | --- |
+| `/partidos` | Partidos |
+| `/equipos` | Equipos |
+| `/estadios` | Estadios |
 
-Official data comes from the backend.
+## Endpoints públicos usados actualmente
 
-User predictions are stored in localStorage.
+El contrato público está documentado en `docs/api-contract.md`.
 
-Flags and shields are loaded from Cloudinary URLs. Do not commit image assets for flags or team shields to the repository.
+Endpoints usados hoy por la UI:
 
-## Loading and Feedback Rules
+- `GET /api/matches`
+- `GET /api/matches/schedule/daily?date=YYYY-MM-DD`
+- `GET /api/standings`
 
-The backend may be slow to wake up because it is hosted on a free Render instance.
+No se consideran uso público actual del frontend:
 
-All backend-powered cards must show skeleton loaders while loading.
+- `POST /api/standings/:group`
+- `PUT /api/matches/:id`
+- `GET /api/teams`
+- `GET /api/stadiums`
+- rutas administrativas o de mantenimiento.
 
-If loading takes more than 7 seconds, show a friendly modal asking the user to wait a few more seconds.
+## Reglas de datos
 
-Technical errors must never be shown directly to users.
+- El backend configurado es la fuente de datos para partidos, equipos, sedes, estados y resultados registrados.
+- El frontend no inventa equipos clasificados, resultados, penales ni progresión de eliminatorias.
+- Las tablas de posiciones se consumen desde `GET /api/standings`; no se recalculan en frontend.
+- Las predicciones del usuario se guardan en `localStorage`.
+- Los escudos/banderas vienen desde URLs provistas por datos del backend.
 
-## Testing Requirement
+## Reglas de UI/UX
 
-Every behavior-changing task must include or update tests.
+- La UI visible debe estar en español.
+- Nombres técnicos, rutas, archivos, componentes y claves internas pueden mantenerse en inglés.
+- Navbar visible en todas las vistas principales.
+- Cada sección backend-powered debe manejar loading, delayed loading, error, empty state y datos válidos cuando aplique.
+- No mostrar errores técnicos crudos al usuario.
+- Usar `FeedbackModal` para demoras relevantes.
+- Usar `SkeletonList`/skeletons para cargas.
 
-Minimum testing stack:
+## Reglas de arquitectura
 
-- Vitest
-- React Testing Library
-- MSW
+- Servicios API en `src/services/`.
+- Validaciones/normalización en `src/schemas/` o utilidades puras.
+- Componentes presentacionales sin llamadas directas al backend.
+- CSS Modules por componente/página.
+- Global CSS mínimo para variables, reset y base.
+- Redux Toolkit reservado para estado global compartido, como feedback/loading.
 
-Required test areas:
+## Prediction Fixture
 
-- scoring algorithm
-- prediction locking
-- Axios error normalization
-- daily schedule rendering
-- form validation
-- localStorage persistence
-- skeleton loading behavior
-- standings rendering
-- knockout placeholders
+Reglas actuales:
 
-## Agent Workflow Requirement
+- Predicciones guardadas en `fixtureMundial.predictions`.
+- Partidos `PLAYING` o `FINISHED` bloquean edición.
+- Si `now >= match.date`, la predicción se bloquea aunque el estado siga pendiente.
+- Scores de predicción: enteros entre 0 y 20.
+- Nombre de participante: requerido, 2-40 caracteres, con letras.
+- Eliminatorias permanecen cerradas para predicción hasta que se apruebe el flujo sobre cruces registrados en la base de datos.
 
-Implementation must follow the orchestrator-based workflow defined in `AGENTS.md`.
+## Testing esperado
 
-The Orchestrator Agent must use Engram MCP to retrieve and persist durable project decisions.
+Todo cambio de comportamiento debe incluir o actualizar tests.
 
-## Restricciones
-- No usar Tailwind, Bootstrap ni frameworks CSS.
-- Cada componente vive en su propia carpeta con `Component.jsx` y `Component.module.css`.
-- La carpeta `.codex` la crea el usuario manualmente.
-- El frontend debe consumir el backend desplegado en `https://world-cup-2026-back.onrender.com`.
+Áreas cubiertas o esperadas:
 
-## Datos de dominio
-### Team
-- _id
-- name
-- shieldUrl
-- group
-- confederation
-- position
-- qualifiedTo
+- render de páginas;
+- servicios y schemas;
+- estados loading/error/empty;
+- delayed loading;
+- localStorage;
+- scoring;
+- locking;
+- validación de inputs;
+- adapters de eliminatorias;
+- componentes compartidos.
 
-### Match
-- _id
-- homeTeam
-- awayTeam
-- stadium
-- date
-- stage
-- status
-- homeScore
-- awayScore
-- homePenaltyScore
-- awayPenaltyScore
+## Validación de entorno
 
-### Stadium
-- _id
-- name
-- country
-- city
-- address
-- capacity
+Antes de ejecutar comandos de validación en WSL:
 
-## Endpoints base
-- GET /api/teams
-- GET /api/stadiums
-- GET /api/matches
-- GET /api/matches/schedule/daily?date=YYYY-MM-DD
-- PUT /api/matches/:id
-- GET /api/standings
-- POST /api/standings/:group
+```bash
+source ~/.nvm/nvm.sh && nvm use 24
+which node
+which pnpm
+type -a node
+type -a pnpm
+```
 
-## Reglas de UX
-- Navbar visible en todas las vistas.
-- Mientras cargan datos, mostrar skeleton loaders con forma de card.
-- Si la carga supera 7 segundos, mostrar FeedbackModal informando que el backend está demorando.
-- El usuario nunca debe ver mensajes técnicos de error.
-- Los partidos ya jugados no pueden editarse en Prediction Fixture.
-- Cuando un partido termina, la predicción se congela y se rellena con el resultado oficial del backend.
+Luego:
 
-## Scoring de predicciones en fase de grupos
-- 1 punto por acertar quién gana.
-- 2 puntos por acertar los goles del equipo ganador.
-- 1 punto por acertar los goles del equipo perdedor.
-- 1 punto por acertar empate.
-- 1 punto por acertar por cuántos goles empataron.
-- El scoring se recalcula si cambia el resultado oficial del backend.
+```bash
+pnpm run build
+pnpm run lint
+pnpm run test
+```
 
-## Fases
-- Fase 1: base técnica, routing, store, API client, modal, loaders, tests.
-- Fase 2: Home y Group Fixtures.
-- Fase 3: Group Standings y actualización post-resultados.
-- Fase 4: Knockout Stage con placeholders.
-- Fase 5: Prediction Fixture, scoring y print.
-- Fase 6: hardening, cobertura, documentación final.
+## Alcance actual
+
+Implementado:
+
+- Home con agenda diaria/próxima fecha.
+- Fixture por grupos.
+- Tabla de posiciones.
+- Eliminatorias con cuadro base + merge de datos reales.
+- Predicciones de fase de grupos con localStorage, locking, scoring, reset e impresión.
+- Documentación final de Bloque 8.
+
+Pendiente/futuro:
+
+- Copy polish visible para reemplazar términos técnicos.
+- Predicción completa de eliminatorias con campos visibles de penales.
+- Exportación PDF.
+- Páginas futuras `/partidos`, `/equipos`, `/estadios`.

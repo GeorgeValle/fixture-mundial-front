@@ -1,82 +1,126 @@
 # Group Fixtures
 
-## Page Agent Contract
+## Propósito
 
-This document is the source of truth for this page.
+La sección Group Fixtures permite consultar los partidos de fase de grupos del Mundial 2026. El usuario elige un grupo A-L y visualiza sus seis partidos ordenados por fecha.
 
-Any agent working on this page must read:
+## Ruta
 
-1. `project-requirements.md`
-2. `task.md`
-3. this page document
-4. `docs/API-Backend-Mundial-2026.md` when backend data is involved
+```text
+/grupos
+```
 
-The page implementation must follow the task IDs assigned in `task.md`.
+## Componentes principales
 
-Behavior changes require tests.
+- `GroupFixtures`: página que carga partidos, mantiene el grupo seleccionado y coordina estados.
+- `GroupSelector`: selector de grupos A-L.
+- `FixtureMatchCard`: card reutilizable para mostrar equipos, escudos, fecha, estadio, marcador y estado.
+- `SkeletonList`: loading visual con forma de lista de partidos.
+- `FeedbackModal`: aviso global para demoras de carga.
 
-## Objetivo
-Mostrar los 6 partidos de un grupo dentro de una card principal.
+## Servicios y endpoints usados
 
-## Fuente de datos
-- GET /api/matches
-- Filtrado por `stage = GRUPO X`
+Servicio:
 
-## Layout
-- Navbar
-- Card grande
-- Selector de grupo A-L
-- Lista de 6 filas de partido
+```text
+src/services/matches/matchesService.js
+```
 
-## Datos renderizados
-- Equipo local
-- Escudo local
-- Equipo visitante
-- Escudo visitante
-- Estadio
-- Fecha y hora local
-- Marcador
-- Estado del partido
+Endpoint:
 
-## Reglas
-- Si el partido está `PENDING`, el marcador se muestra vacío
-- Si el partido está `PLAYING` o `FINISHED`, mostrar scores
-- Si hay penales y corresponde mostrarlo, usar un badge secundario
+```text
+GET /api/matches
+```
 
-## Aceptación
-- Cambiar grupo actualiza la card
-- Cada grupo renderiza 6 partidos
-- No se alojan banderas en el repo
+La respuesta se valida y normaliza con:
 
-## Implementation Notes
+```text
+src/schemas/matchSchema.js
+```
 
-Bloque 3 is complete and manually validated from the user's WSL terminal.
+## Reglas de datos
 
-Implemented behavior:
+- El frontend consume el fixture completo.
+- Luego filtra por:
 
-- `/grupos` fetches the full fixture with `GET /api/matches` through `axiosClient`.
-- The page filters matches by `stage = "GRUPO X"` for groups A-L.
-- The default selected group is A.
-- Each selected group renders its group-stage matches ordered by date.
-- Pending matches show a friendly score placeholder instead of `null`.
-- API failures and invalid payloads render friendly error states.
-- Delayed loading uses the shared delayed-loading modal flow.
+```text
+stage = "GRUPO X"
+```
 
-Relevant files:
+Ejemplo:
 
-- `src/pages/GroupFixtures/GroupFixtures.jsx`
-- `src/pages/GroupFixtures/GroupFixtures.module.css`
-- `src/pages/GroupFixtures/GroupFixtures.test.jsx`
-- `src/components/GroupSelector/GroupSelector.jsx`
-- `src/components/GroupSelector/GroupSelector.module.css`
-- `src/components/FixtureMatchCard/FixtureMatchCard.jsx`
-- `src/components/FixtureMatchCard/FixtureMatchCard.module.css`
-- `src/constants/groups.js`
-- `src/services/matches/matchesService.js`
-- `src/schemas/matchSchema.js`
+```text
+GRUPO A
+```
 
-Validation notes:
+- Los partidos se ordenan por fecha.
+- El grupo inicial seleccionado es `A`.
 
-- The backend wrapper `{ status: "success", data: [...] }` is accepted by `parseMatchesResponse`.
-- The group selector layering fix keeps the select clickable over decorative page elements.
-- Stderr logs in error-path tests are expected when tests intentionally validate API or invalid-payload handling.
+## Estados manejados
+
+### Loading
+
+Muestra `SkeletonList` con seis elementos, representando los seis partidos esperados del grupo.
+
+### Delayed loading
+
+Si la carga se demora, se usa `FeedbackModal` para explicar que la información puede tardar unos segundos.
+
+### Error
+
+Si falla el request o el payload no es válido, se muestra un mensaje amigable y no se exponen errores técnicos.
+
+### Empty state
+
+Si el grupo seleccionado no tiene partidos renderizables, se informa que aún no hay partidos para ese grupo.
+
+### Datos válidos
+
+Cuando hay partidos:
+
+- se muestra una tarjeta resumen del grupo;
+- se renderiza la lista de partidos;
+- cada partido usa `FixtureMatchCard`.
+
+## Decisiones visuales y UX
+
+- El selector de grupo está en el header de la página para facilitar el cambio de contexto.
+- La card de partido centraliza marcador, equipos y metadatos.
+- Los scores pendientes se muestran como estado amigable, no como `null`.
+- Los escudos vienen de URLs del backend; no se guardan banderas/escudos en el repo.
+
+## Reglas de negocio
+
+- La página no inventa partidos.
+- La página no recalcula resultados.
+- La página solo filtra y ordena datos recibidos.
+- Si el marcador registrado no está disponible, se muestra un estado pendiente.
+
+## Validaciones importantes
+
+- `parseMatchesResponse` acepta array directo o wrappers compatibles.
+- Payload inválido dispara error amigable.
+- Equipos o sedes incompletas deben tener fallback visual.
+
+## Relación con otras partes de la app
+
+- Comparte `GET /api/matches` con `/eliminatorias` y `/predicciones`.
+- Comparte `FixtureMatchCard` con Home.
+- Predicciones usa los mismos partidos de fase de grupos, pero con estado local y reglas de locking.
+
+## Limitaciones actuales
+
+- No hay filtros por sede, fecha o equipo.
+- No hay página de detalle de partido.
+- No hay edición de resultados desde el frontend público.
+
+## Mejoras futuras
+
+- Filtro adicional por fecha o equipo.
+- Link a una futura página `/partidos`.
+- Mejoras visuales coordinadas con `DESIGN.md` si se aprueba una evolución de match cards.
+
+## Resumen de implementación por bloques
+
+- **Bloque 3**: página `/grupos`, selector de grupo, cards de partido, parsing de backend, loading, delayed loading, error, empty state y tests.
+- **Validación manual**: bloque aprobado por el usuario desde WSL.
