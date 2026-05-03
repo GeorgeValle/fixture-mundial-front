@@ -1,118 +1,215 @@
 # Prediction Fixture
 
-## Page Agent Contract
+## Propósito
 
-This document is the source of truth for the `/predicciones` page.
+Prediction Fixture permite que el usuario cargue su nombre, guarde pronósticos de partidos y compare sus predicciones contra resultados confirmados cuando estén disponibles.
 
-Any agent working on this page must read:
+El backend provee partidos, estados y resultados registrados. Las predicciones del usuario se guardan localmente en el navegador.
 
-1. `docs/project-requirements.md`
-2. `docs/task.md`
-3. this page document
-4. `docs/API-Backend-Mundial-2026.md` when backend data is involved
-5. `DESIGN.md` before visual, layout, or shared UI changes
+## Ruta
 
-The page implementation must follow the task IDs assigned in `docs/task.md`.
+```text
+/predicciones
+```
 
-Behavior changes require tests.
+## Componentes principales
 
-## Objetivo
+- `PredictionFixture`: página principal, coordina datos del backend, estado local, filtros, scoring, locking, reset e impresión.
+- `PredictionUserForm`: captura y valida el nombre del participante.
+- `PredictionSummary`: muestra participante, cantidad de predicciones y puntos.
+- `PredictionMatchList`: lista de cards de predicción.
+- `PredictionMatchCard`: formulario por partido de fase de grupos.
+- `PredictionResultComparison`: muestra predicción, resultado final registrado, puntos e indicadores.
+- `PredictionIndicatorList`: renderiza indicadores de acierto.
+- `PredictionGroupFilter`: filtra partidos por grupo.
+- `PredictionKnockoutPhaseFilter`: muestra filtro de fases eliminatorias cuando aplica.
+- `KnockoutPredictionsClosedPanel`: informa que eliminatorias aún no están habilitadas para predicción.
+- `PredictionDialog`: modales de ayuda y confirmación.
+- `PredictionStorageResetNotice`: aviso para reset guiado si `localStorage` está corrupto.
+- `SkeletonList`: loading visual.
+- `FeedbackModal`: delayed loading.
 
-Permitir que el usuario cargue su nombre y pronostique resultados del Mundial 2026.
+## Servicios, estado local y endpoints usados
 
-Prediction Fixture debe usar el backend solo como fuente de partidos, estados y resultados oficiales. Las predicciones del usuario se guardan localmente.
+Endpoint público:
 
-## Fuente de datos
+```text
+GET /api/matches
+```
 
-- Backend: `GET /api/matches` para listar partidos, leer `status`, `date`, equipos y resultados oficiales.
-- Backend opcional: `GET /api/matches/:id` para refrescar detalle puntual si una interacción lo requiere.
-- Persistencia de usuario: `localStorage`.
+Servicio backend:
 
-## Persistencia local
+```text
+src/services/matches/matchesService.js
+```
+
+Servicio local:
+
+```text
+src/services/predictions/predictionStorageService.js
+```
+
+Schemas:
+
+```text
+src/schemas/predictionSchema.js
+src/schemas/matchSchema.js
+```
+
+Claves de almacenamiento:
+
+```text
+fixtureMundial.predictions
+fixtureMundial.errorLog
+```
+
+La clave principal de predicciones está definida en:
+
+```text
+src/constants/storageKeys.js
+```
+
+## Modelo local de predicciones
 
 Las predicciones se guardan en `localStorage`.
 
-Modelo base esperado:
+Modelo actual:
 
-- `userName`
-- `predictions[]`
-  - `matchId`
-  - `predictedHomeScore`
-  - `predictedAwayScore`
-  - `predictedHomePenaltyScore`
-  - `predictedAwayPenaltyScore`
-  - `locked`
-  - `officialHomeScore`
-  - `officialAwayScore`
-  - `officialHomePenaltyScore`
-  - `officialAwayPenaltyScore`
-  - `points`
-  - `indicators[]`
+```js
+{
+  version: 1,
+  userName: '',
+  predictions: {
+    [matchId]: {
+      matchId: '...',
+      predictedHomeScore: 0,
+      predictedAwayScore: 0,
+      predictedHomePenaltyScore: null,
+      predictedAwayPenaltyScore: null,
+      updatedAt: '...'
+    }
+  }
+}
+```
 
-If localStorage is corrupt, the UI must offer a guided reset and avoid crashing.
+Si el almacenamiento está corrupto, la UI ofrece reset guiado y evita romper la pantalla.
 
-## Reglas de edición y locking
-
-- `PENDING`: editable only if current date/time is before `match.date`.
-- `PLAYING`: locked.
-- `FINISHED`: locked.
-- If `now >= match.date`, lock the prediction even if `status` is still `PENDING`.
-
-## Alcance de predicciones por etapa
+## Alcance actual de predicciones
 
 ### Fase de grupos
 
-- First implementation should support prediction cards for group-stage matches.
-- Group-stage predictions use regular score only.
+Implementado:
+
+- listado de partidos reales de fase de grupos;
+- captura de goles local/visitante;
+- guardado por partido;
+- filtro por grupo;
+- locking por estado/fecha;
+- comparación contra resultado final registrado;
+- scoring;
+- reset de predicciones editables;
+- impresión.
 
 ### Eliminatorias
 
-- Keep knockout predictions closed until real knockout matches exist in the backend.
-- Do not allow predictions over skeleton-only knockout placeholders.
-- If a real knockout match allows a regular-time tie prediction, the user must complete penalty fields.
-- A knockout prediction with tied penalty scores is invalid.
+Estado actual:
 
-## Resultado oficial
+- la sección muestra que las predicciones de eliminatorias todavía no están disponibles;
+- puede detectar cruces reales si el backend los provee;
+- no permite predicciones sobre equipos por definir, estructura base o cruces no confirmados;
+- los campos de penales quedan como soporte de modelo/scoring, pero la UI de predicción de eliminatorias se habilitará en una etapa futura.
 
-Official result comes from:
+## Estados manejados
 
-- `homeScore`
-- `awayScore`
-- `homePenaltyScore`
-- `awayPenaltyScore`
+### Loading
 
-Do not calculate scoring if official data is incomplete.
+Muestra `SkeletonList` mientras carga partidos.
 
-## Scoring fase de grupos
+### Delayed loading
 
-- 1 point for correct winner.
-- 2 points for correct winner goals.
-- 1 point for correct loser goals.
-- 1 point for correct draw.
-- 1 point for exact draw goals.
-- Recalculate scoring if backend official results change.
+Si la información demora, se muestra `FeedbackModal`.
 
-## Scoring eliminatorias
+### Error
 
-### Regular-time winner
+Si falla `GET /api/matches`, la página muestra un error amigable.
 
-- 2 points for correct winner/qualifier.
-- 1 point for correct winner goals.
-- 1 point for correct loser goals.
+### Empty state
 
-### Regular draw decided by penalties
+Si no hay partidos reales de fase de grupos para predecir, se informa que aparecerán cuando existan partidos con equipos definidos.
 
-- 2 points for correct winner/qualifier.
-- 1 point for predicting a regular-time draw.
-- 1 point for exact draw goals.
-- 1 point for correct winner penalty goals.
-- 1 point for correct loser penalty goals.
+### Datos válidos
+
+Cuando hay partidos:
+
+- se muestra formulario de participante;
+- se muestra resumen;
+- se habilitan filtros;
+- se renderizan cards de predicción para fase de grupos;
+- se muestra panel informativo de eliminatorias.
+
+### localStorage corrupto
+
+Si los datos locales no se pueden parsear:
+
+- se muestra `PredictionStorageResetNotice`;
+- se permite resetear a estado seguro;
+- no se pierde control de la UI.
+
+## Reglas de locking
+
+Una predicción se bloquea cuando:
+
+- `status === 'PLAYING'`;
+- `status === 'FINISHED'`;
+- `now >= match.date`, aunque `status` siga como `PENDING`.
+
+Si la fecha del partido es inválida, la UI no debe romperse y debe mostrar un estado seguro.
+
+## Validación de goles
+
+Reglas actuales:
+
+- enteros;
+- rango 0-20;
+- sin negativos;
+- no aceptar valores vacíos al guardar;
+- no aceptar texto no numérico.
+
+Los inputs usan texto con `inputMode="numeric"` para evitar problemas de campos numéricos nativos del navegador.
+
+## Validación del participante
+
+Reglas actuales:
+
+- nombre requerido;
+- entre 2 y 40 caracteres;
+- debe incluir letras;
+- permite letras Unicode, espacios, guion medio y guion bajo.
+
+## Scoring actual
+
+### Fase de grupos
+
+- 1 punto por acertar ganador.
+- 2 puntos por acertar goles del ganador.
+- 1 punto por acertar goles del perdedor.
+- 1 punto por acertar empate.
+- 1 punto por acertar cantidad exacta de goles del empate.
+
+### Eliminatorias
+
+La lógica pura contempla:
+
+- ganador/clasificado;
+- goles regulares;
+- empate regular;
+- penales si aplica.
+
+La UI para cargar predicciones de eliminatorias permanece cerrada hasta que el flujo sea aprobado con cruces registrados en la base de datos.
 
 ## Indicadores visibles
 
-Finished matches should show text indicators, not color-only feedback.
-
-Expected indicators:
+Cuando un partido finaliza y hay predicción guardada, la UI puede mostrar:
 
 - `Ganador acertado`
 - `Clasificado acertado`
@@ -123,23 +220,95 @@ Expected indicators:
 - `Penales del ganador acertados`
 - `Penales del perdedor acertados`
 
-## Exportación
+Los indicadores tienen texto visible y no dependen solo del color.
 
-- Primera iteración: `window.print()`.
-- Iteración futura: PDF opcional.
+## Filtros
 
-## Errores
+### Grupo
 
-- Predicción inválida: mensaje amigable.
-- localStorage corrupto: reset guiado y aviso al usuario.
-- Resultado oficial incompleto: no calcular scoring todavía.
+`PredictionGroupFilter` permite:
 
-## Aceptación
+- ver todos los grupos;
+- filtrar por un grupo específico.
 
-- Guarda y recupera predicciones.
-- Recalcula scoring si cambian resultados oficiales.
-- No permite editar partidos ya iniciados o terminados.
-- No permite editar si `now >= match.date`.
-- No permite predicciones de eliminatorias sobre placeholders.
-- Muestra predicción, resultado oficial, puntos e indicadores cuando el partido finalizó.
-- Permite imprimir con `window.print()`.
+El filtro no borra predicciones; solo cambia visibilidad.
+
+### Eliminatorias
+
+`PredictionKnockoutPhaseFilter` permite seleccionar fases cuando existen cruces reales detectados. La predicción de eliminatorias sigue cerrada.
+
+## Acciones de reset
+
+Implementado:
+
+- borrar predicciones editables del grupo seleccionado;
+- borrar todas las predicciones editables;
+- borrar predicciones editables de eliminatorias si existen cruces reales;
+- confirmar acciones mediante modal;
+- preservar predicciones bloqueadas de partidos iniciados, finalizados o cerrados por fecha.
+
+## Impresión
+
+La página incluye impresión mediante:
+
+```js
+window.print()
+```
+
+La impresión muestra pronósticos visibles, resumen, puntos y resultados registrados disponibles.
+
+## Decisiones visuales y UX
+
+- El usuario ve primero nombre y resumen.
+- Los puntos tienen modales de ayuda.
+- Las acciones destructivas tienen confirmación.
+- El reset evita borrar predicciones bloqueadas.
+- Las predicciones de eliminatorias se explican como no disponibles para evitar interacción sobre datos incompletos.
+
+## Relación con otras partes de la app
+
+- Comparte `GET /api/matches` con `/grupos` y `/eliminatorias`.
+- Usa resultados registrados del backend para scoring.
+- Usa `localStorage` como estado propio del usuario.
+- Usa utilidades compartidas de fechas, locking, scoring y validación.
+
+## Limitaciones actuales
+
+- No hay persistencia de predicciones en backend.
+- La UI de predicción de eliminatorias no está habilitada.
+- Los campos visibles de penales para eliminatorias quedan pendientes.
+- No hay exportación PDF nativa; la opción actual es impresión del navegador.
+
+## Mejoras futuras
+
+- Habilitar predicciones de eliminatorias con cruces reales registrados en la base de datos.
+- Agregar campos visibles de penales para empates en eliminatorias.
+- Exportación PDF.
+- Página o vista histórica de resultados de predicciones.
+- Sincronización opcional si se define backend para usuarios.
+
+## Archivos relacionados
+
+- `src/pages/PredictionFixture/PredictionFixture.jsx`
+- `src/components/PredictionUserForm/PredictionUserForm.jsx`
+- `src/components/PredictionSummary/PredictionSummary.jsx`
+- `src/components/PredictionMatchCard/PredictionMatchCard.jsx`
+- `src/components/PredictionResultComparison/PredictionResultComparison.jsx`
+- `src/components/PredictionGroupFilter/PredictionGroupFilter.jsx`
+- `src/components/PredictionKnockoutPhaseFilter/PredictionKnockoutPhaseFilter.jsx`
+- `src/components/KnockoutPredictionsClosedPanel/KnockoutPredictionsClosedPanel.jsx`
+- `src/services/predictions/predictionStorageService.js`
+- `src/utils/predictionLocking.js`
+- `src/utils/predictionScoring.js`
+- `src/utils/predictionValidation.js`
+
+## Resumen de implementación por bloques
+
+- **Bloque 7.1**: storage, schemas, locking, scoring, validación y tests unitarios.
+- **Bloque 7.2**: UI base de `/predicciones`, carga de partidos, cards, comparación, estados y tests.
+- **Follow-up 7.2**: filtro por grupo y ajustes de copy.
+- **Bloque 7.3**: impresión con `window.print()` y estilos de print.
+- **Follow-up 7.4**: reset por grupo y reset total preservando predicciones bloqueadas.
+- **Follow-up 7.5**: resumen por fase, modales de ayuda, filtro de eliminatorias, confirmaciones y polish de impresión.
+- **Follow-up 7.5.1**: validación robusta de scores y nombre de participante.
+- **Validación manual**: Bloque 7 aprobado por el usuario.

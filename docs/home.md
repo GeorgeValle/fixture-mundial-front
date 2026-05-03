@@ -1,94 +1,103 @@
 # Home
 
-## Page Agent Contract
+## Propósito
 
-This document is the source of truth for this page.
+Home es la página de entrada de `fixture-mundial-front`. Presenta el proyecto, resume las secciones principales y muestra una agenda del torneo con partidos de hoy o, si no hay actividad, la próxima fecha disponible.
 
-Any agent working on this page must read:
+## Ruta
 
-1. `project-requirements.md`
-2. `task.md`
-3. this page document
-4. `docs/API-Backend-Mundial-2026.md` when backend data is involved
+```text
+/
+```
 
-The page implementation must follow the task IDs assigned in `task.md`.
+## Componentes principales
 
-Behavior changes require tests.
+- `Home`: página principal, carga la agenda diaria y organiza el hero + secciones informativas.
+- `DailyScheduleCard`: decide si mostrar partidos de hoy, próxima jornada o estado vacío.
+- `FixtureMatchCard`: renderiza cada partido visible.
+- `SkeletonList`: muestra placeholders durante la carga.
+- `FeedbackModal`: informa demoras o errores de forma amigable mediante estado global.
 
-## Objetivo
-Mostrar los partidos del día o, si no existen, los del próximo día disponible.
+## Servicios y endpoints usados
 
-## Fuente de datos
-- GET /api/matches/schedule/daily?date=YYYY-MM-DD
+Servicio:
 
-## Layout
-- Navbar arriba
-- Card grande central con hasta 8 partidos
-- Debajo: sección “de qué consiste el programa”
-- Debajo: sección “cómo usarlo”
+```text
+src/services/matches/matchesService.js
+```
 
-## Interacciones
-- Si `today.length > 0`, renderizar `today`
-- Si `today.length === 0`, renderizar `next`
-- Si `next.length === 0`, mostrar estado vacío de calendario cerrado
+Endpoint:
 
-## Estados
-- loading: skeleton card
-- delayed loading > 7s: FeedbackModal informativo
-- error: FeedbackModal de error amigable
+```text
+GET /api/matches/schedule/daily?date=YYYY-MM-DD
+```
 
-## Aceptación
-- Nunca hace requests extra por equipos o estadio
-- Siempre muestra navbar
-- Si no hay partidos hoy, usa próximos
-- No muestra errores técnicos
+Home calcula la fecha actual con utilidades del frontend y consulta el calendario diario.
 
-## Implementation Notes
+## Estados manejados
 
-Bloque 4 is complete and manually validated from the user's WSL terminal.
+### Loading
 
-Implemented behavior:
+Mientras se consulta la agenda, la página muestra skeletons dentro de `DailyScheduleCard`.
 
-- Home fetches the daily schedule with `GET /api/matches/schedule/daily?date=YYYY-MM-DD` using a dynamic date from `getTodayISODate()`.
-- The daily schedule section appears immediately below the existing Home hero and before the informational cards.
-- If `today` has matches, the page shows `Partidos de hoy`.
-- If `today` is empty and `next` has matches, the page shows `Próxima fecha disponible` and uses a friendly formatted `nextDate` when available.
-- Home must not render raw ISO `nextDate` values; schedule calendar dates are formatted as Spanish/Argentina-friendly labels such as `jueves, 11 de junio de 2026`.
-- If `nextDate` is missing or invalid, Home keeps the friendly fallback copy and does not render `Invalid Date`, `null`, `undefined`, or the raw invalid value.
-- If both `today` and `next` are empty, the page shows a friendly empty state.
-- Daily matches reuse `FixtureMatchCard`.
-- Loading reuses `SkeletonList`.
-- Delayed loading reuses the shared delayed-loading threshold and `FeedbackModal` flow.
-- API failures and invalid payloads render friendly states and do not expose raw backend details.
+### Delayed loading
 
-Relevant files:
+Si la respuesta demora más que el umbral definido en `DELAYED_LOADING_THRESHOLD_MS`, se abre un `FeedbackModal` con mensaje amigable.
 
-- `src/pages/Home/Home.jsx`
-- `src/pages/Home/Home.module.css`
-- `src/pages/Home/Home.test.jsx`
-- `src/components/DailyScheduleCard/DailyScheduleCard.jsx`
-- `src/components/DailyScheduleCard/DailyScheduleCard.module.css`
-- `src/services/matches/matchesService.js`
-- `src/schemas/matchSchema.js`
-- `src/utils/dateAdapter.js`
+### Error
 
-## Follow-up Completed
+Si falla la carga o la respuesta no se puede interpretar, se muestra un estado de error sin exponer detalles técnicos.
 
-`nextDate` is formatted visually before rendering it in the UI.
+### Empty state
 
-Behavior:
+Si `today` y `next` llegan vacíos, se muestra un calendario sin actividad.
 
-- The backend may return a date-only value such as `2026-06-11` or a full ISO value such as `2026-06-11T00:00:00.000Z`.
-- Home must display a friendly Spanish/Argentina date label instead of the raw backend value.
-- Formatting must avoid timezone shifting; `2026-06-11T00:00:00.000Z` must stay on June 11 in the UI.
-- Missing or invalid `nextDate` values must fall back to the friendly “Próxima fecha disponible” copy without exposing invalid values.
-- Prefer a Spanish/Argentina-friendly date format.
-- Acceptable examples:
-  - `jueves, 11 de junio de 2026`
-  - `jue, 11 jun 2026`
+### Datos válidos
 
-Implementation constraints:
+Reglas de render:
 
-- Do not change backend contracts.
-- Add or update tests because this changes rendered behavior.
-- Do not start Bloque 5 as part of this follow-up.
+- Si `today.length > 0`, mostrar `Partidos de hoy`.
+- Si `today.length === 0` y `next.length > 0`, mostrar `Próxima fecha disponible`.
+- Si `nextDate` existe, formatearlo en español antes de mostrarlo.
+
+## Decisiones visuales y UX
+
+- El hero presenta la app como experiencia de fixture, tablas, eliminatorias y predicciones.
+- La agenda diaria aparece debajo del hero y antes de las tarjetas informativas.
+- Se muestran hasta ocho partidos para mantener la portada legible.
+- Las fechas visibles deben ser amigables en español y no exponer valores ISO crudos.
+
+## Reglas de negocio
+
+- Home no hace requests extra a equipos ni estadios.
+- La agenda diaria depende solo del endpoint público de calendario diario.
+- El backend es fuente de partidos; el frontend solo decide qué bloque mostrar.
+
+## Validaciones importantes
+
+- `nextDate` inválido o ausente no debe renderizar `Invalid Date`, `null`, `undefined` ni valores técnicos.
+- Payload inválido debe terminar en estado amigable de error.
+- La fecha `2026-06-11T00:00:00.000Z`, si aparece, debe mostrarse como 11 de junio sin corrimiento por zona horaria.
+
+## Relación con otras partes de la app
+
+- Reutiliza `FixtureMatchCard`, igual que `/grupos`.
+- Comparte servicio de partidos con `/grupos`, `/eliminatorias` y `/predicciones`.
+- Usa el sistema global de feedback compartido.
+
+## Limitaciones actuales
+
+- Home no permite navegar por fechas manualmente.
+- No muestra calendario completo.
+- No consulta equipos ni estadios por separado.
+
+## Mejoras futuras
+
+- Selector de fecha.
+- Enlace directo desde cada partido hacia una futura página de detalle.
+- Filtros por sede o grupo si el alcance del producto crece.
+
+## Resumen de implementación por bloques
+
+- **Bloque 4**: integración del calendario diario, fallback a próxima fecha, loading, delayed loading, error y empty state.
+- **Follow-up Bloque 4**: formato amigable de `nextDate` en español.

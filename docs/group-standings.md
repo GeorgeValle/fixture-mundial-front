@@ -1,38 +1,46 @@
 # Group Standings
 
-## Page Agent Contract
+## Propósito
 
-This document is the source of truth for this page.
+La sección Group Standings muestra las tablas de posiciones de los grupos A-L. El frontend consume standings calculados por el backend y los presenta en cards compactas y legibles.
 
-Any agent working on this page must read:
+## Ruta
 
-1. `project-requirements.md`
-2. `task.md`
-3. this page document
-4. `docs/API-Backend-Mundial-2026.md` when backend data is involved
+```text
+/posiciones
+```
 
-The page implementation must follow the task IDs assigned in `task.md`.
+## Componentes principales
 
-Behavior changes require tests.
+- `GroupStandings`: página responsable de cargar standings, manejar estados y controlar modo de vista.
+- `StandingsGroupCard`: card visual por grupo.
+- `StandingsTable`: tabla semántica con estadísticas.
+- `SkeletonList`: loading visual.
+- `FeedbackModal`: aviso global para demoras de carga.
 
-## Objetivo
+## Servicios y endpoints usados
 
-Mostrar cards o secciones por grupo con tablas compactas de posiciones para los grupos A-L.
+Servicio:
 
-## Public Read Endpoint
+```text
+src/services/standings/standingsService.js
+```
 
-### `GET /api/standings`
+Endpoint público:
 
-This is the endpoint the public `/posiciones` page must use.
+```text
+GET /api/standings
+```
 
-Confirmed behavior:
+Schema:
 
-- Returns all groups A-L.
-- Returns backend-calculated standings.
-- The frontend must consume this calculated data as the source of truth.
-- The frontend must not recalculate standings from matches while `GET /api/standings` is available.
+```text
+src/schemas/standingsSchema.js
+```
 
-Confirmed response wrapper:
+## Contrato público de datos
+
+Respuesta esperada:
 
 ```js
 {
@@ -44,12 +52,12 @@ Confirmed response wrapper:
         {
           team: {
             _id: '...',
-            name: 'México',
-            shieldUrl: 'https://...',
+            name: '...',
+            shieldUrl: '...',
             group: 'A',
             confederation: '...',
             position: null,
-            qualifiedTo: null,
+            qualifiedTo: null
           },
           pj: 0,
           pg: 0,
@@ -58,208 +66,107 @@ Confirmed response wrapper:
           gf: 0,
           gc: 0,
           dif: 0,
-          pts: 0,
-        },
-      ],
-    },
-  ],
+          pts: 0
+        }
+      ]
+    }
+  ]
 }
 ```
 
-### Response Shape
+## Regla clave
 
-Top-level response:
+El frontend no recalcula standings desde partidos.
 
-- `status`: expected `success`.
-- `data`: array of group standings.
+La fuente de verdad para posiciones es:
 
-Each item in `data`:
-
-- `group`: group letter, for example `A`.
-- `teams`: array with the standings rows for that group.
-
-Each item in `teams`:
-
-- `team`: team object.
-- `pj`: partidos jugados.
-- `pg`: partidos ganados.
-- `pe`: partidos empatados.
-- `pp`: partidos perdidos.
-- `gf`: goles a favor.
-- `gc`: goles en contra.
-- `dif`: diferencia de gol.
-- `pts`: puntos.
-
-Each `team` object contains:
-
-- `_id`
-- `name`
-- `shieldUrl`
-- `group`
-- `confederation`
-- `position`
-- `qualifiedTo`
-
-`team.position` and `team.qualifiedTo` may be `null` initially. The UI must not invent qualification state when those fields are missing or null.
-
-## Administrative / Maintenance Endpoint
-
-### `POST /api/standings/:group`
-
-Example:
-
-- `POST /api/standings/G`
-
-Confirmed behavior:
-
-- Recalculates the standings for the requested group.
-- Updates the standings in the backend database after match results have been loaded.
-- Modifies backend state.
-
-Confirmed response shape:
-
-```js
-{
-  status: 'success',
-  message: 'Grupo G actualizado en DB',
-  data: [
-    // Updated teams array for the requested group.
-  ],
-}
+```text
+GET /api/standings
 ```
 
-Response fields:
+El orden de grupos y equipos recibido se preserva.
 
-- `status`: operation status.
-- `message`: confirmation message.
-- `data`: updated `teams` array for the requested group.
+## Estados manejados
 
-## Bloque 5 Endpoint Rule
+### Loading
 
-The public `/posiciones` page must call only:
+Muestra skeletons con forma de tarjetas/listas.
 
-- `GET /api/standings`
+### Delayed loading
 
-The public `/posiciones` page must not call:
+Si la carga demora, se muestra `FeedbackModal` explicando que las posiciones pueden tardar unos segundos.
 
-- `POST /api/standings/:group`
+### Error API
 
-Reason:
+Si falla el request, la página muestra un mensaje amigable.
 
-- `POST /api/standings/:group` modifies backend state.
-- It is reserved for a future admin/maintenance flow unless the user explicitly approves using it elsewhere.
+### Payload inválido
 
-## UI Decision for Bloque 5
+Si la respuesta no cumple el contrato esperado, se muestra un error amigable distinto al error de red.
 
-Recommended public UI:
+### Empty state
 
-- Render standings for all groups A-L.
-- Use cards or sections per group.
-- Each group should show a compact table.
-- Show team shield and team name.
-- Preserve backend-calculated order.
-- Show qualification badges only when `team.position` or `team.qualifiedTo` contain useful data.
-- If `team.position` or `team.qualifiedTo` are `null`, do not invent classification labels or badges.
+Si no hay standings renderizables, se informa que aún no hay tablas disponibles.
 
-Recommended columns:
+### Datos válidos
 
-- Pos
-- Equipo
-- PJ
-- PG
-- PE
-- PP
-- GF
-- GC
-- DIF
-- PTS
+Cuando hay standings:
 
-## UI States
+- se renderiza vista general o vista foco;
+- cada grupo muestra tabla de posiciones;
+- se muestran escudos cuando existen;
+- se usa fallback visual si falta `shieldUrl`.
 
-The `/posiciones` page must handle:
+## Decisiones visuales y UX
 
-- Loading state.
-- Delayed loading state using the shared delayed-loading feedback pattern.
-- Empty state when there are no standings to show.
-- Friendly error state for API failures.
-- Invalid payload state when the response does not match the confirmed backend contract.
+- La página soporta dos modos:
+  - `Vista general`: todos los grupos en grid.
+  - `Vista foco`: un grupo seleccionado con card protagonista.
+- El selector de grupo de `Vista foco` se construye desde los grupos devueltos por el backend.
+- Los botones de modo usan `aria-pressed`.
+- Los headers de cards tienen acentos visuales y watermarks decorativos.
+- Los badges de clasificación solo deben mostrarse si el backend trae datos útiles.
 
-Technical backend errors must not be shown directly to users.
+## Reglas de negocio
 
-## Future Tests for Bloque 5
+- No inventar posiciones registradas.
+- No inventar etiquetas de clasificación si `team.qualifiedTo` está vacío o `null`.
+- Si `team.position` es `null`, la UI puede mostrar posición visual por orden de fila, pero no tratarla como dato confirmado.
+- Las columnas visibles son: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.
 
-Expected tests when Bloque 5 implementation starts:
+## Validaciones importantes
 
-- Render of the `/posiciones` page.
-- Loading state.
-- Render of all groups A-L.
-- Render of a group table.
-- Render of team shields and names.
-- Render of statistics: `pj`, `pg`, `pe`, `pp`, `gf`, `gc`, `dif`, `pts`.
-- Empty state.
-- API error state.
-- Invalid payload state.
-- Confirmation that the public page does not call `POST /api/standings/:group`.
+- `status` debe ser `success`.
+- `data` debe ser array.
+- Cada grupo debe tener `group` y `teams`.
+- Cada row debe contener estadísticas numéricas.
 
-## Acceptance
+## Nota sobre endpoints administrativos
 
-- The page shows standings for the 12 groups A-L.
-- The table does not recalculate standings in the frontend when the backend returns calculated standings.
-- The public page uses `GET /api/standings` only.
-- The admin/maintenance `POST /api/standings/:group` endpoint remains out of the public UI.
+El backend puede tener endpoints de mantenimiento para recalcular standings, pero no forman parte del contrato público de esta UI.
 
-## Implementation Notes
+La página pública `/posiciones` no debe llamar endpoints que modifiquen estado del backend.
 
-Bloque 5 implementation uses the confirmed public read endpoint only:
+## Relación con otras partes de la app
 
-- `GET /api/standings`
+- Comparte sistema global de loading y feedback.
+- Usa reglas visuales de `DESIGN.md`.
+- Complementa `/grupos`, porque muestra posiciones calculadas a partir de resultados registrados.
 
-Implemented behavior:
+## Limitaciones actuales
 
-- `/posiciones` replaces the placeholder with a real Group Standings page.
-- The page consumes backend-calculated standings through `getStandings()`.
-- The frontend preserves the group and team order returned by the backend.
-- The frontend does not recalculate standings from matches.
-- The public UI does not call `POST /api/standings/:group`.
-- Each group renders as a standings card with a semantic compact table.
-- The table shows: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.
-- When `team.position` is `null`, Pos uses the visual row index only.
-- The UI does not invent classification badges when `team.qualifiedTo` is `null`.
-- Missing `shieldUrl` values render a simple visual fallback without breaking the table.
-- Loading, delayed loading, empty, friendly API error and invalid payload states are handled.
+- No recalcula tablas offline.
+- No permite refrescar manualmente un grupo.
+- No muestra explicación detallada de desempates.
 
-Relevant files:
+## Mejoras futuras
 
-- `src/services/standings/standingsService.js`
-- `src/schemas/standingsSchema.js`
-- `src/pages/GroupStandings/GroupStandings.jsx`
-- `src/pages/GroupStandings/GroupStandings.module.css`
-- `src/pages/GroupStandings/GroupStandings.test.jsx`
-- `src/components/StandingsGroupCard/StandingsGroupCard.jsx`
-- `src/components/StandingsGroupCard/StandingsGroupCard.module.css`
-- `src/components/StandingsTable/StandingsTable.jsx`
-- `src/components/StandingsTable/StandingsTable.module.css`
-- `src/routes/AppRoutes.jsx`
+- Leyenda de clasificación cuando el backend confirme `qualifiedTo`.
+- Explicación visual de criterios de desempate.
+- Filtro por grupo persistente si se decide conservar estado entre visitas.
 
-## Visual Follow-up Notes
+## Resumen de implementación por bloques
 
-The standings cards were visually refined to better match the approved sports scoreboard light references.
-
-Visual behavior:
-
-- Each standings card uses a visible but elegant multicolor vertical accent on the left side.
-- The card header is more prominent, with stronger hierarchy for the group label, title and team-count chip.
-- The header includes a very subtle gray stadium/crowd-style watermark behind the title content.
-- The watermark artwork uses four project-owned PNG variants stored in `src/assets/standingsHeaderWatermarks/`.
-- The current PNG variants are `crowd-variant-1.png`, `crowd-variant-2.png`, `crowd-variant-3.png` and `crowd-variant-4.png`.
-- The variants are assigned cyclically by group index so cards share the same visual language without looking identical.
-- The PNG watermark layer must remain decorative only: low opacity, clipped by the header, and `pointer-events: none`.
-- The page supports two viewing modes:
-  - `Vista general`: renders all backend groups in a responsive grid, using compact standings cards.
-  - `Vista foco`: renders one selected group at a time with the featured/protagonist card style.
-- The `Vista foco` group selector is built from the groups returned by `GET /api/standings`.
-- The view selector uses real `button` elements with `aria-pressed`; its grid/focus icons are CSS-only and do not require external icon dependencies.
-- The `Equipo` column has stronger horizontal priority: shield/fallback sits to the left and team names align clearly to the left.
-- The table remains clean, light, compact and legible.
-- Qualification badges remain hidden when `team.position` or `team.qualifiedTo` are null.
-- If future `qualifiedTo` values are shown, labels must be translated to Spanish instead of exposing raw backend values.
+- **Bloque 5**: integración de `GET /api/standings`, página `/posiciones`, cards, tablas, loading, delayed loading, error, empty state, payload inválido y tests.
+- **Follow-up visual**: vista general/vista foco, cards refinadas y watermarks decorativos.
+- **Validación manual**: bloque aprobado por el usuario antes de iniciar Bloque 6.

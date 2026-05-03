@@ -1,336 +1,175 @@
 # Knockout Stage
 
-## Page Agent Contract
+## Propósito
 
-This document is the source of truth for the `/eliminatorias` page.
+La sección Knockout Stage muestra la fase eliminatoria del Mundial 2026 desde dieciseisavos de final hasta la final. Su objetivo es presentar el camino hacia el título sin inventar clasificados, resultados ni progresiones que todavía no estén confirmadas por datos de la base de datos.
 
-Any agent working on this page must read:
+## Ruta
 
-1. `docs/project-requirements.md`
-2. `docs/task.md`
-3. this page document
-4. `docs/knockout-stage-skeleton.md`
-5. `docs/API-Backend-Mundial-2026.md` when backend data is involved
-6. `DESIGN.md` before visual, layout, or shared UI changes
+```text
+/eliminatorias
+```
 
-The page implementation must follow the task IDs assigned in `docs/task.md`.
+## Componentes principales
 
-Behavior changes require tests.
+- `KnockoutStage`: página responsable de cargar partidos, combinar datos y manejar filtro de ronda.
+- `KnockoutBracket`: renderiza el conjunto de rondas.
+- `KnockoutRound`: renderiza una ronda y sus partidos.
+- `KnockoutMatchCard`: muestra partido, fecha, estadio, equipos/placeholders, marcador, penales y estado.
+- `SkeletonList`: loading visual.
+- `FeedbackModal`: feedback para delayed loading.
 
-## Objetivo
+## Servicios, datos y endpoints usados
 
-Mostrar la fase eliminatoria del Mundial 2026 desde el partido 73 al 104.
+Endpoint público:
 
-The page should let users understand the path to the final while clearly distinguishing:
+```text
+GET /api/matches
+```
 
-- official backend/database data;
-- documented skeleton fallback data;
-- visual placeholders for teams or results that are not official yet.
+Servicio:
 
-The page must not invent qualified teams, results, goals, penalties, winners, losers, or real bracket progressions that are not confirmed by backend data.
+```text
+src/services/matches/matchesService.js
+```
+
+Skeleton documentado:
+
+```text
+docs/knockout-stage-skeleton.md
+src/data/knockoutStageSkeleton.js
+```
+
+Adapter:
+
+```text
+src/utils/knockoutStageAdapter.js
+```
 
 ## Fuente de datos
 
-The page uses two data sources:
+La sección usa dos fuentes:
 
-1. **Backend/database** through `GET /api/matches`.
-2. **Documented skeleton fallback** derived from `docs/knockout-stage-skeleton.md`.
+1. Datos reales desde `GET /api/matches`.
+2. Cuadro base documentado para completar la estructura visual cuando aún falta información recibida desde el backend.
 
-The local implementation of the documented fallback lives in:
+Prioridad:
 
-- `src/data/knockoutStageSkeleton.js`
+1. Backend/base de datos.
+2. Cuadro base documentado.
+3. Placeholders claros.
 
-The backend/database remains the source of truth whenever it provides real data.
+## Merge backend + cuadro base
 
-## Skeleton documentado
+El merge se realiza en `buildKnockoutStageMatches`.
 
-`docs/knockout-stage-skeleton.md` defines the initial structural reference for the knockout stage:
+Estrategias de identificación:
 
-- match numbers 73–104;
-- rounds;
-- dates;
-- stadiums;
-- home/away placeholders;
-- bracket flow between rounds.
+- `matchNumber`, si el backend lo provee.
+- `templateCode`, si el backend lo provee.
+- clave compuesta normalizada por ronda, fecha y estadio solo cuando no hay identidad explícita y el match no es ambiguo.
 
-The skeleton is not final match data. It is only used to render a complete initial bracket while official data is missing or incomplete.
+Reglas:
 
-The skeleton must not replace real backend data.
+- Datos reales tienen prioridad.
+- El cuadro base completa campos de presentación.
+- Scores y penales solo se muestran si vienen del backend.
+- Ganador registrado solo se deriva con resultado completo y `status === 'FINISHED'`.
+- No se avanzan equipos a rondas futuras desde el frontend.
 
-## Prioridad de datos
+## Estados manejados
 
-Data priority is:
+### Loading
 
-1. Backend/database data.
-2. Skeleton fallback from `docs/knockout-stage-skeleton.md` / `src/data/knockoutStageSkeleton.js`.
-3. Clear visual placeholders.
+Muestra skeletons mientras se consulta `GET /api/matches`.
 
-Rules:
+### Delayed loading
 
-- Real backend data always has priority over skeleton data.
-- The skeleton only completes missing presentation fields such as date, round label, stadium, placeholders, and status labels.
-- If backend data is empty, render the documented skeleton.
-- If backend data is partial, merge real matches with skeleton fallback.
-- If matching is unsafe, keep the skeleton placeholder.
+Si la carga demora, se informa que se está preparando el cuadro base.
 
-## Identificación de partidos
+### Error
 
-Each skeleton match has stable internal identifiers:
+Si falla la consulta, se muestra el cuadro base documentado con mensaje amigable.
 
-- `matchNumber`, for example `73`, `74`, `101`, `104`.
-- `templateCode`, for example `KO-73`, `KO-74`, `KO-101`, `KO-104`.
-- `roundKey`, for example `round-of-32`, `round-of-16`, `quarter-finals`.
+### Empty / datos de la base de datos pendientes
 
-Backend/skeleton matching follows this order:
+Si no hay datos reales de eliminatorias, la UI muestra la estructura documentada con equipos por definir.
 
-1. Match by backend `matchNumber` when available.
-2. Match by backend `templateCode` when `matchNumber` is unavailable.
-3. Match by a normalized compound fallback key only when the backend does not provide an explicit identity.
+### Datos parciales
 
-The compound fallback key uses:
+Si algunos partidos tienen datos reales y otros no, se informa cuántos partidos tienen datos de la base de datos y cuántos siguen pendientes.
 
-- round;
-- date;
-- stadium.
+### Datos válidos
 
-Normalization reduces mismatch risk caused by casing, spaces, accents, and simple stadium naming differences. If the compound match is ambiguous or insecure, do not replace the placeholder.
+Cuando hay datos reales:
 
-## Estrategia de merge backend/skeleton
+- se reemplazan equipos reales;
+- se muestran marcadores registrados si existen;
+- se muestran penales si existen;
+- se muestra ganador registrado solo si se puede derivar de forma segura.
 
-The merge strategy is implemented in:
+## Decisiones visuales y UX
 
-- `src/utils/knockoutStageAdapter.js`
+- La página incluye filtro por ronda:
+  - Todas las rondas.
+  - Dieciseisavos de final.
+  - Octavos de final.
+  - Cuartos de final.
+  - Semifinales.
+  - Partido por el tercer puesto.
+  - Final.
+- Los labels visibles deben estar en español.
+- Los placeholders deben verse como datos pendientes, no como equipos confirmados.
+- La UI distingue datos de la base de datos de estructura base.
 
-Merge rules:
+## Reglas de negocio
 
-- Backend has priority for teams, score, penalties, and status.
-- Skeleton may complete missing presentation fields.
-- Real teams render only when backend provides them.
-- Regular score renders only when backend provides both `homeScore` and `awayScore` as numbers.
-- Penalties render only when backend provides both `homePenaltyScore` and `awayPenaltyScore` as numbers.
-- A winner is derived only when backend data is complete enough:
-  - `status === 'FINISHED'`;
-  - regular score is complete;
-  - if regular score is tied, penalty score is complete.
-- Winners, losers, qualified teams, and future-round placements are never invented from incomplete data.
+- No inventar equipos clasificados.
+- No inventar resultados.
+- No inventar penales.
+- No simular progresión de bracket en frontend.
+- No mover ganadores/perdedores a futuros partidos si el backend no lo confirma.
+- No mostrar keys técnicas como `round-of-32`, `templateCode` o `roundKey` en UI.
 
-## Reglas de placeholders
+## Validaciones importantes
 
-Placeholders must be visibly understood as unresolved data, not confirmed teams.
+- El adapter rechaza matches ambiguos.
+- Solo usa compound matching cuando es seguro.
+- El ganador registrado requiere datos completos.
+- Empates en eliminatorias requieren penales completos para derivar ganador.
 
-Examples:
+## Relación con otras partes de la app
 
-- `2º Grupo A`
-- `3º Grupo A/B/C/D/F`
-- `Ganador Partido 74`
-- `Perdedor Partido 101`
-- `Equipo por definir`
-- `Sin datos oficiales`
+- Comparte `GET /api/matches` con `/grupos` y `/predicciones`.
+- El estado de eliminatorias condiciona cuándo podría habilitarse predicción de cruces reales.
+- Usa el mismo sistema de delayed loading y feedback que otras páginas.
 
-When backend data does not provide a real team for a slot, render the documented placeholder.
+## Limitaciones actuales
 
-## Reglas de progresión del bracket
+- El frontend no simula llaves.
+- Las predicciones de eliminatorias siguen cerradas en `/predicciones`.
+- La estructura base depende del documento `docs/knockout-stage-skeleton.md`.
+- Si el backend no provee identidad explícita de partidos, el merge depende de una clave compuesta conservadora.
 
-The skeleton includes progression placeholders such as:
+## Mejoras futuras
 
-- `Ganador Partido 74`
-- `Ganador Partido 77`
-- `Perdedor Partido 101`
-- `Perdedor Partido 102`
-
-Current Block 6 rules:
-
-- Do not move teams into later rounds unless backend data confirms enough official information.
-- Keep placeholders in later rounds until the backend/database provides the resolved match data.
-- Leave eliminated teams only in the round where the backend provides them.
-- Do not simulate bracket progression in the frontend.
-
-Future backend fields that could support official progression:
-
-- `qualifiedToMatchNumber`
-- `qualifiedToSlot`
-- `winnerGoesTo`
-- `loserGoesTo`
-
-If those fields are added later, the frontend can use them to place official qualifiers in future rounds.
-
-## Idioma de UI
-
-All visible UI text must be in Spanish.
-
-Internal technical keys may remain in English for consistency, for example:
-
-- `roundKey`
-- `templateCode`
-- `status`
-- `homePlaceholder`
-- `awayPlaceholder`
-- `matchNumber`
-
-Do not render technical keys in the UI, including:
-
-- `round-of-32`
-- `round-of-16`
-- `pending-qualified-teams`
-- `pending-previous-round-results`
-- `templateCode`
-- `roundKey`
-
-Visible labels should use Spanish presentation fields such as:
-
-- `Fase eliminatoria`
-- `Datos oficiales`
-- `Cuadro base`
-- `Información oficial pendiente`
-- `Equipos por definir`
-- `Sin datos oficiales`
-- `Resultado pendiente`
-- `Pendiente de clasificación`
-- `Pendiente del resultado anterior`
-
-## Selector de ronda
-
-The page includes an accessible round selector with a visible/associated label:
-
-- `Filtrar por ronda`
-
-Visible options:
-
-- `Todas las rondas`
-- `Dieciseisavos de final`
-- `Octavos de final`
-- `Cuartos de final`
-- `Semifinales`
-- `Partido por el tercer puesto`
-- `Final`
-
-Rules:
-
-- Initial option may be `Todas las rondas`.
-- Selecting a round renders only that round.
-- Returning to `Todas las rondas` renders the complete bracket again.
-- Selector labels must remain in Spanish.
-- Internal option values may remain in English.
-
-## Estados de UI
-
-The page handles:
-
-- loading state;
-- delayed loading state with `FeedbackModal`;
-- friendly API error state;
-- backend-empty state using skeleton fallback;
-- partial-data state combining backend matches and skeleton fallback;
-- placeholder state for unresolved teams/results.
-
-Technical backend errors must not be shown directly to users.
-
-## Componentes implementados
-
-Implemented page/components:
-
-- `KnockoutStage` — page-level data loading, UI states, round filtering, and bracket composition.
-- `KnockoutBracket` — renders the list of rounds.
-- `KnockoutRound` — renders a round title and its matches.
-- `KnockoutMatchCard` — renders match number, date, stadium, teams/placeholders, score, penalties, data-source badge, and optional official winner label.
+- Backend con `matchNumber`, `templateCode`, `roundKey`, `winnerGoesTo` y `loserGoesTo`.
+- Progresión basada en datos confirmados del backend.
+- Diseño de match cards con estética más cercana a campo de juego, si se aprueba.
+- Mayor detalle para explicar origen de datos por partido.
 
 ## Archivos relacionados
 
-Files created or modified for Block 6:
-
-- `docs/task.md`
-- `docs/knockout-stage.md`
-- `src/routes/AppRoutes.jsx`
+- `docs/knockout-stage-skeleton.md`
 - `src/data/knockoutStageSkeleton.js`
 - `src/utils/knockoutStageAdapter.js`
-- `src/utils/knockoutStageAdapter.test.js`
 - `src/components/KnockoutBracket/KnockoutBracket.jsx`
-- `src/components/KnockoutBracket/KnockoutBracket.module.css`
 - `src/components/KnockoutRound/KnockoutRound.jsx`
-- `src/components/KnockoutRound/KnockoutRound.module.css`
 - `src/components/KnockoutMatchCard/KnockoutMatchCard.jsx`
-- `src/components/KnockoutMatchCard/KnockoutMatchCard.module.css`
 - `src/pages/KnockoutStage/KnockoutStage.jsx`
-- `src/pages/KnockoutStage/KnockoutStage.module.css`
-- `src/pages/KnockoutStage/KnockoutStage.test.jsx`
 
-Supporting source document:
+## Resumen de implementación por bloques
 
-- `docs/knockout-stage-skeleton.md`
-
-## Tests
-
-Tests added for Block 6:
-
-- `src/utils/knockoutStageAdapter.test.js`
-- `src/pages/KnockoutStage/KnockoutStage.test.jsx`
-
-Coverage summary:
-
-- skeleton fallback when backend data is empty;
-- backend merge by `matchNumber`;
-- backend merge by `templateCode`;
-- normalized compound fallback matching;
-- unsafe match rejection;
-- partial backend data with skeleton fallback;
-- regular scores from backend;
-- penalties from backend;
-- no winner derivation with incomplete data;
-- no unsafe advancement of teams to future rounds;
-- Spanish round labels, status labels, placeholders, and selector options;
-- no visible technical keys such as `round-of-32`, `pending-qualified-teams`, `templateCode`, or `roundKey`;
-- loading state;
-- delayed-loading modal;
-- friendly error state.
-
-## Validaciones ejecutadas
-
-Block 6 implementation validation:
-
-- Preflight confirmed `which node` and `which pnpm` resolved first to Linux-native paths under `/home/yorch/.nvm/versions/node/v24.14.0/bin/...`.
-- A Windows PNPM path appeared only as a secondary `type -a pnpm` result, which is acceptable under project rules.
-- `pnpm run build`: passed.
-- `pnpm run lint`: passed.
-- `pnpm run test`: passed.
-
-Vitest environment note:
-
-- In this WSL environment, Vitest can fail before running tests if it tries to create temp files under `/mnt/c/Users/Usuario/AppData/Local/Temp/...`.
-- Use Linux temp variables when needed:
-
-```bash
-export TMPDIR=/tmp
-export TEMP=/tmp
-export TMP=/tmp
-pnpm run test
-```
-
-Final Block 6 validation result:
-
-- 13 test files passed.
-- 74 tests passed.
-
-## Notas de backend futuro
-
-Future backend improvements that would make knockout merge/progression more explicit:
-
-- `matchNumber`
-- `templateCode`
-- `roundKey`
-- `qualifiedToMatchNumber`
-- `qualifiedToSlot`
-- `winnerGoesTo`
-- `loserGoesTo`
-
-These fields would reduce reliance on normalized compound matching and allow official future-round placement when backend data confirms qualifiers.
-
-## Backlog
-
-Out of scope for Block 6:
-
-- Prediction Fixture.
-- Simulation of results.
-- Frontend-only bracket progression.
-- Refactor of match cards into a football-field/top-view layout.
-
-The future football-field match-card visual refactor remains a backlog item and should only be implemented after explicit approval.
+- **Bloque 6**: skeleton local, adapter de merge, página `/eliminatorias`, filtro de rondas, bracket, cards, estados de UI y tests.
+- **Validación**: build, lint y test pasaron durante el cierre del Bloque 6.
+- **Validación manual**: bloque aprobado por el usuario.
