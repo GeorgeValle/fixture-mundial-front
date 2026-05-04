@@ -178,7 +178,7 @@ describe('PredictionFixture', () => {
     expect(screen.getByRole('option', { name: 'Partido por el tercer puesto' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Final' })).toBeInTheDocument()
     expect(
-      screen.getByText('Se habilitará cuando estén definidos los cruces oficiales.'),
+      screen.getByText('Se habilitará cuando estén definidos los cruces.'),
     ).toBeInTheDocument()
     expect(screen.queryByText(/backend/i)).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Borrar predicciones del grupo' })).toBeDisabled()
@@ -682,7 +682,7 @@ describe('PredictionFixture', () => {
       'Cómo se calculan los puntos totales',
     )
     expect(screen.getByRole('dialog')).toHaveTextContent(
-      'Solo se calculan puntos cuando hay resultado oficial suficiente.',
+      'Solo se calculan puntos cuando hay resultado registrado suficiente.',
     )
     await user.click(screen.getByRole('button', { name: 'Cerrar' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -701,14 +701,14 @@ describe('PredictionFixture', () => {
 
     expect(
       await screen.findByText(
-        'Las predicciones de eliminatorias se habilitarán cuando estén definidos los cruces oficiales.',
+        'Las predicciones de eliminatorias se habilitarán cuando estén definidos los cruces.',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText('Goles de Ganador Partido 101')).not.toBeInTheDocument()
     expect(screen.getByText('Eliminatorias aún no disponibles')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'No se permiten predicciones sobre placeholders, cruces base, TBD ni equipos por definir.',
+        'No se permiten predicciones sobre cruces base, TBD ni equipos por definir.',
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('No hay partidos de fase de grupos para predecir')).toBeInTheDocument()
@@ -786,7 +786,7 @@ describe('PredictionFixture', () => {
       vi.advanceTimersByTime(7000)
     })
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('Las predicciones están tardando un poco')
+    expect(screen.getByRole('dialog')).toHaveTextContent('El servidor está despertando')
   })
 
   it('shows an empty state when there are no eligible group matches', async () => {
@@ -797,13 +797,41 @@ describe('PredictionFixture', () => {
     expect(await screen.findByText('No hay partidos de fase de grupos para predecir')).toBeInTheDocument()
   })
 
+
+
+  it('retries loading prediction matches from the error state', async () => {
+    const user = userEvent.setup()
+    let callCount = 0
+
+    server.use(
+      http.get('*/api/matches', () => {
+        callCount += 1
+
+        if (callCount === 1) {
+          return HttpResponse.json({ message: 'DB down' }, { status: 500 })
+        }
+
+        return HttpResponse.json([pendingMatch])
+      }),
+    )
+
+    renderPredictionFixture()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Predicciones no disponibles')
+
+    await user.click(screen.getByRole('button', { name: /reintentar/i }))
+
+    expect((await screen.findAllByText('México')).length).toBeGreaterThan(0)
+    expect(callCount).toBe(2)
+  })
+
   it('shows a friendly error state without exposing technical messages', async () => {
     server.use(http.get('*/api/matches', () => HttpResponse.json({ message: 'DB down' }, { status: 500 })))
 
     renderPredictionFixture()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'No pudimos cargar los partidos para predicciones. Intentá nuevamente en unos segundos.',
+      'No pudimos cargar los partidos para predicciones. Si el servidor estaba dormido, esperá unos segundos y probá de nuevo.',
     )
     expect(screen.queryByText('DB down')).not.toBeInTheDocument()
   })

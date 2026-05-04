@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
 import uiReducer from '../../features/ui/uiSlice'
@@ -91,7 +92,7 @@ describe('Home', () => {
         name: /fixture, tablas, eliminatorias y predicciones/i,
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Portfolio project')).toBeInTheDocument()
+    expect(screen.getByText('Proyecto de portfolio')).toBeInTheDocument()
     expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
   })
 
@@ -105,7 +106,7 @@ describe('Home', () => {
 
     renderHome()
 
-    expect(screen.getByRole('heading', { name: /cargando partidos del día/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /cargando partidos/i })).toBeInTheDocument()
     expect(screen.getByRole('status', { name: /cargando partidos del día/i })).toBeInTheDocument()
   })
 
@@ -193,6 +194,33 @@ describe('Home', () => {
     )
   })
 
+
+  it('retries loading the daily schedule from the error state', async () => {
+    const user = userEvent.setup()
+    let callCount = 0
+
+    server.use(
+      http.get('*/api/matches/schedule/daily', () => {
+        callCount += 1
+
+        if (callCount === 1) {
+          return HttpResponse.json({ message: 'DB down' }, { status: 500 })
+        }
+
+        return HttpResponse.json({ status: 'success', data: { today: [todayMatch], next: [], nextDate: null } })
+      }),
+    )
+
+    renderHome()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('No pudimos cargar los partidos del día')
+
+    await user.click(screen.getByRole('button', { name: /reintentar/i }))
+
+    expect(await screen.findByRole('heading', { name: /partidos de hoy/i })).toBeInTheDocument()
+    expect(callCount).toBe(2)
+  })
+
   it('opens the feedback modal when daily schedule loading takes more than seven seconds', async () => {
     vi.useFakeTimers()
     server.use(
@@ -208,6 +236,6 @@ describe('Home', () => {
       vi.advanceTimersByTime(7000)
     })
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('El calendario está tardando un poco')
+    expect(screen.getByRole('dialog')).toHaveTextContent('El servidor está despertando')
   })
 })

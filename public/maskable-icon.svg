@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Fixture Mundial 2026 maskable</title>
+  <rect width="512" height="512" fill="#06152f"/>
+  <circle cx="400" cy="90" r="150" fill="#00b8d4" opacity=".16"/>
+  <circle cx="95" cy="430" r="160" fill="#1f9d63" opacity=".18"/>
+  <path d="M178 114h156v58c0 70-32 118-78 132-46-14-78-62-78-132z" fill="#f2b632"/>
+  <path d="M178 154h-66c0 62 29 102 80 116M334 154h66c0 62-29 102-80 116" fill="none" stroke="#f2b632" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M230 307h52v64h64v49H166v-49h64z" fill="#f2b632"/>
+  <path d="M216 157h84" stroke="#fff5c2" stroke-width="22" stroke-linecap="round" opacity=".75"/>
+</svg>

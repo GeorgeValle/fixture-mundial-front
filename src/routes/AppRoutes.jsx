@@ -7,6 +7,7 @@ import GroupStandings from '../pages/GroupStandings/GroupStandings'
 import KnockoutStage from '../pages/KnockoutStage/KnockoutStage'
 import PlaceholderPage from '../pages/PlaceholderPage/PlaceholderPage'
 import PredictionFixture from '../pages/PredictionFixture/PredictionFixture'
+import NotFound from '../pages/NotFound/NotFound'
 
 function AppRoutes() {
   return (
@@ -46,15 +47,7 @@ function AppRoutes() {
           path={ROUTES.stadiums}
         />
 
-        <Route
-          element={
-            <PlaceholderPage
-              description="La sección que buscás todavía no está implementada en esta fase."
-              title="Página no encontrada"
-            />
-          }
-          path="*"
-        />
+        <Route element={<NotFound />} path="*" />
       </Routes>
     </MainLayout>
   )

@@ -38,7 +38,7 @@ function getVisibleSchedule(schedule) {
   }
 }
 
-function DailyScheduleCard({ schedule, isLoading = false, hasError = false }) {
+function DailyScheduleCard({ schedule, isLoading = false, hasError = false, onRetry }) {
   const visibleSchedule = getVisibleSchedule(schedule)
 
   return (
@@ -47,7 +47,7 @@ function DailyScheduleCard({ schedule, isLoading = false, hasError = false }) {
         <div className={styles.headingGroup}>
           <p className={styles.kicker}>Agenda del torneo</p>
           <h3 className={styles.title} id="daily-schedule-title">
-            {isLoading ? 'Cargando partidos del día' : visibleSchedule.title}
+            {isLoading ? 'Cargando partidos…' : visibleSchedule.title}
           </h3>
           {!isLoading && !hasError && (
             <p className={styles.description}>{visibleSchedule.description}</p>
@@ -71,7 +71,14 @@ function DailyScheduleCard({ schedule, isLoading = false, hasError = false }) {
       {!isLoading && hasError && (
         <div className={`${styles.stateBlock} ${styles.errorState}`} role="alert">
           <p className={styles.stateTitle}>No pudimos cargar los partidos del día</p>
-          <p className={styles.stateText}>Intentá nuevamente en unos segundos.</p>
+          <p className={styles.stateText}>
+            Si el servidor estaba dormido, puede tardar hasta 30 segundos en responder.
+          </p>
+          {onRetry && (
+            <button className={styles.retryButton} onClick={onRetry} type="button">
+              Reintentar
+            </button>
+          )}
         </div>
       )}
 

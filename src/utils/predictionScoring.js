@@ -7,9 +7,9 @@ import {
 } from './predictionValidation'
 
 const SCORE_REASONS = {
-  missingOfficialResult: 'Resultado oficial incompleto',
+  missingOfficialResult: 'Resultado registrado incompleto',
   matchNotFinished: 'Partido no finalizado',
-  invalidOfficialResult: 'Resultado oficial inconsistente',
+  invalidOfficialResult: 'Resultado registrado inconsistente',
   invalidPrediction: 'Predicción inválida',
 }
 

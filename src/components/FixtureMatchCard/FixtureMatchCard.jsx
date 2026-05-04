@@ -14,6 +14,18 @@ function hasScore(match) {
   )
 }
 
+
+const statusLabels = {
+  PENDING: 'Pendiente',
+  PLAYING: 'En juego',
+  FINISHED: 'Finalizado',
+  SCHEDULED: 'Programado',
+}
+
+function getStatusLabel(status) {
+  return statusLabels[status] ?? status ?? 'Pendiente'
+}
+
 function getStadiumLabel(stadium) {
   if (!stadium?.name) {
     return 'Sede por confirmar'
@@ -52,7 +64,7 @@ function FixtureMatchCard({ match }) {
     >
       <div className={styles.metaRow}>
         <span className={styles.stage}>{match.stage ?? 'Grupo'}</span>
-        <span className={styles.status}>{match.status ?? 'PENDING'}</span>
+        <span className={styles.status}>{getStatusLabel(match.status)}</span>
       </div>
 
       <div className={styles.matchRow}>

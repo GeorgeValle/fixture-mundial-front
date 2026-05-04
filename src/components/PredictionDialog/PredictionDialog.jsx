@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import styles from './PredictionDialog.module.css'
 
 function PredictionDialog({
@@ -9,8 +10,25 @@ function PredictionDialog({
   title,
   variant = 'info',
 }) {
+  const cancelButtonRef = useRef(null)
   const titleId = 'prediction-dialog-title'
   const contentId = 'prediction-dialog-content'
+
+  useEffect(() => {
+    cancelButtonRef.current?.focus()
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        onCancel()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [onCancel])
 
   return (
     <div className={styles.overlay} role="presentation">
@@ -35,7 +53,12 @@ function PredictionDialog({
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.secondaryButton} type="button" onClick={onCancel}>
+          <button
+            className={styles.secondaryButton}
+            onClick={onCancel}
+            ref={cancelButtonRef}
+            type="button"
+          >
             {cancelLabel}
           </button>
           {confirmLabel && onConfirm && (

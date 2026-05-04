@@ -138,7 +138,7 @@ describe('knockoutStageAdapter', () => {
 
     expect(getScoreLabel(match101)).toBe('1 - 1')
     expect(getPenaltyLabel(match101)).toBe('Penales: 4 - 3')
-    expect(match101.winnerLabel).toBe('Ganador oficial: México')
+    expect(match101.winnerLabel).toBe('Ganador registrado: México')
   })
 
   it('does not derive a winner when real data is incomplete', () => {

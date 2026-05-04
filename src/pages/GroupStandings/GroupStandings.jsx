@@ -8,11 +8,12 @@ import {
   setGlobalLoading,
 } from '../../features/ui/uiSlice'
 import { getStandings } from '../../services/standings/standingsService'
+import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
 import styles from './GroupStandings.module.css'
 
 const FRIENDLY_API_ERROR_MESSAGE =
-  'No pudimos cargar las posiciones. Intentá nuevamente en unos segundos.'
+  'No pudimos cargar las posiciones. Si el servidor estaba dormido, esperá unos segundos y probá de nuevo.'
 const FRIENDLY_INVALID_PAYLOAD_MESSAGE =
   'No pudimos interpretar las posiciones recibidas. Intentá nuevamente más tarde.'
 const VIEW_MODE_OVERVIEW = 'overview'
@@ -22,13 +23,23 @@ function hasRenderableStandings(standings) {
   return standings.some((standing) => (standing?.teams ?? []).length > 0)
 }
 
+function getInitialFavoriteGroup() {
+  return loadFavoriteGroup().group ?? ''
+}
+
+function getInitialViewMode(initialFavoriteGroup) {
+  return initialFavoriteGroup ? VIEW_MODE_FOCUS : VIEW_MODE_OVERVIEW
+}
+
 function GroupStandings() {
   const dispatch = useDispatch()
+  const [initialFavoriteGroup] = useState(getInitialFavoriteGroup)
   const [standings, setStandings] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorKind, setErrorKind] = useState(null)
-  const [viewMode, setViewMode] = useState(VIEW_MODE_OVERVIEW)
-  const [selectedGroup, setSelectedGroup] = useState('')
+  const [viewMode, setViewMode] = useState(() => getInitialViewMode(initialFavoriteGroup))
+  const [selectedGroup, setSelectedGroup] = useState(initialFavoriteGroup)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let isActive = true
@@ -46,9 +57,9 @@ function GroupStandings() {
       dispatch(setDelayedLoading(true))
       dispatch(
         openFeedbackModal({
-          title: 'Las posiciones están tardando un poco',
+          title: 'El servidor está despertando',
           message:
-            'El backend puede demorar unos segundos en responder. Seguimos intentando cargar las tablas de grupos.',
+            'Puede tardar hasta 30 segundos en responder. Tocá en reintentar para volver a cargar la información.',
           variant: 'info',
         }),
       )
@@ -89,7 +100,7 @@ function GroupStandings() {
       dispatch(setGlobalLoading(false))
       dispatch(setDelayedLoading(false))
     }
-  }, [dispatch])
+  }, [dispatch, retryCount])
 
   const hasStandings = hasRenderableStandings(standings)
   const errorMessage =
@@ -100,6 +111,12 @@ function GroupStandings() {
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
 
+  function handleRetryStandings() {
+    setIsLoading(true)
+    setErrorKind(null)
+    setRetryCount((currentCount) => currentCount + 1)
+  }
+
   return (
     <section className={styles.page}>
       <header className={styles.hero}>
@@ -107,8 +124,8 @@ function GroupStandings() {
           <p className={styles.kicker}>Posiciones</p>
           <h2 className={styles.title}>Tablas de posiciones</h2>
           <p className={styles.description}>
-            Consultá las posiciones oficiales de los grupos A-L calculadas por el backend.
-            La tabla conserva el orden recibido desde la API.
+            Consultá las posiciones de los grupos A-L calculadas con la información recibida.
+            La tabla conserva el orden disponible para cada grupo.
           </p>
         </div>
       </header>
@@ -116,8 +133,8 @@ function GroupStandings() {
       {isLoading && (
         <section className={styles.stateCard} aria-live="polite">
           <div className={styles.stateHeader}>
-            <p className={styles.kicker}>Cargando posiciones</p>
-            <h3 className={styles.stateTitle}>Estamos buscando las tablas de grupos</h3>
+            <p className={styles.kicker}>Buscando posiciones…</p>
+            <h3 className={styles.stateTitle}>Estamos preparando las tablas de grupos</h3>
           </div>
           <SkeletonList count={4} label="Cargando posiciones de grupos" variant="match" />
         </section>
@@ -128,6 +145,13 @@ function GroupStandings() {
           <p className={styles.kicker}>No se pudo cargar</p>
           <h3 className={styles.stateTitle}>Posiciones no disponibles</h3>
           <p className={styles.stateText}>{errorMessage}</p>
+          <button
+            className={styles.retryButton}
+            onClick={handleRetryStandings}
+            type="button"
+          >
+            Reintentar
+          </button>
         </section>
       )}
 
@@ -136,7 +160,7 @@ function GroupStandings() {
           <p className={styles.kicker}>Sin posiciones</p>
           <h3 className={styles.stateTitle}>Todavía no hay tablas disponibles</h3>
           <p className={styles.stateText}>
-            Cuando el backend publique las posiciones, van a aparecer en esta sección.
+            Cuando haya posiciones disponibles, van a aparecer en esta sección.
           </p>
         </section>
       )}
