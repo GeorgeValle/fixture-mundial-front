@@ -81,7 +81,7 @@ function Navbar() {
         </div>
 
         <div>
-          <p className={styles.eyebrow}>World football tracker</p>
+          <p className={styles.eyebrow}>Seguimiento del Mundial</p>
           <h1 className={styles.title}>Fixture Mundial 2026</h1>
           <p className={styles.subtitle}>Fixture, tablas, eliminatorias y predicciones</p>
         </div>

@@ -44,7 +44,7 @@ import {
 import styles from './PredictionFixture.module.css'
 
 const FRIENDLY_ERROR_MESSAGE =
-  'No pudimos cargar los partidos para predicciones. Intentá nuevamente en unos segundos.'
+  'No pudimos cargar los partidos para predicciones. Si el servidor estaba dormido, esperá unos segundos y probá de nuevo.'
 
 const PLACEHOLDER_TEAM_NAMES = new Set([
   'tbd',
@@ -101,7 +101,7 @@ const HELP_MODAL_CONTENT = {
             En eliminatorias se premian el clasificado, los goles regulares y, si hay
             penales, los aciertos del desempate.
           </li>
-          <li>Solo se calculan puntos cuando hay resultado oficial suficiente.</li>
+          <li>Solo se calculan puntos cuando hay resultado registrado suficiente.</li>
         </ul>
       </>
     ),
@@ -314,6 +314,7 @@ function PredictionFixture() {
   const [pendingResetAction, setPendingResetAction] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let isActive = true
@@ -331,9 +332,9 @@ function PredictionFixture() {
       dispatch(setDelayedLoading(true))
       dispatch(
         openFeedbackModal({
-          title: 'Las predicciones están tardando un poco',
+          title: 'El servidor está despertando',
           message:
-            'La información puede demorar unos segundos en responder. Seguimos intentando cargar los partidos.',
+            'Puede tardar hasta 30 segundos en responder. Tocá en reintentar para volver a cargar la información.',
           variant: 'info',
         }),
       )
@@ -374,7 +375,7 @@ function PredictionFixture() {
       dispatch(setGlobalLoading(false))
       dispatch(setDelayedLoading(false))
     }
-  }, [dispatch])
+  }, [dispatch, retryCount])
 
   const groupMatches = sortMatchesByDate(matches.filter(isEligibleGroupMatch))
   const knockoutMatches = sortMatchesByDate(matches.filter(hasRealKnockoutTeams))
@@ -416,6 +417,12 @@ function PredictionFixture() {
   const groupPoints = getTotalPoints(groupScoreResults)
   const knockoutPoints = getTotalPoints(knockoutScoreResults)
   const totalPoints = groupPoints + knockoutPoints
+
+  function handleRetryMatches() {
+    setIsLoading(true)
+    setHasError(false)
+    setRetryCount((currentCount) => currentCount + 1)
+  }
 
   function handleUserNameSubmit(event) {
     event.preventDefault()
@@ -642,7 +649,7 @@ function PredictionFixture() {
         <h2 className={styles.title}>Predicciones</h2>
         <p className={styles.description}>
           Cargá tu nombre, guardá tus pronósticos y comparalos con los resultados
-          oficiales cuando los partidos terminen.
+          registrados cuando los partidos terminen.
         </p>
       </header>
 
@@ -673,7 +680,7 @@ function PredictionFixture() {
           <h3 className={styles.printTitle}>Resumen de predicciones</h3>
           <p className={styles.printText}>
             Imprimí tus pronósticos visibles con el resumen, los puntos y los
-            resultados oficiales disponibles.
+            resultados registrados disponibles.
           </p>
         </div>
         <button className={styles.printButton} type="button" onClick={handlePrintPredictions}>
@@ -683,7 +690,7 @@ function PredictionFixture() {
 
       {isLoading && (
         <section className={styles.stateCard} aria-live="polite">
-          <p className={styles.kicker}>Cargando partidos</p>
+          <p className={styles.kicker}>Cargando tus predicciones…</p>
           <h3 className={styles.stateTitle}>Estamos buscando partidos para predecir</h3>
           <SkeletonList count={6} label="Cargando partidos para predicciones" variant="match" />
         </section>
@@ -694,6 +701,13 @@ function PredictionFixture() {
           <p className={styles.kicker}>No se pudo cargar</p>
           <h3 className={styles.stateTitle}>Predicciones no disponibles</h3>
           <p className={styles.stateText}>{FRIENDLY_ERROR_MESSAGE}</p>
+          <button
+            className={styles.retryButton}
+            onClick={handleRetryMatches}
+            type="button"
+          >
+            Reintentar
+          </button>
         </section>
       )}
 

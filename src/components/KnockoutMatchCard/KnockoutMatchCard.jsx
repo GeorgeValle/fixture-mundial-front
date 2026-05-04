@@ -37,8 +37,8 @@ function KnockoutMatchCard({ match }) {
   const scoreLabel = getScoreLabel(match)
   const penaltyLabel = getPenaltyLabel(match)
   const sourceLabel =
-    match.dataSourceLabel === 'Datos oficiales pendientes'
-      ? 'Sin datos oficiales'
+    match.dataSourceLabel === 'Información recibida pendiente'
+      ? 'Sin información recibida'
       : match.dataSourceLabel
 
   return (
@@ -58,7 +58,7 @@ function KnockoutMatchCard({ match }) {
 
       <div className={styles.matchGrid}>
         <TeamSlot match={match} side="home" />
-        <div className={styles.scoreBox} aria-label={match.hasRegularScore ? 'Marcador oficial' : 'Resultado pendiente'}>
+        <div className={styles.scoreBox} aria-label={match.hasRegularScore ? 'Marcador registrado' : 'Resultado pendiente'}>
           <span className={match.hasRegularScore ? styles.score : styles.pendingScore}>{scoreLabel}</span>
           {penaltyLabel && <span className={styles.penalties}>{penaltyLabel}</span>}
         </div>

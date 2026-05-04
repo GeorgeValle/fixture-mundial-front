@@ -160,7 +160,7 @@ describe('predictionScoring - group stage', () => {
       canScore: false,
       points: 0,
       indicators: [],
-      reason: 'Resultado oficial incompleto',
+      reason: 'Resultado registrado incompleto',
     })
   })
 })
@@ -279,7 +279,7 @@ describe('predictionScoring - knockout stage', () => {
     expect(result).toMatchObject({
       canScore: false,
       points: 0,
-      reason: 'Resultado oficial incompleto',
+      reason: 'Resultado registrado incompleto',
     })
   })
 
@@ -303,7 +303,7 @@ describe('predictionScoring - knockout stage', () => {
     expect(result).toMatchObject({
       canScore: false,
       points: 0,
-      reason: 'Resultado oficial inconsistente',
+      reason: 'Resultado registrado inconsistente',
     })
   })
 

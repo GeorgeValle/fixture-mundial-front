@@ -65,7 +65,7 @@ function createSkeletonMatch({
     homeSource,
     awaySource,
     status,
-    statusLabel: STATUS_LABELS[status] ?? 'Datos oficiales pendientes',
+    statusLabel: STATUS_LABELS[status] ?? 'Información recibida pendiente',
   }
 }
 

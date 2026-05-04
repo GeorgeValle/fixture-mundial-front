@@ -27,7 +27,7 @@ const featureCards = [
   {
     eyebrow: 'Predicciones',
     title: 'Tu pronóstico',
-    description: 'Creá tus pronósticos y compará tu desempeño con los resultados oficiales.',
+    description: 'Creá tus pronósticos y compará tu desempeño con los resultados registrados.',
     accent: 'gold',
   },
 ]
@@ -37,6 +37,7 @@ function Home() {
   const [dailySchedule, setDailySchedule] = useState(null)
   const [isDailyScheduleLoading, setIsDailyScheduleLoading] = useState(true)
   const [hasDailyScheduleError, setHasDailyScheduleError] = useState(false)
+  const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
     let isActive = true
@@ -54,9 +55,9 @@ function Home() {
       dispatch(setDelayedLoading(true))
       dispatch(
         openFeedbackModal({
-          title: 'El calendario está tardando un poco',
+          title: 'El servidor está despertando',
           message:
-            'El backend puede demorar unos segundos en responder. Seguimos intentando cargar los partidos del día.',
+            'Puede tardar hasta 30 segundos en responder. Tocá en reintentar para volver a cargar la información.',
           variant: 'info',
         }),
       )
@@ -97,18 +98,25 @@ function Home() {
       dispatch(setGlobalLoading(false))
       dispatch(setDelayedLoading(false))
     }
-  }, [dispatch])
+  }, [dispatch, retryCount])
+
+  function handleRetryDailySchedule() {
+    setIsDailyScheduleLoading(true)
+    setHasDailyScheduleError(false)
+    setRetryCount((currentCount) => currentCount + 1)
+  }
 
   return (
     <section className={styles.page}>
       <div className={styles.hero}>
+        <span className={styles.heroWatermark} aria-hidden="true" />
         <div className={styles.heroContent}>
           <div className={styles.badgeRow}>
-            <span className={styles.badge}>Portfolio project</span>
+            <span className={styles.badge}>Proyecto de portfolio</span>
             <span className={styles.badge}>React + Vite</span>
           </div>
 
-          <p className={styles.kicker}>International football experience</p>
+          <p className={styles.kicker}>Experiencia de fútbol internacional</p>
           <h2 className={styles.title}>
             Fixture, tablas, eliminatorias y predicciones en una sola experiencia
           </h2>
@@ -133,7 +141,7 @@ function Home() {
           </div>
           <div className={styles.scoreCard}>
             <span>2026</span>
-            <strong>Kickoff ready</strong>
+            <strong>Listo para el inicio</strong>
           </div>
         </div>
       </div>
@@ -142,11 +150,13 @@ function Home() {
         hasError={hasDailyScheduleError}
         isLoading={isDailyScheduleLoading}
         schedule={dailySchedule}
+        onRetry={handleRetryDailySchedule}
       />
 
       <div className={styles.grid}>
         {featureCards.map((card) => (
           <article className={`${styles.card} ${styles[card.accent]}`} key={card.title}>
+            <span className={styles.cardWatermark} aria-hidden="true" />
             <p className={styles.cardEyebrow}>{card.eyebrow}</p>
             <h3 className={styles.cardTitle}>{card.title}</h3>
             <p className={styles.cardDescription}>{card.description}</p>

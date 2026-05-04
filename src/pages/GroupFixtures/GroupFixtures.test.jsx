@@ -1,10 +1,11 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
+import { STORAGE_KEYS } from '../../constants/storageKeys'
 import uiReducer from '../../features/ui/uiSlice'
 import { server } from '../../test/msw/server'
 import GroupFixtures from './GroupFixtures'
@@ -148,6 +149,10 @@ function mockMatchesResponse(matches = [...groupAMatches, ...groupBMatches]) {
   server.use(http.get('*/api/matches', () => HttpResponse.json(matches)))
 }
 
+beforeEach(() => {
+  window.localStorage.clear()
+})
+
 afterEach(() => {
   vi.useRealTimers()
 })
@@ -228,7 +233,7 @@ describe('GroupFixtures', () => {
     renderGroupFixtures()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'No pudimos cargar el fixture de grupos. Intentá nuevamente en unos segundos.',
+      'No pudimos cargar el fixture de grupos. Si el servidor estaba dormido, esperá unos segundos y probá de nuevo.',
     )
     expect(screen.queryByText('DB down')).not.toBeInTheDocument()
   })
@@ -239,8 +244,72 @@ describe('GroupFixtures', () => {
     renderGroupFixtures()
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'No pudimos cargar el fixture de grupos. Intentá nuevamente en unos segundos.',
+      'No pudimos cargar el fixture de grupos. Si el servidor estaba dormido, esperá unos segundos y probá de nuevo.',
     )
+  })
+
+
+  it('uses the favorite group as initial selection and exposes an accessible toggle', async () => {
+    window.localStorage.setItem(STORAGE_KEYS.favoriteGroup, 'B')
+    mockMatchesResponse()
+
+    renderGroupFixtures()
+
+    expect(screen.getByRole('heading', { name: /partidos del grupo b/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/seleccioná un grupo/i)).toHaveValue('B')
+    expect(await screen.findByText('España')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /desmarcar grupo b como favorito/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  })
+
+  it('saves and clears the selected group as favorite', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse()
+
+    renderGroupFixtures()
+
+    const favoriteButton = screen.getByRole('button', { name: /marcar grupo a como favorito/i })
+    expect(favoriteButton).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(favoriteButton)
+
+    expect(window.localStorage.getItem(STORAGE_KEYS.favoriteGroup)).toBe('A')
+    expect(screen.getByRole('button', { name: /desmarcar grupo a como favorito/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await user.click(screen.getByRole('button', { name: /desmarcar grupo a como favorito/i }))
+
+    expect(window.localStorage.getItem(STORAGE_KEYS.favoriteGroup)).toBeNull()
+  })
+
+  it('retries loading matches from the error state', async () => {
+    const user = userEvent.setup()
+    let callCount = 0
+
+    server.use(
+      http.get('*/api/matches', () => {
+        callCount += 1
+
+        if (callCount === 1) {
+          return HttpResponse.json({ message: 'DB down' }, { status: 500 })
+        }
+
+        return HttpResponse.json([...groupAMatches, ...groupBMatches])
+      }),
+    )
+
+    renderGroupFixtures()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Fixture no disponible')
+
+    await user.click(screen.getByRole('button', { name: /reintentar/i }))
+
+    expect(await screen.findByText('México')).toBeInTheDocument()
+    expect(callCount).toBe(2)
   })
 
   it('opens the feedback modal when loading takes more than seven seconds', async () => {
@@ -258,6 +327,6 @@ describe('GroupFixtures', () => {
       vi.advanceTimersByTime(7000)
     })
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('El fixture está tardando un poco')
+    expect(screen.getByRole('dialog')).toHaveTextContent('El servidor está despertando')
   })
 })

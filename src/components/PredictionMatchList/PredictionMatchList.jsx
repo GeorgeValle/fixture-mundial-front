@@ -19,7 +19,7 @@ function PredictionMatchList({
         <h3 className={styles.title}>Partidos de fase de grupos</h3>
         <p className={styles.description}>
           Completá tus pronósticos antes del inicio de cada partido. Cuando haya
-          resultados oficiales, calcularemos tus puntos automáticamente.
+          resultados registrados, calcularemos tus puntos automáticamente.
         </p>
       </div>
 

@@ -11,11 +11,11 @@ function formatPredictionScore(prediction) {
 
 function formatOfficialScore(match) {
   if (match?.homeScore === null || match?.homeScore === undefined) {
-    return 'Resultado oficial pendiente'
+    return 'Resultado registrado pendiente'
   }
 
   if (match?.awayScore === null || match?.awayScore === undefined) {
-    return 'Resultado oficial pendiente'
+    return 'Resultado registrado pendiente'
   }
 
   return `${match.homeScore} - ${match.awayScore}`
@@ -29,7 +29,7 @@ function PredictionResultComparison({ match, prediction, scoreResult }) {
       <div className={styles.box}>
         <p className={styles.title}>Comparación</p>
         <p className={styles.text}>
-          Guardá tu predicción para compararla cuando haya resultado oficial.
+          Guardá tu predicción para compararla cuando haya resultado registrado.
         </p>
       </div>
     )
@@ -42,10 +42,10 @@ function PredictionResultComparison({ match, prediction, scoreResult }) {
         <div className={styles.scoreGrid}>
           <span>Tu predicción</span>
           <strong>{formatPredictionScore(prediction)}</strong>
-          <span>Resultado oficial</span>
+          <span>Resultado registrado</span>
           <strong>{formatOfficialScore(match)}</strong>
         </div>
-        <p className={styles.text}>{scoreResult?.reason ?? 'Resultado oficial pendiente'}</p>
+        <p className={styles.text}>{scoreResult?.reason ?? 'Resultado registrado pendiente'}</p>
       </div>
     )
   }
@@ -56,7 +56,7 @@ function PredictionResultComparison({ match, prediction, scoreResult }) {
       <div className={styles.scoreGrid}>
         <span>Tu predicción</span>
         <strong>{formatPredictionScore(prediction)}</strong>
-        <span>Resultado oficial</span>
+        <span>Resultado registrado</span>
         <strong>{formatOfficialScore(match)}</strong>
       </div>
       <p className={styles.points}>Puntos obtenidos: {scoreResult.points}</p>

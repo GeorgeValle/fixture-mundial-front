@@ -231,3 +231,31 @@
     width: 100%;
   }
 }
+
+.retryButton {
+  justify-self: start;
+  min-height: 2.75rem;
+  padding: 0 var(--space-5);
+  color: var(--color-surface);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-red));
+  border: 0;
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 950;
+  transition:
+    transform var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.retryButton:hover,
+.retryButton:focus-visible {
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.retryButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 56%, white);
+  outline-offset: 3px;
+}

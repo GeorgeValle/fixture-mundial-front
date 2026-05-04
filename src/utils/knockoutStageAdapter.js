@@ -295,7 +295,7 @@ function mergeMatch(skeletonMatch, backendMatch) {
     return {
       ...skeletonMatch,
       source: 'skeleton',
-      dataSourceLabel: 'Datos oficiales pendientes',
+      dataSourceLabel: 'Información recibida pendiente',
       homeTeam: null,
       awayTeam: null,
       homeScore: null,
@@ -318,7 +318,7 @@ function mergeMatch(skeletonMatch, backendMatch) {
   return {
     ...skeletonMatch,
     source: 'backend',
-    dataSourceLabel: 'Datos oficiales',
+    dataSourceLabel: 'Información recibida',
     backendId: backendMatch._id ?? null,
     date,
     stadium,
@@ -333,7 +333,7 @@ function mergeMatch(skeletonMatch, backendMatch) {
     hasRegularScore: hasRegularScore(backendMatch),
     hasPenaltyScore: hasPenaltyScore(backendMatch),
     winnerSide,
-    winnerLabel: winnerSide ? `Ganador oficial: ${getTeamName(winnerTeam)}` : '',
+    winnerLabel: winnerSide ? `Ganador registrado: ${getTeamName(winnerTeam)}` : '',
   }
 }
 

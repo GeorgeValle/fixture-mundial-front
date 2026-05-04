@@ -114,8 +114,8 @@ describe('KnockoutStage', () => {
     expect(screen.getByText('Canadá')).toBeInTheDocument()
     expect(screen.getByText('Datos parciales')).toBeInTheDocument()
     expect(screen.getByText('Ganador Partido 74')).toBeInTheDocument()
-    expect(screen.getAllByText('Datos oficiales').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Sin datos oficiales').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Información recibida').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Sin información recibida').length).toBeGreaterThan(0)
   })
 
   it('renders regular scores and penalties only from backend data', async () => {
@@ -135,7 +135,7 @@ describe('KnockoutStage', () => {
 
     expect(await screen.findByText('1 - 1')).toBeInTheDocument()
     expect(screen.getByText('Penales: 4 - 3')).toBeInTheDocument()
-    expect(screen.getByText('Ganador oficial: México')).toBeInTheDocument()
+    expect(screen.getByText('Ganador registrado: México')).toBeInTheDocument()
   })
 
   it('does not derive a winner when backend data is incomplete', async () => {
@@ -154,7 +154,7 @@ describe('KnockoutStage', () => {
     renderKnockoutStage()
 
     expect(await screen.findByText('1 - 1')).toBeInTheDocument()
-    expect(screen.queryByText(/Ganador oficial/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Ganador registrado/i)).not.toBeInTheDocument()
   })
 
   it('does not advance teams to later rounds without confirmed backend data for that later match', async () => {
@@ -245,7 +245,7 @@ describe('KnockoutStage', () => {
 
     renderKnockoutStage()
 
-    expect(screen.getByRole('heading', { name: /buscando datos oficiales del backend/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /buscando información de eliminatorias/i })).toBeInTheDocument()
     expect(screen.getByRole('status', { name: /cargando cuadro de eliminatorias/i })).toBeInTheDocument()
   })
 
@@ -264,7 +264,7 @@ describe('KnockoutStage', () => {
       vi.advanceTimersByTime(7000)
     })
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('Las eliminatorias están tardando un poco')
+    expect(screen.getByRole('dialog')).toHaveTextContent('El servidor está despertando')
   })
 
   it('shows a friendly error state and falls back to skeleton when the API fails', async () => {
@@ -274,7 +274,7 @@ describe('KnockoutStage', () => {
 
     renderKnockoutStage()
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Usamos el skeleton documentado')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Mostramos el cuadro base documentado')
     expect(screen.getByText('2º Grupo A')).toBeInTheDocument()
     expect(screen.queryByText('Database down')).not.toBeInTheDocument()
   })

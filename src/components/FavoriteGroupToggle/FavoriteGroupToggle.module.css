@@ -1,0 +1,68 @@
+.wrapper {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-surface) 86%, var(--color-gold));
+  border: 1px solid color-mix(in srgb, var(--color-gold) 34%, var(--color-border));
+  border-radius: var(--radius-pill);
+  box-shadow: 0 10px 24px rgba(6, 21, 47, 0.08);
+  cursor: pointer;
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+  transition:
+    transform var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+}
+
+.button:hover {
+  border-color: color-mix(in srgb, var(--color-gold) 62%, var(--color-border));
+  box-shadow: var(--shadow-card);
+  transform: translateY(-2px);
+}
+
+.button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 56%, white);
+  outline-offset: 3px;
+}
+
+.active {
+  color: var(--color-primary);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--color-gold) 42%, white),
+    color-mix(in srgb, var(--color-cyan) 16%, white)
+  );
+}
+
+.icon {
+  display: inline-grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  color: var(--color-gold);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius-pill);
+  text-shadow: 0 1px 0 rgba(6, 21, 47, 0.18);
+}
+
+.active .icon {
+  color: var(--color-primary);
+}
+
+.status {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 800;
+}

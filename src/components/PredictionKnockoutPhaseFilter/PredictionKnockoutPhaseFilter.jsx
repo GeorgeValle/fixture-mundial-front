@@ -21,7 +21,7 @@ function PredictionKnockoutPhaseFilter({ disabled = false, value, onChange }) {
         ))}
       </select>
       {disabled && (
-        <p className={styles.helper}>Se habilitará cuando estén definidos los cruces oficiales.</p>
+        <p className={styles.helper}>Se habilitará cuando estén definidos los cruces.</p>
       )}
     </section>
   )

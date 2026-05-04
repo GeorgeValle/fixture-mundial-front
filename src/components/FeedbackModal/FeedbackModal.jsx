@@ -1,10 +1,32 @@
+import { useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { closeFeedbackModal, selectFeedbackModal } from '../../features/ui/uiSlice'
 import styles from './FeedbackModal.module.css'
 
 function FeedbackModal() {
   const dispatch = useDispatch()
+  const closeButtonRef = useRef(null)
   const { isOpen, title, message, variant } = useSelector(selectFeedbackModal)
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined
+    }
+
+    closeButtonRef.current?.focus()
+
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        dispatch(closeFeedbackModal())
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [dispatch, isOpen])
 
   if (!isOpen) {
     return null
@@ -29,6 +51,7 @@ function FeedbackModal() {
         <button
           className={styles.button}
           onClick={() => dispatch(closeFeedbackModal())}
+          ref={closeButtonRef}
           type="button"
         >
           Entendido

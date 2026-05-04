@@ -2,10 +2,10 @@
 
 ## Current Status
 
-- Current block: Bloque 8 — Documentation and Final Review.
-- Last completed block: Bloque 7 — Prediction Fixture.
-- Goal: leave the project ready for GitHub, portfolio presentation and final technical review.
-- Manual validation status: Bloque 7 was manually validated by the user and approved.
+- Current block: Bloque 9 — Visual Polish, Accessibility and Production Readiness.
+- Last completed block: Bloque 8 — Documentation and Final Review.
+- Goal: improve final UX, accessibility, visual quality, installability and production presentation.
+- Manual validation status: Bloque 9 implementation in progress.
 
 ## Critical Execution Rules
 
@@ -113,8 +113,28 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - [x] Update page-specific documentation.
 - [x] Clean task board and documentation index.
 - [x] Align project requirements with current scope.
-- [ ] Optional future copy polish in visible UI.
-- [ ] Final QA Mode validation.
+- [x] Optional future copy polish in visible UI.
+- [x] Final QA Mode validation.
+
+
+### Bloque 9 — Visual Polish, Accessibility and Production Readiness
+
+- [x] Review `DESIGN.md` before visual changes.
+- [x] Document Block 9 scope and QA checklist.
+- [x] Increase Axios timeout to support slow server wake-up copy.
+- [x] Add human slow-server copy explaining wake-up can take up to 30 seconds.
+- [x] Add retry buttons to backend-powered error states.
+- [x] Replace visible technical copy such as backend/skeleton/placeholders where user-facing.
+- [x] Add favorite group persistence with localStorage.
+- [x] Use favorite group as initial group in `/grupos` and `/posiciones`.
+- [x] Add custom 404 page for route `*`.
+- [x] Polish cards, state containers, badges, headers and spacing.
+- [x] Add subtle decorative CSS/SVG-style details without harming readability.
+- [x] Improve accessibility for modals and new favorite/retry/404 buttons.
+- [x] Add basic installable PWA manifest, icons and theme color.
+- [x] Update favicon, title, meta description and Open Graph metadata.
+- [x] Add or update tests for 404, favorite group, retry/loading copy and key accessibility behaviors.
+- [ ] Final QA Mode validation after implementation.
 
 ## Documentation Index
 
@@ -129,6 +149,7 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - Prediction fixture: `docs/prediction-fixture.md`
 - Expanded backend reference: `docs/API-Backend-Mundial-2026.md`
 - Design system: `DESIGN.md`
+- Block 9 polish/readiness: `docs/block-9-polish.md`
 
 ## Final QA Checklist
 
@@ -169,8 +190,8 @@ TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test
 - [ ] `/predicciones` Predicciones.
 - [ ] Responsive mobile/tablet/desktop.
 - [ ] Loading states.
-- [ ] Delayed loading modal.
-- [ ] Error states.
+- [ ] Delayed loading modal and server wake-up copy.
+- [ ] Error states with retry buttons.
 - [ ] Empty states.
 - [ ] Textos visibles en español.
 - [ ] No raw technical backend errors in UI.

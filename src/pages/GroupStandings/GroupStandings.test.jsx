@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { configureStore } from '@reduxjs/toolkit'
@@ -6,6 +6,7 @@ import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
+import { STORAGE_KEYS } from '../../constants/storageKeys'
 import uiReducer from '../../features/ui/uiSlice'
 import { server } from '../../test/msw/server'
 import GroupStandings from './GroupStandings'
@@ -87,6 +88,10 @@ function mockStandingsResponse(data) {
   )
 }
 
+beforeEach(() => {
+  window.localStorage.clear()
+})
+
 afterEach(() => {
   vi.useRealTimers()
 })
@@ -114,7 +119,7 @@ describe('GroupStandings', () => {
     renderGroupStandings()
 
     expect(
-      screen.getByRole('heading', { name: /estamos buscando las tablas de grupos/i }),
+      screen.getByRole('heading', { name: /estamos preparando las tablas de grupos/i }),
     ).toBeInTheDocument()
     expect(screen.getByRole('status', { name: /cargando posiciones de grupos/i })).toBeInTheDocument()
   })
@@ -134,7 +139,7 @@ describe('GroupStandings', () => {
       vi.advanceTimersByTime(7000)
     })
 
-    expect(screen.getByRole('dialog')).toHaveTextContent('Las posiciones están tardando un poco')
+    expect(screen.getByRole('dialog')).toHaveTextContent('El servidor está despertando')
   })
 
   it('renders all groups returned by the backend', async () => {
@@ -195,6 +200,46 @@ describe('GroupStandings', () => {
     expect(
       screen.queryByRole('heading', { name: 'Posiciones del grupo A' }),
     ).not.toBeInTheDocument()
+  })
+
+
+  it('uses the favorite group as the initial focused standings group when available', async () => {
+    window.localStorage.setItem(STORAGE_KEYS.favoriteGroup, 'C')
+    mockStandingsResponse(createStandingsGroups())
+
+    renderGroupStandings()
+
+    const focusButton = await screen.findByRole('button', { name: /vista foco/i })
+    expect(focusButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText(/elegir grupo/i)).toHaveValue('C')
+    expect(screen.getByRole('heading', { name: 'Posiciones del grupo C' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Posiciones del grupo A' })).not.toBeInTheDocument()
+  })
+
+  it('retries loading standings from the error state', async () => {
+    const user = userEvent.setup()
+    let callCount = 0
+
+    server.use(
+      http.get('*/api/standings', () => {
+        callCount += 1
+
+        if (callCount === 1) {
+          return HttpResponse.json({ message: 'Database unavailable' }, { status: 500 })
+        }
+
+        return HttpResponse.json({ status: 'success', data: createStandingsGroups() })
+      }),
+    )
+
+    renderGroupStandings()
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Posiciones no disponibles')
+
+    await user.click(screen.getByRole('button', { name: /reintentar/i }))
+
+    expect(await screen.findByRole('heading', { name: 'Posiciones del grupo A' })).toBeInTheDocument()
+    expect(callCount).toBe(2)
   })
 
   it('renders a group table with team shields, columns and stats', async () => {

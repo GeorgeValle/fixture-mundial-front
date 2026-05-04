@@ -16,11 +16,11 @@ function KnockoutPredictionsClosedPanel({
       <h3 className={styles.title}>Eliminatorias aún no disponibles</h3>
       <p className={styles.text}>
         {hasRealKnockoutMatches
-          ? 'Hay cruces oficiales detectados, pero la carga de predicciones de eliminatorias se habilitará en una próxima etapa.'
-          : 'Las predicciones de eliminatorias se habilitarán cuando estén definidos los cruces oficiales.'}
+          ? 'Hay cruces definidos detectados, pero la carga de predicciones de eliminatorias se habilitará en una próxima etapa.'
+          : 'Las predicciones de eliminatorias se habilitarán cuando estén definidos los cruces.'}
       </p>
       <p className={styles.note}>
-        No se permiten predicciones sobre placeholders, cruces base, TBD ni equipos por definir.
+        No se permiten predicciones sobre cruces base, TBD ni equipos por definir.
       </p>
 
       {hasRealKnockoutMatches && (
