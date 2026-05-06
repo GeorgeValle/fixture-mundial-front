@@ -19,8 +19,8 @@
 
 .hero {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.78fr);
+  align-items: stretch;
   gap: var(--space-6);
   padding: var(--space-6);
 }
@@ -46,7 +46,68 @@
   position: relative;
   z-index: 1;
   display: grid;
+  align-content: center;
   gap: var(--space-3);
+}
+
+.favoriteSlot {
+  margin-top: var(--space-2);
+}
+
+.controlPanel {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+  padding: var(--space-4);
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid color-mix(in srgb, var(--color-cyan) 22%, var(--color-border));
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 36px rgba(6, 21, 47, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.heroStats,
+.summaryStats {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.heroStats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.heroStat,
+.summaryStats > div {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: var(--space-3);
+  background: color-mix(in srgb, var(--color-surface) 90%, var(--color-cyan));
+  border: 1px solid color-mix(in srgb, var(--color-border) 82%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.heroStats dt,
+.summaryStats dt {
+  color: var(--color-muted);
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.heroStats dd,
+.summaryStats dd {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  line-height: 1.3;
 }
 
 .kicker {
@@ -107,12 +168,15 @@
 }
 
 .summaryCard {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
+  gap: var(--space-5);
   padding: var(--space-5) var(--space-6);
+}
+
+.summaryStats {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .matchList {
@@ -121,14 +185,19 @@
 }
 
 @media (max-width: 760px) {
-  .hero {
+  .hero,
+  .summaryCard {
     grid-template-columns: 1fr;
     align-items: stretch;
     padding: var(--space-5);
   }
 
-  .stateCard,
-  .summaryCard {
+  .heroStats,
+  .summaryStats {
+    grid-template-columns: 1fr;
+  }
+
+  .stateCard {
     padding: var(--space-5);
   }
 }

@@ -7,6 +7,8 @@ export const uiInitialState = {
   feedbackVariant: 'info',
   isGlobalLoading: false,
   hasDelayedLoading: false,
+  isHomeTutorialOpen: false,
+  homeTutorialOpenSource: null,
 }
 
 const uiSlice = createSlice({
@@ -32,6 +34,14 @@ const uiSlice = createSlice({
     setDelayedLoading(state, action) {
       state.hasDelayedLoading = Boolean(action.payload)
     },
+    openHomeTutorial(state, action) {
+      state.isHomeTutorialOpen = true
+      state.homeTutorialOpenSource = action.payload?.source ?? 'manual'
+    },
+    closeHomeTutorial(state) {
+      state.isHomeTutorialOpen = false
+      state.homeTutorialOpenSource = null
+    },
   },
 })
 
@@ -40,6 +50,8 @@ export const {
   closeFeedbackModal,
   setGlobalLoading,
   setDelayedLoading,
+  openHomeTutorial,
+  closeHomeTutorial,
 } = uiSlice.actions
 
 export const selectUiState = (state) => state.ui
@@ -64,6 +76,11 @@ export const selectFeedbackModal = createSelector([selectUiState], (uiState) => 
   title: uiState.feedbackTitle,
   message: uiState.feedbackMessage,
   variant: uiState.feedbackVariant,
+}))
+
+export const selectHomeTutorial = createSelector([selectUiState], (uiState) => ({
+  isOpen: uiState.isHomeTutorialOpen,
+  source: uiState.homeTutorialOpenSource,
 }))
 
 export default uiSlice.reducer

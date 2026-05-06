@@ -3,6 +3,12 @@ import styles from './PredictionUserForm.module.css'
 function PredictionUserForm({ error, statusMessage, userName, onChange, onSubmit }) {
   return (
     <form className={styles.form} onSubmit={onSubmit}>
+      <div className={styles.intro}>
+        <p className={styles.kicker}>Participante</p>
+        <h3 className={styles.title}>Configurá tu perfil</h3>
+        <p className={styles.text}>Este nombre identifica el resumen imprimible guardado en este navegador.</p>
+      </div>
+
       <div className={styles.field}>
         <label className={styles.label} htmlFor="prediction-user-name">
           Tu nombre

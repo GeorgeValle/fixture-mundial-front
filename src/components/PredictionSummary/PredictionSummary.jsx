@@ -1,6 +1,8 @@
 import styles from './PredictionSummary.module.css'
 
-function SummaryCard({ helpLabel, label, onHelpClick, value }) {
+function SummaryCard({ helpLabel, label, maxValue, onHelpClick, progressValue, value }) {
+  const progressPercent = maxValue ? Math.min(Math.max((progressValue / maxValue) * 100, 0), 100) : null
+
   return (
     <div>
       <span className={styles.labelRow}>
@@ -12,6 +14,11 @@ function SummaryCard({ helpLabel, label, onHelpClick, value }) {
         )}
       </span>
       <strong>{value}</strong>
+      {progressPercent !== null && (
+        <span className={styles.progressTrack} aria-hidden="true">
+          <span className={styles.progressFill} style={{ width: `${progressPercent}%` }} />
+        </span>
+      )}
     </div>
   )
 }
@@ -29,27 +36,34 @@ function PredictionSummary({
 }) {
   return (
     <section className={styles.summary} aria-label="Resumen de predicciones">
-      <SummaryCard label="PARTICIPANTE" value={userName || 'Participante pendiente'} />
-      <SummaryCard label="PREDICCIONES DE GRUPO" value={`${groupPredictionsCount} /72`} />
+      <SummaryCard label="Participante" value={userName || 'Participante pendiente'} />
+      <SummaryCard
+        label="Progreso de grupos"
+        maxValue={72}
+        progressValue={groupPredictionsCount}
+        value={`${groupPredictionsCount} /72`}
+      />
       <SummaryCard
         helpLabel="Ver explicación de puntos de grupo"
-        label="PUNTOS DE GRUPO OBTENIDOS"
+        label="Puntos de grupo obtenidos"
         value={groupPoints}
         onHelpClick={onOpenGroupPointsHelp}
       />
       <SummaryCard
-        label="PREDICCIONES DE ELIMINATORIAS"
+        label="Progreso de eliminatorias"
+        maxValue={32}
+        progressValue={knockoutPredictionsCount}
         value={`${knockoutPredictionsCount} /32`}
       />
       <SummaryCard
         helpLabel="Ver explicación de puntos de eliminatorias"
-        label="PUNTOS DE ELIMINATORIAS OBTENIDOS"
+        label="Puntos de eliminatorias obtenidos"
         value={knockoutPoints}
         onHelpClick={onOpenKnockoutPointsHelp}
       />
       <SummaryCard
         helpLabel="Ver explicación de puntos totales"
-        label="PUNTOS TOTALES"
+        label="Puntos totales"
         value={totalPoints}
         onHelpClick={onOpenTotalPointsHelp}
       />

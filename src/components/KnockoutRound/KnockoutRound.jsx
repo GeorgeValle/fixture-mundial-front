@@ -9,7 +9,10 @@ function KnockoutRound({ matches, roundLabel }) {
         <h3 className={styles.roundTitle} id={`round-${roundLabel.replaceAll(' ', '-').toLowerCase()}`}>
           {roundLabel}
         </h3>
-        <span className={styles.countBadge}>{matches.length} partidos</span>
+        <div className={styles.roundBadges}>
+          <span className={styles.countBadge}>{matches.length} partidos</span>
+          <span className={styles.pendingBadge}>Información pendiente</span>
+        </div>
       </div>
 
       <div className={styles.matchList}>

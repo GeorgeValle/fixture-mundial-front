@@ -645,12 +645,18 @@ function PredictionFixture() {
   return (
     <section className={styles.page}>
       <header className={styles.hero}>
-        <p className={styles.kicker}>PREDICCIONES</p>
-        <h2 className={styles.title}>Predicciones</h2>
-        <p className={styles.description}>
-          Cargá tu nombre, guardá tus pronósticos y comparalos con los resultados
-          registrados cuando los partidos terminen.
-        </p>
+        <div className={styles.heroContent}>
+          <p className={styles.kicker}>Predicciones</p>
+          <h2 className={styles.title}>Tu tablero de predicciones</h2>
+          <p className={styles.description}>
+            Completá tus pronósticos y comparalos cuando los resultados estén registrados.
+          </p>
+        </div>
+        <div className={styles.heroStats} aria-label="Resumen rápido de predicciones">
+          <span>Progreso de grupos · {groupPredictionsCount} /72</span>
+          <span>Progreso de eliminatorias · {knockoutPredictionsCount} /32</span>
+          <strong>Puntos acumulados · {totalPoints}</strong>
+        </div>
       </header>
 
       {hasCorruptStorage && <PredictionStorageResetNotice onReset={handleResetStorage} />}
@@ -677,10 +683,9 @@ function PredictionFixture() {
 
       <section className={styles.printActions} aria-label="Acciones de impresión">
         <div>
-          <h3 className={styles.printTitle}>Resumen de predicciones</h3>
+          <h3 className={styles.printTitle}>Resumen imprimible</h3>
           <p className={styles.printText}>
-            Imprimí tus pronósticos visibles con el resumen, los puntos y los
-            resultados registrados disponibles.
+            Imprimí tus pronósticos visibles con el resumen y los resultados disponibles.
           </p>
         </div>
         <button className={styles.printButton} type="button" onClick={handlePrintPredictions}>
@@ -738,10 +743,10 @@ function PredictionFixture() {
 
           <section className={styles.resetActions} aria-label="Controles para borrar predicciones">
             <div>
-              <h3 className={styles.resetTitle}>Borrar predicciones</h3>
+              <h3 className={styles.resetTitle}>Zona de borrado</h3>
               <p className={styles.resetText}>
-                Podés borrar solo predicciones editables. Las predicciones de partidos
-                iniciados o finalizados se conservan.
+                Estas acciones solo eliminan predicciones editables guardadas en este navegador.
+                Las predicciones de partidos iniciados o finalizados se conservan.
               </p>
             </div>
             <div className={styles.resetButtonGroup}>

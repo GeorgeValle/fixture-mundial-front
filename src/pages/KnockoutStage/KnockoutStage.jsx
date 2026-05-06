@@ -96,6 +96,10 @@ function KnockoutStage() {
       ? matches
       : matches.filter((match) => match.roundKey === selectedRound)
   const visibleRounds = groupKnockoutMatchesByRound(visibleMatches)
+  const selectedRoundLabel =
+    ROUND_FILTER_OPTIONS.find((option) => option.roundKey === selectedRound)?.roundLabel ??
+    'Ronda seleccionada'
+  const pendingVisibleMatchesCount = visibleMatches.filter((match) => match.source !== 'backend').length
 
   function handleRetryKnockoutMatches() {
     setIsLoading(true)
@@ -106,17 +110,18 @@ function KnockoutStage() {
   return (
     <section className={styles.page}>
       <header className={styles.hero}>
-        <div>
+        <div className={styles.heroContent}>
           <p className={styles.kicker}>Eliminatorias</p>
-          <h2 className={styles.title}>Fase eliminatoria</h2>
+          <h2 className={styles.title}>Camino a la final</h2>
           <p className={styles.description}>
-            Visualizá el camino hacia la final con información recibida cuando esté disponible y
-            equipos por definir mientras se completan los cruces.
+            Seguí cada ronda eliminatoria cuando los clasificados estén definidos. Los cruces
+            se completarán con la información recibida.
           </p>
         </div>
         <div className={styles.heroBadges} aria-label="Estado de datos del cuadro">
-          <span className={styles.badge}>Información recibida</span>
           <span className={styles.badge}>Cuadro base</span>
+          <span className={styles.badge}>Información pendiente</span>
+          {summary.hasBackendData && <span className={styles.badge}>Información recibida</span>}
         </div>
       </header>
 
@@ -144,13 +149,16 @@ function KnockoutStage() {
       )}
 
       {!isLoading && !hasError && !summary.hasBackendData && (
-        <section className={styles.stateCard}>
-          <p className={styles.kicker}>Información pendiente</p>
-          <h3 className={styles.stateTitle}>Equipos por definir</h3>
-          <p className={styles.stateText}>
-            Todavía no hay cruces reales de eliminatorias disponibles. Mostramos el cuadro
-            base con equipos por definir sin inventar clasificados ni resultados.
-          </p>
+        <section className={`${styles.stateCard} ${styles.pendingPanel}`}>
+          <span className={styles.stateIcon} aria-hidden="true">⌛</span>
+          <div>
+            <p className={styles.kicker}>Información pendiente</p>
+            <h3 className={styles.stateTitle}>Equipos por definir</h3>
+            <p className={styles.stateText}>
+              Todavía no hay cruces reales de eliminatorias disponibles. Mostramos el cuadro
+              base con equipos por definir sin inventar clasificados ni resultados.
+            </p>
+          </div>
         </section>
       )}
 
@@ -167,7 +175,34 @@ function KnockoutStage() {
 
       {!isLoading && (
         <>
-          <section className={styles.controls} aria-label="Filtro de rondas">
+          <section className={styles.controls} aria-label="Rondas eliminatorias">
+            <div className={styles.controlsIntro}>
+              <p className={styles.kicker}>Rondas eliminatorias</p>
+              <h3 className={styles.controlTitle}>Elegí una ronda para revisar sus partidos.</h3>
+              <p className={styles.controlText}>
+                {selectedRound === ROUND_FILTER_ALL
+                  ? `${visibleMatches.length} partidos en el cuadro completo.`
+                  : `${selectedRoundLabel}: ${visibleMatches.length} partidos.`}{' '}
+                {pendingVisibleMatchesCount > 0 && `${pendingVisibleMatchesCount} con información pendiente.`}
+              </p>
+            </div>
+
+            <div className={styles.roundChips} role="group" aria-label="Seleccionar ronda">
+              {ROUND_FILTER_OPTIONS.map((option) => (
+                <button
+                  aria-pressed={selectedRound === option.roundKey}
+                  className={`${styles.roundChip} ${
+                    selectedRound === option.roundKey ? styles.roundChipActive : ''
+                  }`}
+                  key={option.roundKey}
+                  onClick={() => setSelectedRound(option.roundKey)}
+                  type="button"
+                >
+                  {option.roundLabel}
+                </button>
+              ))}
+            </div>
+
             <label className={styles.selectLabel} htmlFor="knockout-round-selector">
               Filtrar por ronda
             </label>

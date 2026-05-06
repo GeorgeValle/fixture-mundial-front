@@ -173,6 +173,16 @@ Forbidden commands:
 - `corepack npm`
 - Any Windows package-manager wrapper
 
+## Memory / Engram
+
+Codex may have access to Engram persistent memory through MCP.
+
+Recommended behavior:
+- At the start of a session, use Engram context when available.
+- Save relevant project decisions, fixes, environment findings, and workflow lessons after significant work.
+- Do not store secrets, tokens, credentials, or sensitive personal data.
+- If Engram reports an ambiguous project, ask the user which project to use instead of guessing.
+
 Agents must not install dependencies unless the task explicitly requires them.
 
 When adding dependencies, agents must explain why the dependency is needed.

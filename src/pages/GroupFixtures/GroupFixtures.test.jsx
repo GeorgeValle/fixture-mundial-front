@@ -212,6 +212,32 @@ describe('GroupFixtures', () => {
     expect(screen.queryByText('México')).not.toBeInTheDocument()
   })
 
+
+  it('shows a safe group summary when match data is incomplete', async () => {
+    mockMatchesResponse([
+      {
+        _id: 'a-incomplete',
+        homeTeam: { _id: 'home-incomplete', group: 'A' },
+        awayTeam: null,
+        stadium: null,
+        date: null,
+        stage: 'GRUPO A',
+        status: 'PENDING',
+        homeScore: null,
+        awayScore: null,
+        homePenaltyScore: null,
+        awayPenaltyScore: null,
+      },
+    ])
+
+    renderGroupFixtures()
+
+    expect(await screen.findByRole('heading', { name: /vista cronológica del grupo/i })).toBeInTheDocument()
+    expect(screen.getAllByText('Partidos programados')[0]).toBeInTheDocument()
+    expect(screen.getAllByText('Por confirmar').length).toBeGreaterThan(0)
+    expect(screen.getByText('Fechas por confirmar')).toBeInTheDocument()
+  })
+
   it('shows a friendly placeholder when scores are null', async () => {
     mockMatchesResponse()
 
