@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
+import { MemoryRouter } from 'react-router-dom'
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
-import uiReducer from '../../features/ui/uiSlice'
+import { STORAGE_KEYS } from '../../constants/storageKeys'
+import uiReducer, { uiInitialState } from '../../features/ui/uiSlice'
 import { server } from '../../test/msw/server'
 import Home from './Home'
 
@@ -55,13 +57,25 @@ const nextMatch = createDailyMatch({
   date: '2026-06-12T21:00:00.000Z',
 })
 
-function renderHome({ includeModal = false } = {}) {
-  const store = configureStore({ reducer: { ui: uiReducer } })
+function renderHome({ includeModal = false, preloadedUiState, tutorialSeen = true } = {}) {
+  if (tutorialSeen) {
+    window.localStorage.setItem(STORAGE_KEYS.homeTutorialSeen, 'true')
+  } else {
+    window.localStorage.removeItem(STORAGE_KEYS.homeTutorialSeen)
+  }
+
+  const store = configureStore({
+    preloadedState: preloadedUiState ? { ui: preloadedUiState } : undefined,
+    reducer: { ui: uiReducer },
+  })
 
   return render(
     <Provider store={store}>
-      <Home />
-      {includeModal && <FeedbackModal />}
+      <MemoryRouter initialEntries={['/']}>
+        <span data-tour="navbar-menu" />
+        <Home />
+        {includeModal && <FeedbackModal />}
+      </MemoryRouter>
     </Provider>,
   )
 }
@@ -79,6 +93,7 @@ function mockDailyScheduleResponse(schedule) {
 
 afterEach(() => {
   vi.useRealTimers()
+  window.localStorage.clear()
 })
 
 describe('Home', () => {
@@ -94,6 +109,27 @@ describe('Home', () => {
     ).toBeInTheDocument()
     expect(screen.getByText('Proyecto de portfolio')).toBeInTheDocument()
     expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
+  })
+
+
+  it('renders accessible quick links with the expected routes and keeps the tour target', async () => {
+    mockDailyScheduleResponse({ today: [], next: [], nextDate: null })
+
+    const { container } = renderHome()
+
+    expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
+    expect(container.querySelector('[data-tour="home-sections"]')).toBeInTheDocument()
+
+    expect(screen.getByRole('link', { name: 'Ir al fixture' })).toHaveAttribute('href', '/grupos')
+    expect(screen.getByRole('link', { name: 'Ver tablas' })).toHaveAttribute('href', '/posiciones')
+    expect(screen.getByRole('link', { name: 'Ver eliminatorias' })).toHaveAttribute(
+      'href',
+      '/eliminatorias',
+    )
+    expect(screen.getByRole('link', { name: 'Hacer predicciones' })).toHaveAttribute(
+      'href',
+      '/predicciones',
+    )
   })
 
   it('shows a loading state while the daily schedule is loading', () => {
@@ -237,5 +273,93 @@ describe('Home', () => {
     })
 
     expect(screen.getByRole('dialog')).toHaveTextContent('El servidor está despertando')
+  })
+
+  it('opens the Home tutorial on first visit and persists it when finished', async () => {
+    const user = userEvent.setup()
+    mockDailyScheduleResponse({ today: [], next: [], nextDate: null })
+
+    renderHome({ tutorialSeen: false })
+
+    expect(await screen.findByRole('dialog', { name: /bienvenido al fixture/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    expect(screen.getByRole('dialog', { name: /abrí el menú desde la pelota/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Atrás' }))
+    expect(screen.getByRole('dialog', { name: /bienvenido al fixture/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await user.click(screen.getByRole('button', { name: 'Siguiente' }))
+    await user.click(screen.getByRole('button', { name: 'Finalizar' }))
+
+    expect(screen.queryByRole('dialog', { name: /todo listo/i })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(STORAGE_KEYS.homeTutorialSeen)).toBe('true')
+  })
+
+  it('closes and persists the Home tutorial with Escape', async () => {
+    const user = userEvent.setup()
+    mockDailyScheduleResponse({ today: [], next: [], nextDate: null })
+
+    renderHome({ tutorialSeen: false })
+
+    expect(await screen.findByRole('dialog', { name: /bienvenido al fixture/i })).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog', { name: /bienvenido al fixture/i })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(STORAGE_KEYS.homeTutorialSeen)).toBe('true')
+  })
+
+  it('closes and persists the Home tutorial when omitted', async () => {
+    const user = userEvent.setup()
+    mockDailyScheduleResponse({ today: [], next: [], nextDate: null })
+
+    renderHome({ tutorialSeen: false })
+
+    expect(await screen.findByRole('dialog', { name: /bienvenido al fixture/i })).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Omitir' }))
+
+    expect(screen.queryByRole('dialog', { name: /bienvenido al fixture/i })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(STORAGE_KEYS.homeTutorialSeen)).toBe('true')
+  })
+
+  it('does not auto-open the Home tutorial while the daily schedule is loading', () => {
+    server.use(
+      http.get('*/api/matches/schedule/daily', async () => {
+        await delay(200)
+        return HttpResponse.json({ status: 'success', data: { today: [], next: [], nextDate: null } })
+      }),
+    )
+
+    renderHome({ tutorialSeen: false })
+
+    expect(screen.getByRole('heading', { name: /cargando partidos/i })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: /bienvenido al fixture/i })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(STORAGE_KEYS.homeTutorialSeen)).toBeNull()
+  })
+
+  it('does not auto-open the Home tutorial while a feedback modal is open', async () => {
+    mockDailyScheduleResponse({ today: [], next: [], nextDate: null })
+
+    renderHome({
+      includeModal: true,
+      preloadedUiState: {
+        ...uiInitialState,
+        isFeedbackModalOpen: true,
+        feedbackTitle: 'Carga activa',
+        feedbackMessage: 'Esperá a que termine la carga.',
+        feedbackVariant: 'info',
+      },
+      tutorialSeen: false,
+    })
+
+    expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
+    expect(screen.getByRole('dialog', { name: /carga activa/i })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: /bienvenido al fixture/i })).not.toBeInTheDocument()
+    expect(window.localStorage.getItem(STORAGE_KEYS.homeTutorialSeen)).toBeNull()
   })
 })

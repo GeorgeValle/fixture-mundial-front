@@ -167,6 +167,8 @@ describe('GroupStandings', () => {
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo A' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo B' })).toBeInTheDocument()
     expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/vista general muestra todos los grupos/i)).toBeInTheDocument()
+    expect(screen.getByText(/vista foco permite revisar un grupo en detalle/i)).toBeInTheDocument()
   })
 
   it('switches to Vista foco and changes the selected group', async () => {
@@ -196,6 +198,7 @@ describe('GroupStandings', () => {
 
     await user.selectOptions(groupSelector, 'B')
 
+    expect(screen.getByText('Grupo B seleccionado')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo B' })).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Posiciones del grupo A' }),

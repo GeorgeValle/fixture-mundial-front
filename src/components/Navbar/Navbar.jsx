@@ -1,13 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { NavLink } from 'react-router-dom'
+import soccerBallIcon from '../../assets/icons/soccerballnoshadow.svg'
+import whistleIcon from '../../assets/icons/silbato-web.svg'
 import { NAV_ITEMS } from '../../constants/routes'
+import {
+  openHomeTutorial,
+  selectFeedbackModal,
+  selectLoadingState,
+} from '../../features/ui/uiSlice'
 import styles from './Navbar.module.css'
 
 const MENU_ID = 'main-football-menu'
 
 function Navbar() {
+  const dispatch = useDispatch()
+  const { isOpen: isFeedbackModalOpen } = useSelector(selectFeedbackModal)
+  const { isGlobalLoading, hasDelayedLoading } = useSelector(selectLoadingState)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const navRef = useRef(null)
+  const isTutorialBlocked = isGlobalLoading || hasDelayedLoading || isFeedbackModalOpen
 
   useEffect(() => {
     function handlePointerDown(event) {
@@ -31,6 +43,15 @@ function Navbar() {
     }
   }, [])
 
+  function handleOpenTutorial() {
+    if (isTutorialBlocked) {
+      return
+    }
+
+    setIsMenuOpen(false)
+    dispatch(openHomeTutorial({ source: 'manual' }))
+  }
+
   return (
     <header className={styles.header}>
       <div
@@ -47,12 +68,16 @@ function Navbar() {
             aria-expanded={isMenuOpen}
             aria-label={isMenuOpen ? 'Cerrar menú principal' : 'Abrir menú principal'}
             className={`${styles.ballButton} ${isMenuOpen ? styles.ballButtonOpen : ''}`}
+            data-tour="navbar-menu"
             onClick={() => setIsMenuOpen((currentValue) => !currentValue)}
             type="button"
           >
-            <span className={styles.ball} aria-hidden="true">
-              <span className={styles.ballCore}></span>
-            </span>
+            <img
+              alt=""
+              aria-hidden="true"
+              className={styles.ballIcon}
+              src={soccerBallIcon}
+            />
           </button>
 
           <nav
@@ -80,11 +105,27 @@ function Navbar() {
           </nav>
         </div>
 
-        <div>
+        <div className={styles.brandCopy}>
           <p className={styles.eyebrow}>Seguimiento del Mundial</p>
           <h1 className={styles.title}>Fixture Mundial 2026</h1>
           <p className={styles.subtitle}>Fixture, tablas, eliminatorias y predicciones</p>
         </div>
+
+        <button
+          aria-label="Ver tutorial de la app"
+          className={styles.helpButton}
+          disabled={isTutorialBlocked}
+          onClick={handleOpenTutorial}
+          type="button"
+        >
+          <img
+            alt=""
+            aria-hidden="true"
+            className={styles.helpIcon}
+            src={whistleIcon}
+          />
+          <span>Ver tutorial</span>
+        </button>
       </div>
     </header>
   )

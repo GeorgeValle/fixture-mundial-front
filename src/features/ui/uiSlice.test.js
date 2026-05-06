@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import uiReducer, {
   closeFeedbackModal,
+  closeHomeTutorial,
+  openHomeTutorial,
   openFeedbackModal,
   selectDelayedLoading,
+  selectHomeTutorial,
   setDelayedLoading,
   setGlobalLoading,
   selectFeedbackModal,
@@ -65,5 +68,19 @@ describe('uiSlice', () => {
       isGlobalLoading: true,
       hasDelayedLoading: true,
     })
+  })
+
+  it('opens and closes the Home tutorial with a serializable source', () => {
+    const openState = uiReducer(uiInitialState, openHomeTutorial({ source: 'manual' }))
+    const closedState = uiReducer(openState, closeHomeTutorial())
+
+    expect(openState.isHomeTutorialOpen).toBe(true)
+    expect(openState.homeTutorialOpenSource).toBe('manual')
+    expect(selectHomeTutorial({ ui: openState })).toEqual({
+      isOpen: true,
+      source: 'manual',
+    })
+    expect(closedState.isHomeTutorialOpen).toBe(false)
+    expect(closedState.homeTutorialOpenSource).toBeNull()
   })
 })

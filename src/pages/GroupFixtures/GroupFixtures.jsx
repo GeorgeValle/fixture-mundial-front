@@ -13,7 +13,7 @@ import {
 import { getMatches } from '../../services/matches/matchesService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
-import { sortMatchesByDate } from '../../utils/dateAdapter'
+import { formatDisplayDate, sortMatchesByDate } from '../../utils/dateAdapter'
 import styles from './GroupFixtures.module.css'
 
 const FRIENDLY_ERROR_MESSAGE =
@@ -30,6 +30,70 @@ function getMatchKey(match, index) {
 function getMatchesForGroup(matches, selectedGroup) {
   const selectedStage = getGroupStageName(selectedGroup)
   return sortMatchesByDate(matches.filter((match) => match.stage === selectedStage))
+}
+
+
+function getTeamName(team) {
+  return typeof team?.name === 'string' && team.name.trim() ? team.name.trim() : ''
+}
+
+function getStadiumName(stadium) {
+  return typeof stadium?.name === 'string' && stadium.name.trim() ? stadium.name.trim() : ''
+}
+
+function getValidMatchDates(matches) {
+  return matches
+    .map((match) => match?.date)
+    .filter((value) => value instanceof Date || typeof value === 'string' || typeof value === 'number')
+    .map((value) => new Date(value))
+    .filter((date) => !Number.isNaN(date.getTime()))
+}
+
+function getDateRangeLabel(matches) {
+  const dates = getValidMatchDates(matches)
+
+  if (dates.length === 0) {
+    return 'Fechas por confirmar'
+  }
+
+  const firstDate = dates[0]
+  const lastDate = dates[dates.length - 1]
+
+  if (firstDate.toDateString() === lastDate.toDateString()) {
+    return formatDisplayDate(firstDate)
+  }
+
+  return `${formatDisplayDate(firstDate)} — ${formatDisplayDate(lastDate)}`
+}
+
+function getGroupSummary(matches) {
+  const teams = new Set()
+  const stadiums = new Set()
+
+  matches.forEach((match) => {
+    const homeTeam = getTeamName(match?.homeTeam)
+    const awayTeam = getTeamName(match?.awayTeam)
+    const stadium = getStadiumName(match?.stadium)
+
+    if (homeTeam) {
+      teams.add(homeTeam)
+    }
+
+    if (awayTeam) {
+      teams.add(awayTeam)
+    }
+
+    if (stadium) {
+      stadiums.add(stadium)
+    }
+  })
+
+  return {
+    matchesCount: matches.length,
+    teamsCount: teams.size,
+    stadiumsCount: stadiums.size,
+    dateRangeLabel: getDateRangeLabel(matches),
+  }
 }
 
 function GroupFixtures() {
@@ -102,6 +166,7 @@ function GroupFixtures() {
   }, [dispatch, retryCount])
 
   const selectedMatches = getMatchesForGroup(matches, selectedGroup)
+  const groupSummary = getGroupSummary(selectedMatches)
 
   function handleRetryMatches() {
     setIsLoading(true)
@@ -116,13 +181,31 @@ function GroupFixtures() {
           <p className={styles.kicker}>Fixture por grupo</p>
           <h2 className={styles.title}>Partidos del grupo {selectedGroup}</h2>
           <p className={styles.description}>
-            Elegí un grupo y consultá sus seis partidos con escudos, sedes, fechas y
-            marcadores cuando estén disponibles.
+            Elegí un grupo para revisar sus partidos, sedes y marcadores en una vista
+            cronológica del grupo.
           </p>
-          <FavoriteGroupToggle group={selectedGroup} />
+          <div className={styles.favoriteSlot}>
+            <FavoriteGroupToggle group={selectedGroup} />
+          </div>
         </div>
 
-        <GroupSelector value={selectedGroup} onChange={setSelectedGroup} />
+        <div className={styles.controlPanel} aria-label={`Panel de control del grupo ${selectedGroup}`}>
+          <GroupSelector value={selectedGroup} onChange={setSelectedGroup} />
+          <dl className={styles.heroStats} aria-label={`Resumen del grupo ${selectedGroup}`}>
+            <div className={styles.heroStat}>
+              <dt>Partidos programados</dt>
+              <dd>{groupSummary.matchesCount}</dd>
+            </div>
+            <div className={styles.heroStat}>
+              <dt>Selecciones</dt>
+              <dd>{groupSummary.teamsCount || 'Por confirmar'}</dd>
+            </div>
+            <div className={styles.heroStat}>
+              <dt>Sedes disponibles</dt>
+              <dd>{groupSummary.stadiumsCount || 'Por confirmar'}</dd>
+            </div>
+          </dl>
+        </div>
       </header>
 
       {isLoading && (
@@ -164,9 +247,25 @@ function GroupFixtures() {
       {!isLoading && !hasError && selectedMatches.length > 0 && (
         <section className={styles.fixtures} aria-label={`Partidos del grupo ${selectedGroup}`}>
           <div className={styles.summaryCard}>
-            <p className={styles.kicker}>Grupo {selectedGroup}</p>
-            <h3 className={styles.stateTitle}>{selectedMatches.length} partidos</h3>
-            <p className={styles.stateText}>Ordenados por fecha y hora del encuentro.</p>
+            <div>
+              <p className={styles.kicker}>Grupo {selectedGroup}</p>
+              <h3 className={styles.stateTitle}>Vista cronológica del grupo</h3>
+              <p className={styles.stateText}>Ordenados por fecha y hora del encuentro.</p>
+            </div>
+            <dl className={styles.summaryStats} aria-label={`Detalle del grupo ${selectedGroup}`}>
+              <div>
+                <dt>Rango de fechas</dt>
+                <dd>{groupSummary.dateRangeLabel}</dd>
+              </div>
+              <div>
+                <dt>Partidos programados</dt>
+                <dd>{groupSummary.matchesCount}</dd>
+              </div>
+              <div>
+                <dt>Selecciones</dt>
+                <dd>{groupSummary.teamsCount || 'Por confirmar'}</dd>
+              </div>
+            </dl>
           </div>
 
           <div className={styles.matchList}>

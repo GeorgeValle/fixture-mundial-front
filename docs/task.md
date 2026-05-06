@@ -2,10 +2,10 @@
 
 ## Current Status
 
-- Current block: Bloque 9 — Visual Polish, Accessibility and Production Readiness.
-- Last completed block: Bloque 8 — Documentation and Final Review.
-- Goal: improve final UX, accessibility, visual quality, installability and production presentation.
-- Manual validation status: Bloque 9 implementation in progress.
+- Current block: none — Bloque 10 closed after final QA.
+- Last completed block: Bloque 10 — Onboarding, Navbar and Progressive UI Polish.
+- Goal: keep the completed Block 10 scope stable until the next approved block.
+- Manual validation status: Bloque 10 Parte 1 and Parte 2 validated manually by the user. Bloque 10 Parte 3 passed automated validation. Final QA for Block 10 passed.
 
 ## Critical Execution Rules
 
@@ -134,7 +134,43 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - [x] Add basic installable PWA manifest, icons and theme color.
 - [x] Update favicon, title, meta description and Open Graph metadata.
 - [x] Add or update tests for 404, favorite group, retry/loading copy and key accessibility behaviors.
-- [ ] Final QA Mode validation after implementation.
+- [x] Final QA Mode validation after implementation.
+
+
+### Bloque 10 — Onboarding, Navbar and Progressive UI Polish
+
+- [x] Review `DESIGN.md`, `docs/task.md` and Block 9 documentation before visual changes.
+- [x] Verify WSL Node/pnpm runtime before implementation.
+- [x] Verify SVG asset filenames and references.
+- [x] Normalize stadium illustration filename to lowercase when confirmed unused.
+- [x] Create Block 10 documentation.
+- [x] Implement Part 1 — Onboarding, Navbar and SVG Assets.
+- [x] Add Home first-visit tutorial with localStorage persistence.
+- [x] Add manual `Ver tutorial` entry point from Navbar.
+- [x] Replace Navbar ball visual with `soccerballnoshadow.svg` while preserving menu logic.
+- [x] Use `silbato-web.svg` for the tutorial/help button.
+- [x] Preserve `aria-label`, `aria-expanded`, `aria-controls`, Escape behavior and focus-visible states.
+- [x] Add tests for Part 1 behavior.
+- [x] Run final validation for Part 1.
+- [x] Fix manual validation issue where the Home tutorial rendered below page elements and blocked/failed button clicks.
+- [x] Fix second manual validation issue: align spotlight to real `data-tour` targets, avoid panel/target overlap and prevent tutorial from competing with feedback/loading overlays.
+- [x] Fix third manual validation issue: keep the `home-sections` tutorial step stable with fixed panel placement and conservative scroll.
+- [x] User manual validation of corrected Part 1 tutorial UI.
+- [x] Implement Part 2 — Home, Group Fixtures and Standings Refinement.
+- [x] Convert Home chips into real quick links.
+- [x] Refine Home hero visual balance.
+- [x] Refine `/grupos` top control panel and safe group summary.
+- [x] Refine `/posiciones` hero and standings control panel.
+- [x] Add/update Part 2 tests.
+- [x] Implement Part 3 — Knockout, Predictions, Consistency and Tests.
+- [x] Refine `/eliminatorias` as Camino a la final without inventing data.
+- [x] Add accessible knockout round chips synchronized with the select filter.
+- [x] Refine `/predicciones` as a predictions dashboard without changing scoring/storage.
+- [x] Apply controlled consistency polish for chips, badges, cards, focus states and danger zone in Part 3 scope.
+- [x] Add/update Part 3 tests.
+- [x] Block 10 ready for final QA review.
+- [x] Run final QA validation for Block 10.
+- [x] Close Block 10.
 
 ## Documentation Index
 
@@ -150,6 +186,7 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - Expanded backend reference: `docs/API-Backend-Mundial-2026.md`
 - Design system: `DESIGN.md`
 - Block 9 polish/readiness: `docs/block-9-polish.md`
+- Block 10 onboarding/UI polish: `docs/block-10-onboarding-and-ui-polish.md`
 
 ## Final QA Checklist
 

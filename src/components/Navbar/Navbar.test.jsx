@@ -1,15 +1,27 @@
 import { describe, expect, it } from 'vitest'
+import { Provider } from 'react-redux'
+import { configureStore } from '@reduxjs/toolkit'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import uiReducer, { selectHomeTutorial, uiInitialState } from '../../features/ui/uiSlice'
 import Navbar from './Navbar'
 
-function renderNavbar(initialPath = '/') {
-  return render(
-    <MemoryRouter initialEntries={[initialPath]}>
-      <Navbar />
-    </MemoryRouter>,
+function renderNavbar(initialPath = '/', preloadedUiState) {
+  const store = configureStore({
+    preloadedState: preloadedUiState ? { ui: preloadedUiState } : undefined,
+    reducer: { ui: uiReducer },
+  })
+
+  const view = render(
+    <Provider store={store}>
+      <MemoryRouter initialEntries={[initialPath]}>
+        <Navbar />
+      </MemoryRouter>
+    </Provider>,
   )
+
+  return { store, ...view }
 }
 
 describe('Navbar', () => {
@@ -61,5 +73,38 @@ describe('Navbar', () => {
       'aria-expanded',
       'false',
     )
+  })
+
+  it('opens the Home tutorial from the help button', async () => {
+    const user = userEvent.setup()
+    const { store } = renderNavbar()
+
+    await user.click(screen.getByRole('button', { name: /ver tutorial de la app/i }))
+
+    expect(selectHomeTutorial(store.getState())).toEqual({
+      isOpen: true,
+      source: 'manual',
+    })
+  })
+
+  it('does not open the Home tutorial while feedback or loading UI is active', async () => {
+    const user = userEvent.setup()
+    const { store } = renderNavbar('/', {
+      ...uiInitialState,
+      isFeedbackModalOpen: true,
+      feedbackTitle: 'Carga activa',
+      feedbackMessage: 'Esperá a que termine la carga.',
+      feedbackVariant: 'info',
+    })
+
+    const helpButton = screen.getByRole('button', { name: /ver tutorial de la app/i })
+    expect(helpButton).toBeDisabled()
+
+    await user.click(helpButton)
+
+    expect(selectHomeTutorial(store.getState())).toEqual({
+      isOpen: false,
+      source: null,
+    })
   })
 })

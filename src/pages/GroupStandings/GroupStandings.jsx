@@ -110,6 +110,11 @@ function GroupStandings() {
     standings.find((standing) => standing?.group === selectedGroup) ?? standings[0]
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
+  const totalGroups = standings.length
+  const totalTeams = standings.reduce(
+    (count, standing) => count + (standing?.teams?.length ?? 0),
+    0,
+  )
 
   function handleRetryStandings() {
     setIsLoading(true)
@@ -124,9 +129,14 @@ function GroupStandings() {
           <p className={styles.kicker}>Posiciones</p>
           <h2 className={styles.title}>Tablas de posiciones</h2>
           <p className={styles.description}>
-            Consultá las posiciones de los grupos A-L calculadas con la información recibida.
-            La tabla conserva el orden disponible para cada grupo.
+            Compará todos los grupos o revisá uno en detalle con una lectura clara de ranking,
+            puntos y diferencia de gol.
           </p>
+        </div>
+        <div className={styles.heroMarks} aria-hidden="true">
+          <span>PTS</span>
+          <span>GF</span>
+          <span>DIF</span>
         </div>
       </header>
 
@@ -168,51 +178,66 @@ function GroupStandings() {
       {!isLoading && !errorKind && hasStandings && (
         <>
           <section className={styles.viewControls} aria-label="Opciones de visualización">
-            <div className={styles.segmentedControl} role="group" aria-label="Modo de vista">
-              <button
-                aria-pressed={viewMode === VIEW_MODE_OVERVIEW}
-                className={`${styles.viewButton} ${
-                  viewMode === VIEW_MODE_OVERVIEW ? styles.viewButtonActive : ''
-                }`}
-                onClick={() => setViewMode(VIEW_MODE_OVERVIEW)}
-                type="button"
-              >
-                <span className={`${styles.viewIcon} ${styles.overviewIcon}`} aria-hidden="true" />
-                Vista general
-              </button>
-              <button
-                aria-pressed={isFocusMode}
-                className={`${styles.viewButton} ${isFocusMode ? styles.viewButtonActive : ''}`}
-                onClick={() => setViewMode(VIEW_MODE_FOCUS)}
-                type="button"
-              >
-                <span className={`${styles.viewIcon} ${styles.focusIcon}`} aria-hidden="true" />
-                Vista foco
-              </button>
+            <div className={styles.controlIntro}>
+              <p className={styles.kicker}>Panel de control</p>
+              <h3 className={styles.controlTitle}>Compará todos los grupos o revisá uno en detalle.</h3>
+              <p className={styles.controlHelp}>
+                Vista general muestra todos los grupos. Vista foco permite revisar un grupo en detalle.
+              </p>
+              <div className={styles.controlMeta} aria-label="Resumen de posiciones disponibles">
+                <span>{totalGroups} grupos</span>
+                <span>{totalTeams} selecciones</span>
+                {isFocusMode && activeSelectedGroup && <span>Grupo {activeSelectedGroup} seleccionado</span>}
+              </div>
             </div>
 
-            {isFocusMode && (
-              <div className={styles.groupSelector}>
-                <label className={styles.groupSelectorLabel} htmlFor="standings-group-selector">
-                  Elegir grupo
-                </label>
-                <select
-                  className={styles.groupSelect}
-                  id="standings-group-selector"
-                  onChange={(event) => setSelectedGroup(event.target.value)}
-                  value={activeSelectedGroup}
+            <div className={styles.controlActions}>
+              <div className={styles.segmentedControl} role="group" aria-label="Modo de vista">
+                <button
+                  aria-pressed={viewMode === VIEW_MODE_OVERVIEW}
+                  className={`${styles.viewButton} ${
+                    viewMode === VIEW_MODE_OVERVIEW ? styles.viewButtonActive : ''
+                  }`}
+                  onClick={() => setViewMode(VIEW_MODE_OVERVIEW)}
+                  type="button"
                 >
-                  {standings.map((standing, index) => (
-                    <option
-                      key={standing?.group ?? `standings-option-${index}`}
-                      value={standing?.group ?? ''}
-                    >
-                      Grupo {standing?.group ?? index + 1}
-                    </option>
-                  ))}
-                </select>
+                  <span className={`${styles.viewIcon} ${styles.overviewIcon}`} aria-hidden="true" />
+                  Vista general
+                </button>
+                <button
+                  aria-pressed={isFocusMode}
+                  className={`${styles.viewButton} ${isFocusMode ? styles.viewButtonActive : ''}`}
+                  onClick={() => setViewMode(VIEW_MODE_FOCUS)}
+                  type="button"
+                >
+                  <span className={`${styles.viewIcon} ${styles.focusIcon}`} aria-hidden="true" />
+                  Vista foco
+                </button>
               </div>
-            )}
+
+              {isFocusMode && (
+                <div className={styles.groupSelector}>
+                  <label className={styles.groupSelectorLabel} htmlFor="standings-group-selector">
+                    Elegir grupo
+                  </label>
+                  <select
+                    className={styles.groupSelect}
+                    id="standings-group-selector"
+                    onChange={(event) => setSelectedGroup(event.target.value)}
+                    value={activeSelectedGroup}
+                  >
+                    {standings.map((standing, index) => (
+                      <option
+                        key={standing?.group ?? `standings-option-${index}`}
+                        value={standing?.group ?? ''}
+                      >
+                        Grupo {standing?.group ?? index + 1}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
           </section>
 
           <section

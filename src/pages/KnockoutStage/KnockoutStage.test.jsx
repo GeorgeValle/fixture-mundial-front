@@ -78,7 +78,7 @@ describe('KnockoutStage', () => {
 
     renderKnockoutStage()
 
-    expect(await screen.findByRole('heading', { name: /fase eliminatoria/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /camino a la final/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Dieciseisavos de final' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Octavos de final' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Cuartos de final' })).toBeInTheDocument()
@@ -197,6 +197,29 @@ describe('KnockoutStage', () => {
     ]) {
       expect(within(selector).getByRole('option', { name: option })).toBeInTheDocument()
     }
+  })
+
+
+  it('syncs accessible round chips with the select filter', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    const roundOf16Chip = await screen.findByRole('button', { name: 'Octavos de final' })
+    expect(roundOf16Chip).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(roundOf16Chip)
+
+    expect(roundOf16Chip).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Filtrar por ronda')).toHaveValue('round-of-16')
+    expect(screen.getByRole('heading', { name: 'Octavos de final' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Dieciseisavos de final' })).not.toBeInTheDocument()
+
+    await user.selectOptions(screen.getByLabelText('Filtrar por ronda'), 'final')
+
+    expect(screen.getByRole('button', { name: 'Final' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('heading', { name: 'Final' })).toBeInTheDocument()
   })
 
   it('filters by Octavos de final and then returns to all rounds', async () => {

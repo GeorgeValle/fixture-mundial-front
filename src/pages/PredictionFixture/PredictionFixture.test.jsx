@@ -149,10 +149,26 @@ describe('PredictionFixture', () => {
 
     renderPredictionsRoute()
 
-    expect(screen.getByRole('heading', { name: 'Predicciones' })).toBeInTheDocument()
-    expect(screen.getByText('PREDICCIONES')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Tu tablero de predicciones' })).toBeInTheDocument()
+    expect(screen.getAllByText('Predicciones').length).toBeGreaterThan(0)
     expect(screen.queryByText('PREDICTION FIXTURE')).not.toBeInTheDocument()
     expect(await screen.findAllByText('México')).not.toHaveLength(0)
+  })
+
+
+  it('renders the prediction dashboard copy, printable CTA and danger zone', async () => {
+    mockMatchesResponse([pendingMatch, groupBMatch])
+
+    renderPredictionFixture()
+
+    expect(screen.getByRole('heading', { name: 'Tu tablero de predicciones' })).toBeInTheDocument()
+    expect(screen.getByText('Configurá tu perfil')).toBeInTheDocument()
+    expect(await screen.findByText('Resumen imprimible')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Imprimir predicciones' })).toBeInTheDocument()
+    expect(screen.getByText('Zona de borrado')).toBeInTheDocument()
+    expect(
+      screen.getByText(/Estas acciones solo eliminan predicciones editables guardadas en este navegador/i),
+    ).toBeInTheDocument()
   })
 
   it('renders the group selector with Spanish options and initial all-groups value', async () => {
@@ -370,7 +386,7 @@ describe('PredictionFixture', () => {
     const groupSelector = await screen.findByLabelText('Filtrar por grupo')
     expect(printSpy).not.toHaveBeenCalled()
     expect(screen.getByRole('button', { name: 'Imprimir predicciones' })).toBeInTheDocument()
-    expect(screen.getByText('Resumen de predicciones')).toBeInTheDocument()
+    expect(screen.getByText('Resumen imprimible')).toBeInTheDocument()
 
     await user.selectOptions(groupSelector, 'B')
     await user.click(screen.getByRole('button', { name: 'Imprimir predicciones' }))
@@ -635,13 +651,13 @@ describe('PredictionFixture', () => {
 
     const summary = await screen.findByLabelText('Resumen de predicciones')
 
-    expect(within(summary).getByText('PREDICCIONES DE GRUPO')).toBeInTheDocument()
+    expect(within(summary).getByText('Progreso de grupos')).toBeInTheDocument()
     expect(within(summary).getByText('1 /72')).toBeInTheDocument()
-    expect(within(summary).getByText('PUNTOS DE GRUPO OBTENIDOS')).toBeInTheDocument()
-    expect(within(summary).getByText('PREDICCIONES DE ELIMINATORIAS')).toBeInTheDocument()
+    expect(within(summary).getByText('Puntos de grupo obtenidos')).toBeInTheDocument()
+    expect(within(summary).getByText('Progreso de eliminatorias')).toBeInTheDocument()
     expect(within(summary).getByText('1 /32')).toBeInTheDocument()
-    expect(within(summary).getByText('PUNTOS DE ELIMINATORIAS OBTENIDOS')).toBeInTheDocument()
-    expect(within(summary).getByText('PUNTOS TOTALES')).toBeInTheDocument()
+    expect(within(summary).getByText('Puntos de eliminatorias obtenidos')).toBeInTheDocument()
+    expect(within(summary).getByText('Puntos totales')).toBeInTheDocument()
     expect(within(summary).getAllByText('4')).toHaveLength(2)
     expect(within(summary).getByText('8')).toBeInTheDocument()
   })
