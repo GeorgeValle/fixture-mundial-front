@@ -1,3 +1,4 @@
+import { MATCH_STATUS, normalizeMatchStatus } from '../constants/matchStatus'
 export const PREDICTION_LOCK_REASONS = {
   playing: 'Partido iniciado',
   finished: 'Partido finalizado',
@@ -13,14 +14,16 @@ function toValidTime(value) {
 }
 
 export function getPredictionLockState(match, now = new Date()) {
-  if (match?.status === 'PLAYING') {
+  const status = normalizeMatchStatus(match?.status)
+
+  if (status === MATCH_STATUS.playing) {
     return {
       locked: true,
       reason: PREDICTION_LOCK_REASONS.playing,
     }
   }
 
-  if (match?.status === 'FINISHED') {
+  if (status === MATCH_STATUS.finished) {
     return {
       locked: true,
       reason: PREDICTION_LOCK_REASONS.finished,

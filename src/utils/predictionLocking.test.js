@@ -41,6 +41,17 @@ describe('predictionLocking', () => {
     )
   })
 
+
+
+  it('locks legacy IN_PROGRESS matches as started matches', () => {
+    const match = createMatch({ status: 'IN_PROGRESS' })
+
+    expect(isPredictionLocked(match, '2026-06-11T20:00:00.000Z')).toBe(true)
+    expect(getPredictionLockReason(match, '2026-06-11T20:00:00.000Z')).toBe(
+      'Partido iniciado',
+    )
+  })
+
   it('locks FINISHED matches', () => {
     const match = createMatch({ status: 'FINISHED' })
 

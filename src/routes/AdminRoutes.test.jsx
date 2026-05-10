@@ -124,6 +124,40 @@ describe('Admin routes', () => {
     expect(screen.queryByRole('heading', { name: /dashboard del admin zone/i })).not.toBeInTheDocument()
   })
 
+
+
+  it('renders the protected admin matches route for an authenticated admin', async () => {
+    server.use(
+      http.get('*/api/matches', () =>
+        HttpResponse.json([
+          {
+            _id: 'match-1',
+            homeTeam: { _id: 'team-1', name: 'Argentina', group: 'A' },
+            awayTeam: { _id: 'team-2', name: 'Canadá', group: 'A' },
+            stadium: { name: 'MetLife Stadium' },
+            date: '2026-06-11T21:00:00.000Z',
+            stage: 'GRUPO A',
+            status: 'PENDING',
+            homeScore: null,
+            awayScore: null,
+            homePenaltyScore: null,
+            awayPenaltyScore: null,
+          },
+        ]),
+      ),
+    )
+
+    renderAdminRoute('/admin/matches', {
+      user: { email: 'admin@example.com', role: 'ADMIN' },
+      isAuthenticated: true,
+      hasTriedRestore: true,
+    })
+
+    expect(await screen.findByRole('heading', { name: /partidos del mundial 2026/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /partidos/i })).toBeInTheDocument()
+    expect(screen.getByText('Argentina vs Canadá')).toBeInTheDocument()
+  })
+
   it('shows a controlled error state when logout fails', async () => {
     const user = userEvent.setup()
 

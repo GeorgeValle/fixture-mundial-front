@@ -11,7 +11,7 @@ export const ADMIN_ROUTES = {
 
 export const ADMIN_NAV_ITEMS = [
   { label: 'Dashboard', path: ADMIN_ROUTES.dashboard, isEnabled: true },
-  { label: 'Partidos', path: ADMIN_ROUTES.matches, isEnabled: false },
+  { label: 'Partidos', path: ADMIN_ROUTES.matches, isEnabled: true },
   { label: 'Grupos', path: ADMIN_ROUTES.groups, isEnabled: false },
   { label: 'Transición', path: ADMIN_ROUTES.transition, isEnabled: false },
   { label: 'Correcciones', path: ADMIN_ROUTES.teamCorrections, isEnabled: false },

@@ -4,7 +4,8 @@ import styles from './AdminDashboardPage.module.css'
 const summaryCards = [
   {
     title: 'Partidos',
-    description: 'Carga de resultados, estados y penales en el Bloque 13.',
+    description: 'Carga de resultados, estados y penales oficiales disponible en /admin/matches.',
+    status: 'Disponible',
   },
   {
     title: 'Grupos',
@@ -42,7 +43,9 @@ function AdminDashboardPage() {
             <span className={styles.cardIcon} aria-hidden="true">●</span>
             <h2>{card.title}</h2>
             <p>{card.description}</p>
-            <span className={styles.badge}>Pendiente</span>
+            <span className={card.status === 'Disponible' ? `${styles.badge} ${styles.availableBadge}` : styles.badge}>
+              {card.status ?? 'Pendiente'}
+            </span>
           </article>
         ))}
       </div>
