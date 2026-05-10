@@ -2,13 +2,13 @@
 
 ## Current Status
 
-- Current block: none — Bloque 12 completed after final validation.
-- Last completed planning block: Bloque 11 — Admin Zone Planning & Backend Engine Alignment.
-- Last completed admin implementation block: Bloque 12 — Admin Auth & Protected Layout.
-- Last completed implementation block: Bloque 10 — Onboarding, Navbar and Progressive UI Polish.
-- Next suggested block: Bloque 13 — Admin Match Result Controls, pending approval.
-- Goal: keep match editing, standings recalculation, transition, team corrections and admin knockouts deferred until their approved blocks.
-- Manual validation status: Bloque 10 Parte 1 and Parte 2 validated manually by the user. Bloque 10 Parte 3 passed automated validation. Final QA for Block 10 passed.
+- Current block: none — Bloque 13 fue completado y validado automáticamente.
+- Last completed planning block: Bloque 13 — Admin Match Result Controls.
+- Last completed admin implementation block: Bloque 13 — Admin Match Result Controls.
+- Last completed implementation block: Bloque 13 — Admin Match Result Controls.
+- Next suggested block: Bloque 14 — Admin Groups & Standings Controls, pending approval.
+- Goal: mantener la edición de partidos en el admin, delegar recalculo de standings/bracket al backend y no duplicar lógica en frontend.
+- Manual validation status: Bloque 13 pasó validación automática (`pnpm run build`, `pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 28 test files, 289 tests). Queda pendiente validación manual de usuario si corresponde.
 
 ## Critical Execution Rules
 
@@ -201,14 +201,17 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 
 ### Bloque 13 — Admin Match Result Controls
 
-- [ ] Implement `/admin/matches`.
-- [ ] List and filter matches by group, stage and status.
-- [ ] Load regular goals and status.
-- [ ] Handle `PLAYING` and `FINISHED`.
-- [ ] Load penalties for tied knockout matches.
-- [ ] Send partial payloads with `PUT /api/matches/:id`.
-- [ ] Refresh matches after save.
-- [ ] Do not move teams or recalculate brackets from React.
+- [x] Implement `/admin/matches`.
+- [x] List and filter matches by group, stage and status.
+- [x] Load regular goals and status.
+- [x] Handle `PLAYING` and `FINISHED`.
+- [x] Load penalties for tied knockout matches.
+- [x] Send partial payloads with `PUT /api/matches/:id`.
+- [x] Refresh matches after save.
+- [x] Do not move teams or recalculate brackets from React.
+- [x] Run `pnpm run build`.
+- [x] Run `pnpm run lint`.
+- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (28 test files, 289 tests).
 
 ### Bloque 14 — Admin Groups & Standings Controls
 

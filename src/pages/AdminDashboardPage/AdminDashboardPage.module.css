@@ -120,3 +120,8 @@
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
+
+.availableBadge {
+  background: color-mix(in srgb, var(--color-green) 18%, white);
+  color: color-mix(in srgb, var(--color-primary) 68%, var(--color-green));
+}
