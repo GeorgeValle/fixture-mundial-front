@@ -90,6 +90,11 @@ Campos relevantes por partido:
 - `awayScore`
 - `homePenaltyScore`
 - `awayPenaltyScore`
+- `matchNumber`
+- `placeholderHome`
+- `placeholderAway`
+- `nextMatchWinner`
+- `nextMatchLoser`
 
 Campos relevantes de equipo:
 
@@ -120,9 +125,10 @@ Campos relevantes de estadio:
 
 #### `/eliminatorias`
 
-- Combina datos reales con el cuadro base documentado.
-- Prioriza datos reales sobre placeholders.
-- No inventa equipos, resultados ni clasificados.
+- Utiliza el campo `matchNumber` para identificar inequívocamente cada partido de eliminatoria (del 73 al 104).
+- Combina datos reales devueltos por la API con el cuadro base documentado, basándose en el `matchNumber`.
+- Prioriza datos reales sobre placeholders (`placeholderHome` / `placeholderAway`).
+- No inventa equipos, resultados ni clasificados; confía ciegamente en el backend como fuente de verdad.
 
 #### `/predicciones`
 
@@ -272,6 +278,7 @@ Los siguientes endpoints no forman parte del uso público actual del frontend:
 - `PUT /api/matches/:id`
 - `GET /api/teams`
 - `GET /api/stadiums`
+- `POST /api/admin/classify-group` (Uso exclusivo del panel administrativo)
 
 Pueden existir en el backend, pero no deben presentarse como contrato público de la UI actual.
 

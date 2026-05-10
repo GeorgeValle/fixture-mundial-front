@@ -2,9 +2,11 @@
 
 ## Current Status
 
-- Current block: none — Bloque 10 closed after final QA.
-- Last completed block: Bloque 10 — Onboarding, Navbar and Progressive UI Polish.
-- Goal: keep the completed Block 10 scope stable until the next approved block.
+- Current block: none — Bloque 11 documentation/planning completed.
+- Last completed planning block: Bloque 11 — Admin Zone Planning & Backend Engine Alignment.
+- Last completed implementation block: Bloque 10 — Onboarding, Navbar and Progressive UI Polish.
+- Next suggested block: Bloque 12 — Admin Auth & Protected Layout, pending approval.
+- Goal: keep Admin Zone implementation deferred until an approved build block.
 - Manual validation status: Bloque 10 Parte 1 and Parte 2 validated manually by the user. Bloque 10 Parte 3 passed automated validation. Final QA for Block 10 passed.
 
 ## Critical Execution Rules
@@ -16,6 +18,7 @@
 - Keep long page details in page-specific docs.
 - Keep this file as a short board/checklist.
 - Build/lint/test must be executed only in QA Mode or final validation.
+- Admin Zone planning lives in `docs/admin-dashboard.md`; do not implement admin source files until the relevant block is approved.
 
 ## Block Checklist
 
@@ -172,11 +175,94 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - [x] Run final QA validation for Block 10.
 - [x] Close Block 10.
 
+### Bloque 11 — Admin Zone Planning & Backend Engine Alignment
+
+- [x] Create `docs/admin-dashboard.md`.
+- [x] Align the Admin Zone plan with Standings, Transition and Bracket backend engines.
+- [x] Define admin routes, sectors, services, components and flow.
+- [x] Register legacy inconsistencies that need normalization before or during implementation.
+- [x] Keep this block documentation-only; no `src/` changes, build, lint or tests.
+
+### Bloque 12 — Admin Auth & Protected Layout
+
+- [ ] Implement `/admin/login`.
+- [ ] Implement `/admin` and `/admin/dashboard` redirects.
+- [ ] Implement `AdminProtectedRoute`.
+- [ ] Implement `AdminLayout` with sidebar.
+- [ ] Implement `authSlice` or equivalent auth state.
+- [ ] Implement login/logout with `HttpOnly` cookie and `withCredentials`.
+- [ ] Restore session with `GET /api/auth/me` if available.
+
+### Bloque 13 — Admin Match Result Controls
+
+- [ ] Implement `/admin/matches`.
+- [ ] List and filter matches by group, stage and status.
+- [ ] Load regular goals and status.
+- [ ] Handle `PLAYING` and `FINISHED`.
+- [ ] Load penalties for tied knockout matches.
+- [ ] Send partial payloads with `PUT /api/matches/:id`.
+- [ ] Refresh matches after save.
+- [ ] Do not move teams or recalculate brackets from React.
+
+### Bloque 14 — Admin Groups & Standings Controls
+
+- [ ] Implement `/admin/groups`.
+- [ ] Show group summary.
+- [ ] Show current standings.
+- [ ] Execute `POST /api/standings/:group`.
+- [ ] Refresh standings after recalculation.
+- [ ] Show group pending/ready notices without recalculating standings in React.
+
+### Bloque 15 — Admin Transition Controls
+
+- [ ] Implement `/admin/transition`.
+- [ ] Execute `POST /api/admin/classify-group`.
+- [ ] Show qualified teams by group.
+- [ ] Show `ROUND_OF_32` slots.
+- [ ] Refresh matches after transition.
+- [ ] Do not calculate knockout pairings from React.
+
+### Bloque 16 — Admin Team Corrections
+
+- [ ] Implement `/admin/teams-corrections`.
+- [ ] Allow limited correction of `position`, `qualifiedTo` and `shieldUrl`.
+- [ ] Use strong confirmations before saving.
+- [ ] Keep this screen for exceptional cases only.
+
+### Bloque 17 — Admin Knockouts Controls & Public Knockout Polish
+
+- [ ] Implement `/admin/knockouts` or integrate knockout filtering into `/admin/matches`.
+- [ ] Show `matchNumber`, placeholders, `nextMatchWinner` and `nextMatchLoser`.
+- [ ] Load knockout results and penalties.
+- [ ] Confirm public `/eliminatorias` renders updated data from `GET /api/matches`.
+- [ ] Confirm knockout predictions only enable with real `homeTeam` and `awayTeam`.
+
+## Admin Zone Normalization Watchlist
+
+- `docs/worldcup2026/*` backend documents requested for review are not present in the workspace; root-level backend docs were used instead.
+- Some backend docs use legacy or conflicting admin endpoints. The confirmed frontend Admin Zone contract is:
+  - `PUT /api/matches/:id`
+  - `POST /api/standings/:group`
+  - `PUT /api/teams/:id`
+  - `POST /api/admin/classify-group`
+- Legacy `qualifiedTo` values need normalization:
+  - `16AVOS` -> `ROUND_OF_32`
+  - `OCTAVOS` -> `ROUND_OF_16`
+  - `CUARTOS` -> `QUARTER_FINALS`
+  - `SEMIFINAL` -> `SEMI_FINALS`
+  - `3RO` -> `THIRD_PLACE_MATCH`
+  - `ELIMINADO` -> `ELIMINATED`
+- Legacy match status needs normalization:
+  - `IN_PROGRESS` -> `PLAYING`
+- Legacy team image field needs normalization:
+  - `flagUrl` -> `shieldUrl`
+
 ## Documentation Index
 
 - Main README: `README.md`
 - Project requirements: `docs/project-requirements.md`
 - Public API contract: `docs/api-contract.md`
+- Admin Zone planning: `docs/admin-dashboard.md`
 - Home: `docs/home.md`
 - Group fixtures: `docs/group-fixtures.md`
 - Group standings: `docs/group-standings.md`
@@ -184,6 +270,10 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - Knockout skeleton reference: `docs/knockout-stage-skeleton.md`
 - Prediction fixture: `docs/prediction-fixture.md`
 - Expanded backend reference: `docs/API-Backend-Mundial-2026.md`
+- Backend API notes: `docs/api-back.md`
+- Standings Engine: `docs/Backed_Standings_Engine.md`
+- Bracket Engine: `docs/Backend_Bracket_Engine.md`
+- Transition Engine: `docs/Backend_Transition_Engine.md`
 - Design system: `DESIGN.md`
 - Block 9 polish/readiness: `docs/block-9-polish.md`
 - Block 10 onboarding/UI polish: `docs/block-10-onboarding-and-ui-polish.md`
