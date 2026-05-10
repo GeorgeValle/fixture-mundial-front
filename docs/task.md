@@ -2,11 +2,12 @@
 
 ## Current Status
 
-- Current block: none — Bloque 11 documentation/planning completed.
+- Current block: none — Bloque 12 completed after final validation.
 - Last completed planning block: Bloque 11 — Admin Zone Planning & Backend Engine Alignment.
+- Last completed admin implementation block: Bloque 12 — Admin Auth & Protected Layout.
 - Last completed implementation block: Bloque 10 — Onboarding, Navbar and Progressive UI Polish.
-- Next suggested block: Bloque 12 — Admin Auth & Protected Layout, pending approval.
-- Goal: keep Admin Zone implementation deferred until an approved build block.
+- Next suggested block: Bloque 13 — Admin Match Result Controls, pending approval.
+- Goal: keep match editing, standings recalculation, transition, team corrections and admin knockouts deferred until their approved blocks.
 - Manual validation status: Bloque 10 Parte 1 and Parte 2 validated manually by the user. Bloque 10 Parte 3 passed automated validation. Final QA for Block 10 passed.
 
 ## Critical Execution Rules
@@ -185,13 +186,18 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 
 ### Bloque 12 — Admin Auth & Protected Layout
 
-- [ ] Implement `/admin/login`.
-- [ ] Implement `/admin` and `/admin/dashboard` redirects.
-- [ ] Implement `AdminProtectedRoute`.
-- [ ] Implement `AdminLayout` with sidebar.
-- [ ] Implement `authSlice` or equivalent auth state.
-- [ ] Implement login/logout with `HttpOnly` cookie and `withCredentials`.
-- [ ] Restore session with `GET /api/auth/me` if available.
+- [x] Implement `/admin/login`.
+- [x] Implement `/admin` and `/admin/dashboard` redirects.
+- [x] Implement `AdminProtectedRoute`.
+- [x] Implement `AdminLayout` with sidebar.
+- [x] Implement `authSlice` or equivalent auth state.
+- [x] Implement login/logout with `HttpOnly` cookie and `withCredentials`.
+- [x] Restore session with `GET /api/auth/me` if available.
+- [x] Add admin auth/routing tests.
+- [x] Final fix: logout sends `{}` with `withCredentials`, clears Redux auth state and redirects to `/admin/login`.
+- [x] Run `pnpm run build`.
+- [x] Run `pnpm run lint`.
+- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` after default Vitest temp path failed under `/mnt/c`.
 
 ### Bloque 13 — Admin Match Result Controls
 

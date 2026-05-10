@@ -1,55 +1,109 @@
-import { Route, Routes } from 'react-router-dom'
+import { useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import AdminProtectedRoute from '../components/AdminProtectedRoute/AdminProtectedRoute'
+import { ADMIN_ROUTES } from '../constants/adminRoutes'
 import { ROUTES } from '../constants/routes'
+import { restoreAdminSession, selectAdminAuth } from '../features/adminAuth/adminAuthSlice'
+import AdminLayout from '../layouts/AdminLayout/AdminLayout'
 import MainLayout from '../layouts/MainLayout/MainLayout'
-import Home from '../pages/Home/Home'
+import AdminDashboardPage from '../pages/AdminDashboardPage/AdminDashboardPage'
+import AdminLoginPage from '../pages/AdminLoginPage/AdminLoginPage'
 import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
 import GroupStandings from '../pages/GroupStandings/GroupStandings'
+import Home from '../pages/Home/Home'
 import KnockoutStage from '../pages/KnockoutStage/KnockoutStage'
+import NotFound from '../pages/NotFound/NotFound'
 import PlaceholderPage from '../pages/PlaceholderPage/PlaceholderPage'
 import PredictionFixture from '../pages/PredictionFixture/PredictionFixture'
-import NotFound from '../pages/NotFound/NotFound'
+
+function PublicRoute({ children }) {
+  return <MainLayout>{children}</MainLayout>
+}
+
+function AdminIndexRoute() {
+  const dispatch = useDispatch()
+  const { isAuthenticated, isRestoringSession, hasTriedRestore } = useSelector(selectAdminAuth)
+
+  useEffect(() => {
+    if (!isAuthenticated && !hasTriedRestore && !isRestoringSession) {
+      dispatch(restoreAdminSession())
+    }
+  }, [dispatch, hasTriedRestore, isAuthenticated, isRestoringSession])
+
+  if (isAuthenticated) {
+    return <Navigate replace to={ADMIN_ROUTES.dashboard} />
+  }
+
+  if (isRestoringSession || !hasTriedRestore) {
+    return (
+      <main aria-busy="true">
+        <p>Verificando sesión administrativa…</p>
+      </main>
+    )
+  }
+
+  return <Navigate replace to={ADMIN_ROUTES.login} />
+}
 
 function AppRoutes() {
   return (
-    <MainLayout>
-      <Routes>
-        <Route element={<Home />} path={ROUTES.home} />
-        <Route element={<GroupFixtures />} path={ROUTES.fixture} />
-        <Route element={<GroupStandings />} path={ROUTES.standings} />
-        <Route element={<KnockoutStage />} path={ROUTES.knockout} />
-        <Route element={<PredictionFixture />} path={ROUTES.predictions} />
+    <Routes>
+      <Route element={<AdminIndexRoute />} path={ADMIN_ROUTES.root} />
+      <Route element={<AdminLoginPage />} path={ADMIN_ROUTES.login} />
+      <Route
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminDashboardPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+        path={ADMIN_ROUTES.dashboard}
+      />
 
-        <Route
-          element={
+      <Route element={<PublicRoute><Home /></PublicRoute>} path={ROUTES.home} />
+      <Route element={<PublicRoute><GroupFixtures /></PublicRoute>} path={ROUTES.fixture} />
+      <Route element={<PublicRoute><GroupStandings /></PublicRoute>} path={ROUTES.standings} />
+      <Route element={<PublicRoute><KnockoutStage /></PublicRoute>} path={ROUTES.knockout} />
+      <Route element={<PublicRoute><PredictionFixture /></PublicRoute>} path={ROUTES.predictions} />
+
+      <Route
+        element={
+          <PublicRoute>
             <PlaceholderPage
               description="Sección futura opcional para centralizar todos los partidos del torneo en una sola vista."
               title="Partidos (futuro/opcional)"
             />
-          }
-          path={ROUTES.matches}
-        />
-        <Route
-          element={
+          </PublicRoute>
+        }
+        path={ROUTES.matches}
+      />
+      <Route
+        element={
+          <PublicRoute>
             <PlaceholderPage
               description="Sección futura opcional para explorar equipos, planteles y fichas relacionadas."
               title="Equipos (futuro/opcional)"
             />
-          }
-          path={ROUTES.teams}
-        />
-        <Route
-          element={
+          </PublicRoute>
+        }
+        path={ROUTES.teams}
+      />
+      <Route
+        element={
+          <PublicRoute>
             <PlaceholderPage
               description="Sección futura opcional para ver sedes, ciudades y contexto de estadios del torneo."
               title="Estadios (futuro/opcional)"
             />
-          }
-          path={ROUTES.stadiums}
-        />
+          </PublicRoute>
+        }
+        path={ROUTES.stadiums}
+      />
 
-        <Route element={<NotFound />} path="*" />
-      </Routes>
-    </MainLayout>
+      <Route element={<PublicRoute><NotFound /></PublicRoute>} path="*" />
+    </Routes>
   )
 }
 
