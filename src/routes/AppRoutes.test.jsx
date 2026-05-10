@@ -3,12 +3,13 @@ import { Provider } from 'react-redux'
 import { configureStore } from '@reduxjs/toolkit'
 import { MemoryRouter } from 'react-router-dom'
 import { render, screen } from '@testing-library/react'
+import adminAuthReducer from '../features/adminAuth/adminAuthSlice'
 import uiReducer from '../features/ui/uiSlice'
 import AppRoutes from './AppRoutes'
 
 describe('AppRoutes', () => {
   it('renders the custom 404 fallback for unknown routes', () => {
-    const store = configureStore({ reducer: { ui: uiReducer } })
+    const store = configureStore({ reducer: { adminAuth: adminAuthReducer, ui: uiReducer } })
 
     render(
       <Provider store={store}>
