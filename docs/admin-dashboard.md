@@ -61,11 +61,11 @@ Usar solo endpoints confirmados al implementar servicios. Los endpoints marcados
 | Listar partidos | `GET /api/matches` | Confirmado por Bloque 13 |
 | Actualizar partido | `PUT /api/matches/:id` | Confirmado por Bloque 13 |
 | Leer standings | `GET /api/standings` | Confirmado para UI pública y revisión admin |
-| Recalcular standings de grupo | `POST /api/standings/:group` o `POST /api/admin/standings/:group` | Pendiente de confirmar antes del Bloque 14 |
-| Clasificar grupo a eliminatorias | `POST /api/admin/classify-group` | Documentado para Bloque 15; confirmar antes de implementar |
+| Recalcular standings de grupo | `POST /api/standings/:group` o `POST /api/admin/standings/:group` | Pendiente de confirmar antes de habilitar una mutación |
+| Clasificar grupo a eliminatorias | `POST /api/admin/classify-group` | Confirmado en follow-up del Bloque 15 con body `{ group }`; frontend solo envía el grupo y backend calcula/injecta clasificados |
 | Corrección manual de equipo | `PUT /api/teams/:id` | Documentado para Bloque 16; confirmar antes de implementar |
 
-> Nota: algunos documentos legacy usan variantes con prefijo `/api/admin` para matches, teams o standings. Para el Bloque 14 no se debe inventar endpoint: primero confirmar la ruta real de recálculo de standings y sus efectos.
+> Nota: algunos documentos legacy usan variantes con prefijo `/api/admin` para matches, teams o standings. Para cualquier mutación futura no se debe inventar endpoint: primero confirmar la ruta real, permisos, payload, respuesta y efectos sobre base de datos.
 
 ## Valores canónicos
 
@@ -173,15 +173,22 @@ Regla clave: React no recalcula standings.
 
 Debe permitir:
 
-- seleccionar grupo;
-- revisar equipos con `qualifiedTo: "ROUND_OF_32"`;
-- ejecutar `POST /api/admin/classify-group` con `{ "group": "A" }`;
-- refrescar `GET /api/matches`;
-- mostrar bracket/slots actualizados.
+- revisar estado de grupos desde standings oficiales;
+- revisar equipos con `qualifiedTo: "ROUND_OF_32"` cuando el backend ya los exponga;
+- cargar partidos de eliminatorias desde `GET /api/matches`;
+- mostrar una preview read-only de clasificados y slots si hay datos suficientes;
+- seleccionar un grupo A-L;
+- ejecutar `POST /api/admin/classify-group` enviando solo `{ "group": "A" }`;
+- pedir confirmación antes de mutar backend;
+- mostrar success/error devuelto por backend;
+- refrescar `GET /api/standings` y `GET /api/matches` después de una transición exitosa;
+- mostrar bracket/slots actualizados sin mover equipos desde React.
 
 Reglas:
 
 - no calcular combinaciones de terceros desde React;
+- no calcular standings, desempates ni `qualifiedTo` desde React;
+- no enviar equipos, standings, posiciones ni slots desde React;
 - no sembrar equipos manualmente desde React;
 - no modificar placeholders.
 
@@ -334,6 +341,161 @@ Después de la implementación del Bloque 14, validar manualmente:
 - crear lógica local de standings;
 - agregar persistencia nueva para predicciones;
 - activar recálculo hasta resolver el contrato backend.
+
+## Bloque 15 — Admin Transition Controls
+
+Estado: implementado con follow-up de transición manual por grupo en `/admin/transition`.
+
+### Intención funcional
+
+`AdminTransitionPage` permite que un admin revise el estado operativo de grupos y 16avos y ejecute manualmente el Transition Engine backend para un grupo específico.
+
+La transición sigue siendo autoritativa del backend: React no calcula clasificados, mejores terceros, desempates, `qualifiedTo` ni mapping definitivo de 16avos. El frontend solo selecciona una letra de grupo y envía `{ group }` al endpoint confirmado.
+
+La UI pública de `/eliminatorias` continúa siendo read-only y solo refleja partidos actualizados recibidos desde `GET /api/matches`; no contiene controles admin.
+
+### Contrato backend confirmado
+
+Endpoint confirmado para el follow-up del Bloque 15:
+
+| Acción | Método y ruta | Body | Credenciales | Respuesta esperada |
+| --- | --- | --- | --- | --- |
+| Procesar transición de grupo | `POST /api/admin/classify-group` | `{ "group": "A" }` | `withCredentials: true` | `{ status, message }` |
+
+Reglas del contrato frontend:
+
+- `group` debe ser una letra de `A` a `L`.
+- El frontend no envía equipos, standings, posiciones, slots, `qualifiedTo` ni placeholders.
+- El backend ejecuta la lógica equivalente a `TransitionService.allocateGroupQualifiers(group)`.
+- El backend calcula los clasificados del grupo, resuelve las reglas necesarias y actualiza/injecta los equipos en el bracket de 16avos.
+- La respuesta visible de éxito se muestra usando `message` devuelto por backend.
+- Si el backend devuelve error con `message`, la pantalla muestra ese mensaje; si no existe, usa fallback en español.
+
+### Estado actual detectado
+
+- `/admin/transition` está registrada en `ADMIN_ROUTES.transition` y protegida por `AdminProtectedRoute` dentro de `AdminLayout`.
+- El sidebar admin muestra `Transición` como entrada habilitada hacia `/admin/transition`.
+- `AdminTransitionPage` carga standings con `getAdminTransitionStandings` desde `GET /api/standings` y partidos con `getAdminTransitionMatches` desde `GET /api/matches`, ambos con `withCredentials: true`.
+- `getTransitionReadiness` calcula señales operativas no autoritativas: grupos detectados, equipos con posición, equipos ya marcados `ROUND_OF_32`, partidos de 16avos, slots reales y slots pendientes.
+- La preview read-only muestra datos ya recibidos desde backend; no decide clasificados definitivos.
+- `processGroupTransition(group)` ejecuta el endpoint confirmado `POST /api/admin/classify-group` enviando únicamente `{ group }` con `withCredentials: true`.
+- Después de una transición exitosa, la página refresca standings y matches para mostrar el estado actualizado.
+
+### UI implementada en `/admin/transition`
+
+La pantalla incluye:
+
+- título visible `Transición a 16avos`;
+- copy explicativo de que la transición se ejecuta por grupo;
+- selector `Grupo a procesar` con opciones `Grupo A` a `Grupo L`;
+- botón `Refrescar datos` para recargar standings y matches sin mutar backend;
+- botón `Ejecutar transición a 16avos` habilitado solo cuando hay grupo seleccionado y no hay carga/request en curso;
+- confirmación previa con el grupo seleccionado: `¿Querés procesar el Grupo A e inyectar sus clasificados en 16avos?`;
+- estado de loading durante la ejecución con copy `Procesando transición…`;
+- success visible con el `message` devuelto por backend;
+- error visible con el `message` devuelto por backend o fallback `No se pudo ejecutar la transición del grupo seleccionado.`;
+- nota explícita: React solo envía `{ group }` y no envía equipos, standings, posiciones ni slots.
+
+Copy funcional relevante:
+
+- `La transición se ejecuta por grupo. El frontend solo envía el grupo seleccionado; el backend revisa standings, clasificados y slots de 16avos.`
+- `Si más adelante corregís una clasificación desde el área admin correspondiente, podés volver a procesar el grupo para actualizar sus inyecciones en el bracket.`
+
+### Flujo de datos implementado
+
+1. El admin inicia sesión y navega a `/admin/transition`.
+2. La pantalla carga standings oficiales y matches actuales con servicios admin y cookie de sesión.
+3. La pantalla muestra readiness y preview read-only como apoyo visual no autoritativo.
+4. El admin selecciona un grupo A-L.
+5. El botón `Ejecutar transición a 16avos` se habilita si no hay carga ni request en curso.
+6. Al hacer click, la UI muestra confirmación previa con el grupo seleccionado.
+7. Si el admin cancela, no se ejecuta POST.
+8. Si confirma, `processGroupTransition(selectedGroup)` envía `POST /api/admin/classify-group` con body `{ group: selectedGroup }`.
+9. El backend procesa standings, clasificados y slots; React no calcula ni completa bracket.
+10. En success, la UI muestra el mensaje backend y refresca `GET /api/standings` + `GET /api/matches`.
+11. En error, la UI muestra el mensaje backend o fallback amigable.
+12. La selección de grupo se mantiene para que el admin vea qué grupo procesó.
+
+### Service layer implementado
+
+| Función | Tipo | Endpoint | `withCredentials` | Resultado |
+| --- | --- | --- | --- | --- |
+| `getAdminTransitionStandings` | admin-only lectura | `GET /api/standings` | Sí | standings oficiales parseados |
+| `getAdminTransitionMatches` | admin-only lectura | `GET /api/matches` | Sí | partidos parseados |
+| `processGroupTransition(group)` | admin-only mutación confirmada | `POST /api/admin/classify-group` | Sí | `{ status, message }` del backend |
+| `getTransitionReadiness` | helper local read-only | no aplica | no aplica | señales operativas no autoritativas |
+
+`processGroupTransition(group)` normaliza defensivamente el grupo antes de enviarlo y rechaza grupo vacío antes de llamar al backend. No arma payloads con teams, standings, posiciones ni slots.
+
+### Límites explícitos
+
+No implementado en React:
+
+- cálculo de clasificados definitivos;
+- mejores terceros;
+- desempates oficiales;
+- mapping definitivo de 16avos;
+- escritura local de `qualifiedTo`;
+- escritura local de `homeTeam`/`awayTeam` en matches;
+- envío de equipos o standings al backend.
+
+### Reprocesamiento después de correcciones
+
+Si una corrección admin posterior cambia standings, terceros o clasificados, el admin puede volver a seleccionar y procesar el grupo correspondiente desde `/admin/transition`. La reejecución debe ser segura del lado backend; el frontend solo vuelve a disparar el grupo elegido y refresca datos después del success.
+
+### Relación con `/eliminatorias`
+
+- `/eliminatorias` pública no muestra selector, botones ni acciones admin.
+- La página pública consume datos actualizados de `GET /api/matches` y los renderiza junto al skeleton visual cuando corresponde.
+- La transición manual puede impactar lo que la vista pública muestra después de un refresh, pero la vista pública no ejecuta Transition Engine.
+
+### Validación automática
+
+Tests cubiertos para el follow-up:
+
+- `adminTransitionService.test.js` verifica `processGroupTransition('A')` con `POST /api/admin/classify-group`, body `{ group: 'A' }` y `{ withCredentials: true }`.
+- El servicio valida grupo vacío antes de llamar al backend y no envía `teams`, `standings`, `positions` ni `slots`.
+- `AdminTransitionPage.test.jsx` cubre selector A-L, botón inicialmente deshabilitado, habilitación al seleccionar grupo, confirmación, cancelación sin POST, success, error, loading de ejecución y refresh posterior.
+- `AdminRoutes.test.jsx` mantiene `/admin/transition` como ruta protegida.
+- `KnockoutStage.test.jsx` confirma que `/eliminatorias` no expone controles admin.
+
+Resultado final del follow-up:
+
+- `pnpm run lint`: passed.
+- `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`: 32 test files, 317 tests passed.
+- `pnpm run build`: passed con warning informativo de Vite por chunk mayor a 500 kB.
+
+### Validación manual sugerida
+
+- Iniciar sesión como admin.
+- Entrar al dashboard admin.
+- Navegar a `/admin/transition` desde el sidebar.
+- Confirmar que se cargan standings y matches.
+- Confirmar que el selector muestra `Grupo A` a `Grupo L`.
+- Confirmar que `Ejecutar transición a 16avos` inicia deshabilitado.
+- Seleccionar un grupo y confirmar que el botón se habilita.
+- Cancelar la confirmación y verificar que no se ejecuta POST.
+- Confirmar la acción y verificar success/error claro.
+- Confirmar que después del success se refrescan standings y matches.
+- Confirmar que el copy visible está en español.
+- Confirmar que `/eliminatorias` pública no muestra controles admin.
+
+### Riesgos y decisiones seguras
+
+- Re-ejecución no idempotente: el frontend permite reprocesar por grupo porque el contrato confirmado delega la seguridad al backend; backend debe mantener idempotencia operacional.
+- Mapping de 16avos cambiante: React no lo hardcodea como contrato de escritura.
+- Terceros y desempates: React no los calcula.
+- Mutación accidental: hay confirmación previa, botón deshabilitado sin grupo y tests de cancelación sin POST.
+- Exposición pública: controles solo bajo layout admin protegido.
+- Payload excesivo: tests aseguran que solo se envía `{ group }`.
+
+### Orden recomendado siguiente
+
+1. Validar manualmente `/admin/transition` contra backend real.
+2. Confirmar comportamiento de idempotencia y errores 400/401/403/500 en backend.
+3. Implementar Block 16 de correcciones de equipo si se aprueba.
+4. Si Block 16 modifica datos que afectan clasificación, usar `/admin/transition` para reprocesar el grupo impactado.
+5. Mantener tests de payload mínimo y ausencia de controles admin públicos.
 
 ## Componentes propuestos
 

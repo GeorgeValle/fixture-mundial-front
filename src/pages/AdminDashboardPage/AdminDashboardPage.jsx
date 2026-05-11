@@ -14,7 +14,8 @@ const summaryCards = [
   },
   {
     title: 'Transición',
-    description: 'Siembra de clasificados hacia eliminatorias en el Bloque 15.',
+    description: 'Transición manual por grupo hacia 16avos disponible en /admin/transition. React solo envía el grupo y el backend calcula los clasificados.',
+    status: 'Disponible',
   },
   {
     title: 'Correcciones',
