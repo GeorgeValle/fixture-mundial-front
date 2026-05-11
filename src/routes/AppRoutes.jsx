@@ -11,6 +11,7 @@ import AdminDashboardPage from '../pages/AdminDashboardPage/AdminDashboardPage'
 import AdminLoginPage from '../pages/AdminLoginPage/AdminLoginPage'
 import AdminMatchesPage from '../pages/AdminMatchesPage/AdminMatchesPage'
 import AdminGroupsPage from '../pages/AdminGroupsPage/AdminGroupsPage'
+import AdminTransitionPage from '../pages/AdminTransitionPage/AdminTransitionPage'
 import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
 import GroupStandings from '../pages/GroupStandings/GroupStandings'
 import Home from '../pages/Home/Home'
@@ -84,6 +85,17 @@ function AppRoutes() {
           </AdminProtectedRoute>
         }
         path={ADMIN_ROUTES.groups}
+      />
+
+      <Route
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminTransitionPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+        path={ADMIN_ROUTES.transition}
       />
 
       <Route element={<PublicRoute><Home /></PublicRoute>} path={ROUTES.home} />

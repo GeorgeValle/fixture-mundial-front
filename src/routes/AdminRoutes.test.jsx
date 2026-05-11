@@ -81,6 +81,19 @@ describe('Admin routes', () => {
     expect(await screen.findByRole('heading', { name: /ingreso administrativo/i })).toBeInTheDocument()
   })
 
+  it('redirects the admin transition route to login without a valid session', async () => {
+    server.use(
+      http.get('*/api/auth/me', () =>
+        HttpResponse.json({ message: 'No hay sesión activa' }, { status: 401 }),
+      ),
+    )
+
+    renderAdminRoute('/admin/transition')
+
+    expect(await screen.findByRole('heading', { name: /ingreso administrativo/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /transición a 16avos/i })).not.toBeInTheDocument()
+  })
+
   it('clears the admin session after logout', async () => {
     const user = userEvent.setup()
     let logoutBody = ''
@@ -200,6 +213,33 @@ describe('Admin routes', () => {
     expect(await screen.findByRole('heading', { name: /grupos y standings oficiales/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /grupos/i })).toBeInTheDocument()
     expect(screen.getByText(/endpoint de recálculo pendiente de confirmación/i)).toBeInTheDocument()
+  })
+
+  it('renders the protected admin transition route for an authenticated admin', async () => {
+    server.use(
+      http.get('*/api/matches', () => HttpResponse.json([])),
+      http.get('*/api/standings', () =>
+        HttpResponse.json({
+          status: 'success',
+          data: [
+            {
+              group: 'A',
+              teams: [],
+            },
+          ],
+        }),
+      ),
+    )
+
+    renderAdminRoute('/admin/transition', {
+      user: { email: 'admin@example.com', role: 'ADMIN' },
+      isAuthenticated: true,
+      hasTriedRestore: true,
+    })
+
+    expect(await screen.findByRole('heading', { name: /transición a 16avos/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /transición/i })).toHaveAttribute('href', '/admin/transition')
+    expect(screen.getByRole('button', { name: /ejecutar transición a 16avos/i })).toBeDisabled()
   })
 
   it('shows a controlled error state when logout fails', async () => {
