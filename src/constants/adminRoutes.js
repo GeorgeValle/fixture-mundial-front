@@ -12,7 +12,7 @@ export const ADMIN_ROUTES = {
 export const ADMIN_NAV_ITEMS = [
   { label: 'Dashboard', path: ADMIN_ROUTES.dashboard, isEnabled: true },
   { label: 'Partidos', path: ADMIN_ROUTES.matches, isEnabled: true },
-  { label: 'Grupos', path: ADMIN_ROUTES.groups, isEnabled: false },
+  { label: 'Grupos', path: ADMIN_ROUTES.groups, isEnabled: true },
   { label: 'Transición', path: ADMIN_ROUTES.transition, isEnabled: false },
   { label: 'Correcciones', path: ADMIN_ROUTES.teamCorrections, isEnabled: false },
   { label: 'Eliminatorias', path: ADMIN_ROUTES.knockouts, isEnabled: false },

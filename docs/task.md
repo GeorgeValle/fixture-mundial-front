@@ -2,13 +2,13 @@
 
 ## Current Status
 
-- Current block: none — Bloque 13 fue completado y validado automáticamente.
-- Last completed planning block: Bloque 13 — Admin Match Result Controls.
-- Last completed admin implementation block: Bloque 13 — Admin Match Result Controls.
-- Last completed implementation block: Bloque 13 — Admin Match Result Controls.
-- Next suggested block: Bloque 14 — Admin Groups & Standings Controls, pending approval.
-- Goal: mantener la edición de partidos en el admin, delegar recalculo de standings/bracket al backend y no duplicar lógica en frontend.
-- Manual validation status: Bloque 13 pasó validación automática (`pnpm run build`, `pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 28 test files, 289 tests). Queda pendiente validación manual de usuario si corresponde.
+- Current block: none — Bloque 14 fue implementado y validado automáticamente.
+- Last completed planning block: Bloque 14 — Admin Groups & Standings Controls.
+- Last completed admin implementation block: Bloque 14 — Admin Groups & Standings Controls.
+- Last completed implementation block: Bloque 14 — Admin Groups & Standings Controls.
+- Next suggested block: Bloque 15 — Admin Transition Controls, pending approval.
+- Goal: mantener `/admin/groups` como consola operativa para revisar grupos y standings oficiales sin recalcular lógica deportiva en React.
+- Manual validation status: Bloque 14 pasó validación automática (`pnpm run build`, `pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 30 test files, 298 tests). Queda pendiente validación manual de usuario si corresponde.
 
 ## Critical Execution Rules
 
@@ -215,12 +215,22 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 
 ### Bloque 14 — Admin Groups & Standings Controls
 
-- [ ] Implement `/admin/groups`.
-- [ ] Show group summary.
-- [ ] Show current standings.
-- [ ] Execute `POST /api/standings/:group`.
-- [ ] Refresh standings after recalculation.
-- [ ] Show group pending/ready notices without recalculating standings in React.
+- [x] Implement `/admin/groups` as a protected admin route.
+- [x] Enable `Grupos` in the admin sidebar.
+- [x] Load admin matches with `GET /api/matches` and explicit `withCredentials`.
+- [x] Load standings with `GET /api/standings` and explicit `withCredentials` from `adminStandingsService`.
+- [x] Show group selector A-L.
+- [x] Show operational counts by status: `PENDING`, `PLAYING`, `FINISHED` and expected group total.
+- [x] Normalize legacy `IN_PROGRESS` defensively to `PLAYING` for counts.
+- [x] Show current standings for the selected group as official backend data.
+- [x] Show loading, empty, error and retry states.
+- [x] Keep recalculation disabled because docs still conflict between `POST /api/standings/:group` and `POST /api/admin/standings/:group`.
+- [x] Do not calculate standings, best third places, qualifiers or `qualifiedTo` in React.
+- [x] Do not implement transition, team corrections, knockout controls or bracket modification.
+- [x] Add tests for route protection, data loading, group selector, status counts, empty/error/retry, disabled recalculation and no token storage.
+- [x] Run `pnpm run build`.
+- [x] Run `pnpm run lint`.
+- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (30 test files, 298 tests).
 
 ### Bloque 15 — Admin Transition Controls
 
@@ -249,11 +259,12 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 ## Admin Zone Normalization Watchlist
 
 - `docs/worldcup2026/*` backend documents requested for review are not present in the workspace; root-level backend docs were used instead.
-- Some backend docs use legacy or conflicting admin endpoints. The confirmed frontend Admin Zone contract is:
+- Some backend docs use legacy or conflicting admin endpoints. Current confirmed admin implementation contract is:
   - `PUT /api/matches/:id`
-  - `POST /api/standings/:group`
-  - `PUT /api/teams/:id`
-  - `POST /api/admin/classify-group`
+- Contracts to confirm before future admin blocks:
+  - standings recalculation remains disabled in frontend until `POST /api/standings/:group` vs `POST /api/admin/standings/:group` is resolved
+  - team corrections: `PUT /api/teams/:id`
+  - group transition: `POST /api/admin/classify-group`
 - Legacy `qualifiedTo` values need normalization:
   - `16AVOS` -> `ROUND_OF_32`
   - `OCTAVOS` -> `ROUND_OF_16`

@@ -9,7 +9,8 @@ const summaryCards = [
   },
   {
     title: 'Grupos',
-    description: 'Control de standings y recálculo por grupo en el Bloque 14.',
+    description: 'Revisión operativa de grupos y standings oficiales disponible en /admin/groups.',
+    status: 'Disponible',
   },
   {
     title: 'Transición',
@@ -33,7 +34,7 @@ function AdminDashboardPage() {
         <h1 id="admin-dashboard-title">Dashboard del Admin Zone</h1>
         <p>
           Esta pantalla confirma la sesión administrativa y deja preparada la navegación interna.
-          Los controles operativos se implementarán en los próximos bloques.
+          Partidos y grupos ya tienen controles operativos; los standings se revisan sin recalcular lógica deportiva en React.
         </p>
       </div>
 
