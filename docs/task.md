@@ -2,13 +2,13 @@
 
 ## Current Status
 
-- Current block: none — Bloque 14 fue implementado y validado automáticamente.
-- Last completed planning block: Bloque 14 — Admin Groups & Standings Controls.
-- Last completed admin implementation block: Bloque 14 — Admin Groups & Standings Controls.
-- Last completed implementation block: Bloque 14 — Admin Groups & Standings Controls.
-- Next suggested block: Bloque 15 — Admin Transition Controls, pending approval.
-- Goal: mantener `/admin/groups` como consola operativa para revisar grupos y standings oficiales sin recalcular lógica deportiva en React.
-- Manual validation status: Bloque 14 pasó validación automática (`pnpm run build`, `pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 30 test files, 298 tests). Queda pendiente validación manual de usuario si corresponde.
+- Current block: none — Bloque 15 follow-up fue implementado para ejecutar transición manual por grupo desde `/admin/transition`.
+- Last completed planning block: Bloque 15 — Admin Transition Controls.
+- Last completed admin implementation block: Bloque 15 follow-up — Manual Group Transition Action.
+- Last completed implementation block: Bloque 15 follow-up — Manual Group Transition Action.
+- Next suggested block: Bloque 16 — Admin Team Corrections, pending approval.
+- Goal: permitir que el admin seleccione un grupo A-L y ejecute `POST /api/admin/classify-group` enviando solo `{ group }`, dejando el cálculo e inyección de clasificados al backend.
+- Manual validation status: Bloque 15 follow-up pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 32 test files, 317 tests, y `pnpm run build`). Queda pendiente validación manual de usuario si corresponde.
 
 ## Critical Execution Rules
 
@@ -234,12 +234,41 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 
 ### Bloque 15 — Admin Transition Controls
 
-- [ ] Implement `/admin/transition`.
-- [ ] Execute `POST /api/admin/classify-group`.
-- [ ] Show qualified teams by group.
-- [ ] Show `ROUND_OF_32` slots.
-- [ ] Refresh matches after transition.
-- [ ] Do not calculate knockout pairings from React.
+- [x] Planificar el flujo grupos → 16avos en Plan Mode.
+- [x] Documentar que no se implementó código, servicios, componentes ni rutas en este bloque.
+- [x] Revisar docs y código existente: standings, knockout, admin groups, servicios admin y patrón `withCredentials`.
+- [x] Confirmar que la app pública `/eliminatorias` ya lee `GET /api/matches` y mergea datos reales con skeleton sin ejecutar lógica admin.
+- [x] Definir `/admin/transition` como ubicación recomendada para no mezclar revisión de standings con siembra de eliminatorias.
+- [x] Registrar que la acción real debe ser admin-only y no debe aparecer en rutas públicas.
+- [x] Registrar que el frontend no debe calcular standings, mejores terceros, desempates, `qualifiedTo` ni mapping definitivo de 16avos.
+- [x] Registrar contrato backend pendiente antes de habilitar mutaciones reales, aunque la documentación disponible mencione `POST /api/admin/classify-group`.
+- [x] Confirmar con backend la ruta real, método y body de `POST /api/admin/classify-group`; quedan como consideraciones operativas los detalles de idempotencia completa y casos de negocio.
+- [ ] Confirmar si el contrato expone una preview de clasificados o si la preview debe ser read-only desde `GET /api/standings` + `GET /api/matches`.
+- [ ] Confirmar cómo se resuelven mejores terceros, empates absolutos, Fair Play/sorteos y slots tipo `3rd Group A/B/C/D/F`.
+- [x] En Build Mode, crear `AdminTransitionPage` protegida en `/admin/transition`.
+- [x] En Build Mode, habilitar `Transición` en el sidebar como pantalla de revisión/preview.
+- [x] En Build Mode, crear `adminTransitionService` con lecturas `GET /api/standings` y `GET /api/matches`, ambas con `withCredentials: true`.
+- [x] En Build Mode, no crear función activa `transitionGroupsToKnockout` para evitar mutaciones accidentales con contrato pendiente.
+- [x] En Build Mode, mostrar estado inicial, loading, error, empty, preview read-only y acción deshabilitada por contrato pendiente.
+- [x] En Build Mode inicial, mantener bloqueada la acción real `Ejecutar transición a 16avos` hasta confirmar contrato backend.
+- [x] En Build Mode, agregar botón `Refrescar datos` para recargar standings y partidos sin mutar backend.
+- [x] En Build Mode, agregar tests de ruta protegida, acción deshabilitada, preview, no POST sin contrato, `withCredentials` y ausencia de controles admin en UI pública.
+- [x] Registrar resultado final de `pnpm run lint` — passed.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 32 test files, 310 tests passed en la primera implementación segura.
+- [x] Registrar resultado final de `pnpm run build` — passed con warning Vite de chunk mayor a 500 kB.
+- [x] Follow-up Block 15: habilitar transición manual por grupo dentro de `/admin/transition`.
+- [x] Confirmar contrato backend para transición manual: `POST /api/admin/classify-group` con body `{ group: "A" }`.
+- [x] Agregar selector `Grupo a procesar` con opciones A-L y valores enviados `A`-`L`.
+- [x] Habilitar `Ejecutar transición a 16avos` solo cuando hay grupo seleccionado y no hay carga/request en curso.
+- [x] Agregar confirmación previa con el grupo seleccionado antes de enviar el POST.
+- [x] Implementar `processGroupTransition(group)` con `axiosClient.post('/api/admin/classify-group', { group }, { withCredentials: true })`.
+- [x] Mantener React como disparador administrativo: no envía teams, standings, posiciones ni slots; no calcula clasificados, mejores terceros, desempates ni mapping.
+- [x] Mostrar success/error devueltos por backend y fallback claro en español.
+- [x] Refrescar standings y matches después de una transición exitosa manteniendo seleccionado el grupo procesado.
+- [x] Actualizar tests de servicio y página para selector, confirmación, cancelación, success/error, refresh y payload mínimo.
+- [x] Registrar resultado final de `pnpm run lint` del follow-up — passed.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` del follow-up — 32 test files, 317 tests passed.
+- [x] Registrar resultado final de `pnpm run build` del follow-up — passed con warning Vite de chunk mayor a 500 kB.
 
 ### Bloque 16 — Admin Team Corrections
 
@@ -264,7 +293,7 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - Contracts to confirm before future admin blocks:
   - standings recalculation remains disabled in frontend until `POST /api/standings/:group` vs `POST /api/admin/standings/:group` is resolved
   - team corrections: `PUT /api/teams/:id`
-  - group transition: `POST /api/admin/classify-group`
+  - group transition: contrato confirmado para `POST /api/admin/classify-group` con body `{ group }`; frontend solo dispara por grupo con cookie admin y backend ejecuta `TransitionService.allocateGroupQualifiers(group)`
 - Legacy `qualifiedTo` values need normalization:
   - `16AVOS` -> `ROUND_OF_32`
   - `OCTAVOS` -> `ROUND_OF_16`

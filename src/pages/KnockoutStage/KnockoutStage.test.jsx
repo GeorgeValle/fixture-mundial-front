@@ -301,4 +301,14 @@ describe('KnockoutStage', () => {
     expect(screen.getByText('2º Grupo A')).toBeInTheDocument()
     expect(screen.queryByText('Database down')).not.toBeInTheDocument()
   })
+
+  it('does not expose admin transition controls in the public knockout page', async () => {
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    expect(await screen.findByRole('heading', { name: /camino a la final/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ejecutar transición a 16avos/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/contrato backend pendiente/i)).not.toBeInTheDocument()
+  })
 })
