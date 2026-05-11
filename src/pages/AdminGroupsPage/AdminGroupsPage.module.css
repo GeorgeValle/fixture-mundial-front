@@ -1,0 +1,297 @@
+.page {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.hero,
+.groupSelectorPanel,
+.stateCard,
+.summaryCard,
+.recalculateCard,
+.standingsPanel,
+.matchesStatusPanel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow-card);
+}
+
+.hero {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-6);
+}
+
+.kicker {
+  margin: 0 0 var(--space-2);
+  color: var(--color-red);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.stateCard h2,
+.summaryCard h2,
+.recalculateCard h2,
+.sectionHeader h2,
+.emptyState h3 {
+  margin: 0;
+  color: var(--color-primary);
+}
+
+.hero h1 {
+  max-width: 16ch;
+  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  line-height: 0.96;
+}
+
+.hero p:not(.kicker),
+.groupSelectorPanel p,
+.stateCard p,
+.summaryCard p,
+.recalculateCard p,
+.sectionHeader p,
+.emptyState p,
+.helperText {
+  max-width: 62rem;
+  margin: var(--space-3) 0 0;
+  color: var(--color-muted);
+}
+
+.contractCard {
+  display: grid;
+  gap: var(--space-2);
+  align-self: end;
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-cyan) 8%, white);
+}
+
+.contractCard strong {
+  color: var(--color-primary);
+}
+
+.contractCard span {
+  color: var(--color-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 800;
+}
+
+.groupSelectorPanel {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+}
+
+.groupSelector {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+.groupSelector span {
+  font-size: var(--font-size-sm);
+}
+
+.groupSelector select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: white;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.stateCard,
+.summaryCard,
+.recalculateCard,
+.standingsPanel,
+.matchesStatusPanel {
+  padding: var(--space-6);
+}
+
+.errorState {
+  border-color: color-mix(in srgb, var(--color-red) 38%, var(--color-border));
+}
+
+.primaryButton,
+.disabledButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--radius-pill);
+  font-weight: 900;
+}
+
+.primaryButton {
+  margin-top: var(--space-4);
+  background: var(--color-primary);
+  color: white;
+  cursor: pointer;
+}
+
+.disabledButton {
+  background: color-mix(in srgb, var(--color-muted) 18%, white);
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-muted));
+  cursor: not-allowed;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.summaryCard {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.pendingCard {
+  border-color: color-mix(in srgb, var(--color-gold) 32%, var(--color-border));
+}
+
+.readyCard {
+  border-color: color-mix(in srgb, var(--color-green) 38%, var(--color-border));
+}
+
+.stats {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.stats div {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-cyan) 8%, white);
+}
+
+.stats dt {
+  color: var(--color-muted);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stats dd {
+  margin: 0;
+  color: var(--color-primary);
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+}
+
+.progressWrap {
+  overflow: hidden;
+  height: 0.75rem;
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-muted) 16%, white);
+}
+
+.progressWrap span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+}
+
+.helperText {
+  font-size: var(--font-size-sm);
+}
+
+.recalculateCard {
+  display: grid;
+  gap: var(--space-4);
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-gold) 44%, var(--color-border));
+  background: color-mix(in srgb, var(--color-gold) 8%, white);
+}
+
+.sectionHeader {
+  margin-bottom: var(--space-5);
+}
+
+.emptyState {
+  padding: var(--space-5);
+  border: 1px dashed color-mix(in srgb, var(--color-muted) 48%, var(--color-border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-surface-soft) 64%, white);
+}
+
+.matchStatusList {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.matchStatusList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.matchStatusList li:last-child {
+  border-bottom: 0;
+}
+
+.statusBadge {
+  flex: 0 0 auto;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.statusPENDING {
+  background: color-mix(in srgb, var(--color-gold) 22%, white);
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-gold));
+}
+
+.statusPLAYING {
+  background: color-mix(in srgb, var(--color-green) 18%, white);
+  color: color-mix(in srgb, var(--color-primary) 65%, var(--color-green));
+}
+
+.statusFINISHED {
+  background: color-mix(in srgb, var(--color-muted) 18%, white);
+  color: color-mix(in srgb, var(--color-primary) 82%, var(--color-muted));
+}
+
+@media (min-width: 720px) {
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 24rem);
+    align-items: end;
+  }
+
+  .groupSelectorPanel,
+  .recalculateCard {
+    grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .summaryGrid {
+    grid-template-columns: minmax(0, 1.15fr) minmax(18rem, 0.85fr);
+  }
+
+  .stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}

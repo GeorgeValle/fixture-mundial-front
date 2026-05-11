@@ -158,6 +158,50 @@ describe('Admin routes', () => {
     expect(screen.getByText('Argentina vs Canadá')).toBeInTheDocument()
   })
 
+
+  it('renders the protected admin groups route for an authenticated admin', async () => {
+    server.use(
+      http.get('*/api/matches', () =>
+        HttpResponse.json([
+          {
+            _id: 'match-1',
+            homeTeam: { _id: 'team-1', name: 'Argentina', group: 'A' },
+            awayTeam: { _id: 'team-2', name: 'Canadá', group: 'A' },
+            stadium: { name: 'MetLife Stadium' },
+            date: '2026-06-11T21:00:00.000Z',
+            stage: 'GRUPO A',
+            status: 'PENDING',
+            homeScore: null,
+            awayScore: null,
+            homePenaltyScore: null,
+            awayPenaltyScore: null,
+          },
+        ]),
+      ),
+      http.get('*/api/standings', () =>
+        HttpResponse.json({
+          status: 'success',
+          data: [
+            {
+              group: 'A',
+              teams: [],
+            },
+          ],
+        }),
+      ),
+    )
+
+    renderAdminRoute('/admin/groups', {
+      user: { email: 'admin@example.com', role: 'ADMIN' },
+      isAuthenticated: true,
+      hasTriedRestore: true,
+    })
+
+    expect(await screen.findByRole('heading', { name: /grupos y standings oficiales/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /grupos/i })).toBeInTheDocument()
+    expect(screen.getByText(/endpoint de recálculo pendiente de confirmación/i)).toBeInTheDocument()
+  })
+
   it('shows a controlled error state when logout fails', async () => {
     const user = userEvent.setup()
 

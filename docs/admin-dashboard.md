@@ -49,23 +49,23 @@ Los documentos bajo `docs/worldcup2026/` no están presentes en el workspace act
 - No documentar credenciales reales.
 - Las llamadas privadas deben usar cookie `HttpOnly` y `withCredentials`.
 
-## Contrato backend confirmado para Admin Zone
+## Contratos backend y confirmaciones pendientes para Admin Zone
 
-Usar estos endpoints como contrato técnico para futuros bloques:
+Usar solo endpoints confirmados al implementar servicios. Los endpoints marcados como pendientes deben validarse contra el backend antes de escribir código.
 
-| Acción | Endpoint |
-| --- | --- |
-| Login | `POST /api/auth/login` |
-| Logout | `POST /api/auth/logout` |
-| Restaurar sesión recomendada | `GET /api/auth/me` |
-| Listar partidos | `GET /api/matches` |
-| Actualizar partido | `PUT /api/matches/:id` |
-| Leer standings | `GET /api/standings` |
-| Recalcular standings de grupo | `POST /api/standings/:group` |
-| Clasificar grupo a eliminatorias | `POST /api/admin/classify-group` |
-| Corrección manual de equipo | `PUT /api/teams/:id` |
+| Acción | Endpoint | Estado |
+| --- | --- | --- |
+| Login | `POST /api/auth/login` | Confirmado por Bloque 12 |
+| Logout | `POST /api/auth/logout` | Confirmado por Bloque 12 |
+| Restaurar sesión recomendada | `GET /api/auth/me` | Confirmado por Bloque 12 cuando el backend está disponible |
+| Listar partidos | `GET /api/matches` | Confirmado por Bloque 13 |
+| Actualizar partido | `PUT /api/matches/:id` | Confirmado por Bloque 13 |
+| Leer standings | `GET /api/standings` | Confirmado para UI pública y revisión admin |
+| Recalcular standings de grupo | `POST /api/standings/:group` o `POST /api/admin/standings/:group` | Pendiente de confirmar antes del Bloque 14 |
+| Clasificar grupo a eliminatorias | `POST /api/admin/classify-group` | Documentado para Bloque 15; confirmar antes de implementar |
+| Corrección manual de equipo | `PUT /api/teams/:id` | Documentado para Bloque 16; confirmar antes de implementar |
 
-> Nota: algunos documentos legacy usan variantes con prefijo `/api/admin` para matches, teams o standings. Antes de implementar servicios, mantener los endpoints anteriores como contrato confirmado o normalizar la documentación backend correspondiente.
+> Nota: algunos documentos legacy usan variantes con prefijo `/api/admin` para matches, teams o standings. Para el Bloque 14 no se debe inventar endpoint: primero confirmar la ruta real de recálculo de standings y sus efectos.
 
 ## Valores canónicos
 
@@ -163,7 +163,7 @@ Debe permitir:
 - seleccionar grupo A-L;
 - ver resumen de partidos finalizados del grupo;
 - ver standings actuales;
-- disparar `POST /api/standings/:group`;
+- disparar el endpoint backend confirmado de recálculo de standings, si existe;
 - mostrar feedback de éxito/error;
 - refrescar `GET /api/standings` después de recalcular.
 
@@ -241,6 +241,100 @@ No debe permitir:
 - arrastrar equipos manualmente;
 - mover ganadores desde React.
 
+## Bloque 14 — Admin Groups & Standings Controls
+
+Estado: implementado como vista protegida de revisión operativa en `/admin/groups`. El recálculo quedó deshabilitado porque el contrato backend sigue ambiguo.
+
+### Intención funcional
+
+El módulo `Admin Groups & Standings Controls` debe darle al admin una vista operativa de grupos y standings sin mover la lógica deportiva al frontend.
+
+Responsabilidades implementadas:
+
+- visualizar grupos A-L y permitir seleccionar un grupo;
+- revisar cuántos partidos del grupo están finalizados;
+- revisar standings actuales consumidos desde `GET /api/standings`;
+- mostrar avisos de grupo pendiente, incompleto, listo para revisar o listo para acción backend;
+- mostrar la acción de recálculo deshabilitada con el mensaje `Endpoint de recálculo pendiente de confirmación`;
+- no disparar POST de recálculo hasta resolver el contrato backend;
+- mostrar errores amigables cuando la cookie admin falte, expire o el backend rechace la acción;
+- mantener `withCredentials` explícito en cualquier servicio admin porque `axiosClient` no lo centraliza.
+
+### Responsabilidades sobre datos derivados
+
+Standings, posiciones, diferencias de gol, puntos, clasificados y `qualifiedTo` son datos derivados o gestionados por motores backend.
+
+El frontend admin puede:
+
+- mostrar esos datos;
+- advertir cuando los datos puedan estar desactualizados después de editar resultados;
+- dejar preparada la revisión previa a una acción backend futura, sin ejecutarla mientras el endpoint esté ambiguo;
+- guiar al admin hacia el siguiente flujo aprobado.
+
+El frontend admin no debe:
+
+- recalcular standings desde partidos;
+- editar puntos, goles a favor, goles en contra o diferencia de gol manualmente;
+- calcular mejores terceros;
+- asignar `qualifiedTo` por su cuenta;
+- sembrar eliminatorias desde `/admin/groups`;
+- usar endpoints no confirmados para corregir inconsistencias.
+
+Como la documentación disponible mantiene el conflicto entre `POST /api/standings/:group` y `POST /api/admin/standings/:group`, el Bloque 14 no ejecuta recálculo. La pantalla carga partidos y standings, calcula solo conteos operativos por status y muestra standings oficiales recibidos del backend.
+
+### Preguntas abiertas para backend
+
+- ¿La ruta real para recalcular standings es `POST /api/standings/:group` o `POST /api/admin/standings/:group`?
+- ¿El endpoint de recálculo requiere body o solo el `group` en la URL?
+- ¿Qué grupos son válidos y cómo responde el backend ante un grupo inválido?
+- ¿`PUT /api/matches/:id` recalcula standings automáticamente cuando cambia un resultado?
+- Si el recálculo no es automático, ¿hay endpoint admin para recalcular un grupo o todos los grupos?
+- ¿El recálculo actualiza `qualifiedTo` o eso queda reservado para `POST /api/admin/classify-group`?
+- ¿`qualifiedTo` puede editarse manualmente, o solo mediante correcciones excepcionales del Bloque 16?
+- ¿Qué permisos exactos requiere cada acción y cómo se reportan errores de cookie ausente, expirada o inválida?
+- ¿La respuesta de recálculo devuelve standings actualizados o solo un mensaje de éxito?
+- ¿Existe un indicador backend de standings stale/pending, o la UI solo puede inferirlo por partidos finalizados?
+
+### Validaciones manuales futuras
+
+Después de la implementación del Bloque 14, validar manualmente:
+
+- acceso protegido a `/admin/groups` solo con sesión admin vigente;
+- redirect a `/admin/login` cuando la cookie no esté disponible;
+- llamadas admin con `withCredentials` y sin tokens en `localStorage` o `sessionStorage`;
+- carga de grupos y standings actuales;
+- estados de loading, empty, error y retry;
+- mensajes claros para grupos con partidos pendientes;
+- acción de recálculo deshabilitada mientras el endpoint no esté confirmado;
+- refresco de datos con el botón `Reintentar` ante errores;
+- reflejo de standings oficiales recibidos por `GET /api/standings`, igual que `/posiciones`;
+- comportamiento seguro ante errores 401/403/404/409/500;
+- ausencia de cálculos de standings o clasificación en React.
+
+### Riesgos técnicos
+
+- olvidar `withCredentials` en servicios admin y romper la cookie `HttpOnly`;
+- usar una ruta legacy de standings y documentar como existente un endpoint incorrecto;
+- duplicar en React reglas del Standings Engine;
+- mostrar standings desactualizados después de editar resultados en `/admin/matches`;
+- mezclar recálculo de standings con transición a eliminatorias;
+- tratar `qualifiedTo` como editable cuando el backend lo deriva;
+- alterar datos derivados y producir inconsistencias con `/posiciones`, `/eliminatorias` o `/predicciones`;
+- no distinguir entre grupo incompleto, grupo listo para recálculo y grupo listo para transición;
+- asumir reglas de mejores terceros sin contrato backend.
+
+### Fuera de alcance del Bloque 14
+
+- implementar `POST /api/admin/classify-group` o sembrar eliminatorias;
+- modificar `qualifiedTo` manualmente;
+- editar datos base de equipos;
+- gestionar mejores terceros;
+- corregir bracket o placeholders;
+- rediseñar páginas públicas;
+- crear lógica local de standings;
+- agregar persistencia nueva para predicciones;
+- activar recálculo hasta resolver el contrato backend.
+
 ## Componentes propuestos
 
 - `AdminLayout`
@@ -317,6 +411,7 @@ Para rutas admin:
 - Cálculo frontend de standings.
 - Cálculo frontend de mejores terceros.
 - Cálculo frontend de progresión de bracket.
+- Edición manual de puntos, posiciones o diferencias de gol si el backend recalcula standings.
 - Editor drag-and-drop de eliminatorias.
 - Persistencia backend de predicciones.
 
@@ -326,7 +421,7 @@ Para rutas admin:
 - Las rutas hijas admin están protegidas.
 - Login/logout no exponen tokens al frontend.
 - Matches guardan resultados con payloads parciales limpios.
-- Recalcular standings llama al Standings Engine.
+- `/admin/groups` revisa standings oficiales y mantiene recálculo deshabilitado hasta confirmar endpoint.
 - Transition llama al Transition Engine.
 - Finalizar eliminatoria confía en el Bracket Engine y refresca matches.
 - Correcciones de equipos están limitadas y confirmadas.
