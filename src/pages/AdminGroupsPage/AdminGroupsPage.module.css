@@ -120,6 +120,23 @@
   border-color: color-mix(in srgb, var(--color-red) 38%, var(--color-border));
 }
 
+.successText,
+.errorText {
+  margin: 0;
+  margin-top: var(--space-3);
+  font-size: var(--font-size-sm);
+  font-weight: 900;
+}
+
+.successText {
+  color: color-mix(in srgb, var(--color-green) 84%, var(--color-primary));
+}
+
+.errorText {
+  color: color-mix(in srgb, var(--color-red) 84%, var(--color-primary));
+}
+
+
 .primaryButton,
 .disabledButton {
   display: inline-flex;

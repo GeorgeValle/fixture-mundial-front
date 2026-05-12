@@ -61,11 +61,16 @@ Usar solo endpoints confirmados al implementar servicios. Los endpoints marcados
 | Listar partidos | `GET /api/matches` | Confirmado por Bloque 13 |
 | Actualizar partido | `PUT /api/matches/:id` | Confirmado por Bloque 13 |
 | Leer standings | `GET /api/standings` | Confirmado para UI pública y revisión admin |
-| Recalcular standings de grupo | `POST /api/standings/:group` o `POST /api/admin/standings/:group` | Pendiente de confirmar antes de habilitar una mutación |
+| Listar equipos | `GET /api/teams` | Confirmado para Bloque 16 |
+| Listar equipo por ID | `GET /api/teams/:id` | Confirmado; no usado de forma obligatoria por la pantalla actual |
+| Buscar equipo por nombre | `GET /api/teams/name/:name` | Confirmado |
+| Recalcular standings de grupo | `POST /api/standings/:group` | Confirmado, protegido por `verifyAdmin` en backend |
 | Clasificar grupo a eliminatorias | `POST /api/admin/classify-group` | Confirmado en follow-up del Bloque 15 con body `{ group }`; frontend solo envía el grupo y backend calcula/injecta clasificados |
-| Corrección manual de equipo | `PUT /api/teams/:id` | Documentado para Bloque 16; confirmar antes de implementar |
+| Corrección manual de equipo | `PUT /api/teams/:id` | Confirmado para Bloque 16; ruta sin prefijo `/api/admin`, protegida en backend con `verifyAdmin` |
 
-> Nota: algunos documentos legacy usan variantes con prefijo `/api/admin` para matches, teams o standings. Para cualquier mutación futura no se debe inventar endpoint: primero confirmar la ruta real, permisos, payload, respuesta y efectos sobre base de datos.
+> Nota: algunos documentos legacy usan variantes con prefijo `/api/admin` para mutaciones de standings. El contrato real de recálculo es `POST /api/standings/:group`.
+
+> Importante para Bloque 16: no existe `GET /api/teams/group/:group`; `GET /api/teams` no trae paginación y se filtra por grupo en frontend para `/admin/teams-corrections`.
 
 ## Valores canónicos
 
@@ -163,7 +168,7 @@ Debe permitir:
 - seleccionar grupo A-L;
 - ver resumen de partidos finalizados del grupo;
 - ver standings actuales;
-- disparar el endpoint backend confirmado de recálculo de standings, si existe;
+- disparar `POST /api/standings/:group` tras confirmación cuando el grupo esté listo;
 - mostrar feedback de éxito/error;
 - refrescar `GET /api/standings` después de recalcular.
 
@@ -250,7 +255,7 @@ No debe permitir:
 
 ## Bloque 14 — Admin Groups & Standings Controls
 
-Estado: implementado como vista protegida de revisión operativa en `/admin/groups`. El recálculo quedó deshabilitado porque el contrato backend sigue ambiguo.
+Estado: implementado con follow-up para habilitar recálculo manual en `/admin/groups` usando contrato confirmado.
 
 ### Intención funcional
 
@@ -262,10 +267,10 @@ Responsabilidades implementadas:
 - revisar cuántos partidos del grupo están finalizados;
 - revisar standings actuales consumidos desde `GET /api/standings`;
 - mostrar avisos de grupo pendiente, incompleto, listo para revisar o listo para acción backend;
-- mostrar la acción de recálculo deshabilitada con el mensaje `Endpoint de recálculo pendiente de confirmación`;
-- no disparar POST de recálculo hasta resolver el contrato backend;
+- mostrar el control de recálculo con explicación de que la lógica de cálculo vive en backend;
+- disparar POST solo tras confirmación y cuando el grupo está completo (6 partidos finalizados);
 - mostrar errores amigables cuando la cookie admin falte, expire o el backend rechace la acción;
-- mantener `withCredentials` explícito en cualquier servicio admin porque `axiosClient` no lo centraliza.
+- usar `withCredentials: true` explícito en la mutación admin.
 
 ### Responsabilidades sobre datos derivados
 
@@ -275,7 +280,7 @@ El frontend admin puede:
 
 - mostrar esos datos;
 - advertir cuando los datos puedan estar desactualizados después de editar resultados;
-- dejar preparada la revisión previa a una acción backend futura, sin ejecutarla mientras el endpoint esté ambiguo;
+- disparar recálculo cuando el contrato esté confirmado y el grupo complete los 6 partidos.
 - guiar al admin hacia el siguiente flujo aprobado.
 
 El frontend admin no debe:
@@ -287,20 +292,15 @@ El frontend admin no debe:
 - sembrar eliminatorias desde `/admin/groups`;
 - usar endpoints no confirmados para corregir inconsistencias.
 
-Como la documentación disponible mantiene el conflicto entre `POST /api/standings/:group` y `POST /api/admin/standings/:group`, el Bloque 14 no ejecuta recálculo. La pantalla carga partidos y standings, calcula solo conteos operativos por status y muestra standings oficiales recibidos del backend.
+El flujo ahora usa `POST /api/standings/:group` tras confirmación y refresca `GET /api/standings` + `GET /api/matches`.
+
+El contrato confirmado no usa prefijo `/api/admin`, pero el endpoint es privado y depende de sesión/cookie (`verifyAdmin`), por lo que la pantalla solo lo usa en contexto admin con `withCredentials: true`.
 
 ### Preguntas abiertas para backend
 
-- ¿La ruta real para recalcular standings es `POST /api/standings/:group` o `POST /api/admin/standings/:group`?
-- ¿El endpoint de recálculo requiere body o solo el `group` en la URL?
-- ¿Qué grupos son válidos y cómo responde el backend ante un grupo inválido?
-- ¿`PUT /api/matches/:id` recalcula standings automáticamente cuando cambia un resultado?
-- Si el recálculo no es automático, ¿hay endpoint admin para recalcular un grupo o todos los grupos?
-- ¿El recálculo actualiza `qualifiedTo` o eso queda reservado para `POST /api/admin/classify-group`?
-- ¿`qualifiedTo` puede editarse manualmente, o solo mediante correcciones excepcionales del Bloque 16?
-- ¿Qué permisos exactos requiere cada acción y cómo se reportan errores de cookie ausente, expirada o inválida?
-- ¿La respuesta de recálculo devuelve standings actualizados o solo un mensaje de éxito?
-- ¿Existe un indicador backend de standings stale/pending, o la UI solo puede inferirlo por partidos finalizados?
+- `POST /api/standings/:group` está confirmado.
+- Pendiente: confirmar si requiere body o funciona solo con `group` en la URL.
+- Pendiente: confirmar formato de respuesta del recálculo (si devuelve standings actualizados o solo mensaje de estado).
 
 ### Validaciones manuales futuras
 
@@ -312,7 +312,7 @@ Después de la implementación del Bloque 14, validar manualmente:
 - carga de grupos y standings actuales;
 - estados de loading, empty, error y retry;
 - mensajes claros para grupos con partidos pendientes;
-- acción de recálculo deshabilitada mientras el endpoint no esté confirmado;
+- acción de recálculo habilitada solo con grupo completo (6 partidos finalizados) y en estado de acción confirmada;
 - refresco de datos con el botón `Reintentar` ante errores;
 - reflejo de standings oficiales recibidos por `GET /api/standings`, igual que `/posiciones`;
 - comportamiento seguro ante errores 401/403/404/409/500;
@@ -338,9 +338,10 @@ Después de la implementación del Bloque 14, validar manualmente:
 - gestionar mejores terceros;
 - corregir bracket o placeholders;
 - rediseñar páginas públicas;
+- recalcular standings desde React;
+- editar manualmente puntos, posiciones, diferencia de gol o criterios de desempate en frontend;
 - crear lógica local de standings;
-- agregar persistencia nueva para predicciones;
-- activar recálculo hasta resolver el contrato backend.
+- agregar persistencia nueva para predicciones.
 
 ## Bloque 15 — Admin Transition Controls
 
@@ -497,6 +498,168 @@ Resultado final del follow-up:
 4. Si Block 16 modifica datos que afectan clasificación, usar `/admin/transition` para reprocesar el grupo impactado.
 5. Mantener tests de payload mínimo y ausencia de controles admin públicos.
 
+## Bloque 16 — Admin Team Corrections
+
+Estado: implementado y validado automáticamente.
+
+### Diagnóstico
+
+Después del follow-up del Bloque 15, el Admin Zone ya puede ejecutar la transición manual por grupo desde `/admin/transition` enviando solo `{ group }` al backend. El siguiente riesgo operativo está en los datos de equipos que alimentan esa transición:
+
+- `position` define si el equipo encaja como `1st Group X`, `2nd Group X` o un caso equivalente autorizado por backend;
+- `qualifiedTo` define si el Transition Engine considera al equipo para 16avos u otra instancia;
+- `shieldUrl` impacta la visualización pública/admin de escudos o banderas.
+
+Por eso el Bloque 16 debe ser una pantalla excepcional de corrección, no un CRUD completo de equipos. Su objetivo es resolver casos administrativos puntuales antes de reprocesar el grupo en `/admin/transition`.
+
+### Alcance funcional implementado
+
+- `/admin/teams-corrections` como ruta protegida.
+- `Correcciones` habilitado en el sidebar.
+- Mostrar equipos con filtros por grupo A-L y búsqueda por nombre.
+  - Dato importante: el backend no expone `GET /api/teams/group/:group`, por eso la pantalla usa `GET /api/teams` y filtra por grupo en frontend.
+- Mostrar datos actuales: nombre, grupo, posición, `qualifiedTo` y `shieldUrl`.
+- Permitir editar solo:
+  - `position`;
+  - `qualifiedTo`;
+  - `shieldUrl`.
+- Bloquear edición de datos estables salvo nuevo contrato explícito:
+  - `name`;
+  - `group`;
+  - `confederation`;
+  - `_id`.
+- Pedir confirmación fuerte antes de guardar, con resumen de cambios y advertencia de impacto en transición/bracket.
+- Después de un guardado exitoso, refrescar equipos y mostrar mensaje en español.
+- Si la corrección afecta clasificación, guiar al admin a reprocesar el grupo desde `/admin/transition`.
+
+### Alcance técnico implementado
+
+- Usar `axiosClient` en un servicio admin dedicado.
+- Usar `withCredentials: true` explícito en llamadas privadas.
+- Usar payload parcial limpio: omitir campos no modificados y strings vacíos.
+- Validar valores de `position` y `qualifiedTo` antes de enviar.
+- Mantener constantes técnicas en inglés y labels visibles en español.
+- No calcular standings, clasificados, mejores terceros, desempates ni mapping de 16avos desde React.
+- No escribir equipos, posiciones o slots de eliminatorias desde React fuera del payload de corrección confirmado.
+- No almacenar tokens, cookies ni datos sensibles en `localStorage`.
+
+### Contratos backend
+
+Confirmado para lectura:
+
+| Acción | Endpoint | Estado |
+| --- | --- | --- |
+| Listar equipos | `GET /api/teams` | Documentado como lectura pública |
+| Listar equipo por ID | `GET /api/teams/:id` | Confirmado por usuario/backend; no requerido por la pantalla actual |
+| Buscar equipo por nombre | `GET /api/teams/name/:name` | Confirmado por usuario/backend; no requerido por la pantalla actual |
+
+Confirmado para mutación privada:
+
+| Acción | Endpoint | Estado |
+| --- | --- | --- |
+| Actualizar equipo | `PUT /api/teams/:id` | Confirmado; protegido en backend con `verifyAdmin`; frontend admin usa `withCredentials: true` |
+
+No usar en Bloque 16:
+
+- `GET /api/teams/group/:group` (no existe en backend confirmado; usar `GET /api/teams` + filtros cliente).
+- `PUT /api/admin/teams/:id`;
+- `POST /api/teams`;
+- `POST /api/admin/teams`;
+- `DELETE /api/teams/:id`;
+- cualquier endpoint de creación o eliminación.
+
+Payload permitido:
+
+```json
+{
+  "position": 1,
+  "qualifiedTo": "ROUND_OF_32",
+  "shieldUrl": "https://..."
+}
+```
+
+Confirmado:
+
+- La ruta real de mutación es `PUT /api/teams/:id`.
+- Aunque no usa prefijo `/api/admin`, está protegida por `verifyAdmin`.
+- El frontend debe tratarla como mutación privada y enviar `{ withCredentials: true }`.
+- El payload debe ser parcial y limitado a `position`, `qualifiedTo` y `shieldUrl`.
+- `qualifiedTo` usa valores canónicos o `null`.
+
+Pendiente de backend:
+
+- Confirmar si actualizar `position`/`qualifiedTo` dispara algún engine o solo modifica el equipo.
+- Confirmar el formato exacto de respuesta para mensajes de éxito más específicos.
+- Confirmar status codes finales para validación, permisos, equipo inexistente y conflictos.
+
+### Archivos implementados
+
+- `src/pages/AdminTeamCorrectionsPage/AdminTeamCorrectionsPage.jsx`
+- `src/pages/AdminTeamCorrectionsPage/AdminTeamCorrectionsPage.module.css`
+- `src/pages/AdminTeamCorrectionsPage/AdminTeamCorrectionsPage.test.jsx`
+- `src/services/admin/adminTeamsService.js`
+- `src/services/admin/adminTeamsService.test.js`
+- `src/schemas/adminTeamCorrectionSchema.js`
+- `src/schemas/adminTeamCorrectionSchema.test.js`
+- `src/constants/qualifiedTo.js`
+- `src/constants/adminRoutes.js`
+- `src/routes/AppRoutes.jsx`
+- `src/routes/AdminRoutes.test.jsx`
+- `src/pages/AdminDashboardPage/AdminDashboardPage.jsx`
+
+### Riesgos y mitigaciones
+
+- **Ruta privada sin prefijo admin**: aunque el endpoint es `PUT /api/teams/:id`, se trata como privado porque backend usa `verifyAdmin`; el servicio usa `withCredentials: true`.
+- **Uso no excepcional**: copy visible y confirmación deben dejar claro que no es un CRUD normal.
+- **Inconsistencia con engines**: después de cambios que afecten clasificación, orientar a reprocesar `/admin/transition`.
+- **Cálculo indebido en React**: la pantalla solo muestra y edita campos permitidos; no calcula rankings ni mejores terceros.
+- **Payload excesivo**: tests deben asegurar que no se envían campos bloqueados.
+- **Credenciales omitidas**: tests de servicio deben comprobar `withCredentials: true`.
+- **Valores legacy**: labels pueden ayudar a leer datos antiguos, pero el payload debe usar valores canónicos confirmados.
+
+### Criterios de aceptación implementados
+
+- `/admin/teams-corrections` está protegida por la sesión admin.
+- La navegación admin habilita `Correcciones`.
+- La pantalla muestra loading, delayed loading si aplica, empty, error y retry.
+- La lectura de equipos usa contratos confirmados.
+- La mutación real usa `PUT /api/teams/:id`, no `/api/admin/teams/:id`.
+- El servicio usa `axiosClient` con `withCredentials: true`.
+- Solo se pueden editar `position`, `qualifiedTo` y `shieldUrl`.
+- El payload enviado es parcial, limpio y no contiene `name`, `group`, `confederation`, standings, slots ni objetos completos.
+- Hay confirmación fuerte antes de guardar.
+- La UI visible está en español.
+- Después de guardar, la UI refresca equipos y sugiere reprocesar el grupo en `/admin/transition` cuando corresponda.
+- Tests cubren ruta protegida, servicio, payload, confirmación/cancelación, estados, ausencia de creación/eliminación y ausencia de controles públicos.
+
+### Validaciones manuales sugeridas
+
+- Acceder sin sesión a `/admin/teams-corrections` y confirmar redirect a `/admin/login`.
+- Acceder con sesión admin y confirmar que se listan equipos.
+- Filtrar por grupo A-L y buscar por nombre.
+- Intentar guardar sin cambios y verificar que no se envía payload innecesario.
+- Editar `position`, `qualifiedTo` o `shieldUrl`, revisar confirmación y cancelar sin mutar.
+- Confirmar guardado contra backend real.
+- Verificar success/error amigable en español.
+- Confirmar que no se pueden editar `name`, `group` ni `confederation`.
+- Confirmar que `/eliminatorias`, `/posiciones` y rutas públicas no muestran controles admin.
+- Después de una corrección que afecte clasificación, reprocesar el grupo en `/admin/transition`.
+
+### Validaciones automáticas sugeridas
+
+- `adminTeamsService.test.js`: lectura, mutación confirmada, `withCredentials`, payload parcial y errores.
+- `AdminTeamCorrectionsPage.test.jsx`: loading, empty, error, filtros, edición, confirmación, cancelación, success/error.
+- `AdminRoutes.test.jsx`: ruta protegida y navegación.
+- Tests de constantes/schemas para `qualifiedTo`, `position`, `shieldUrl` y rechazo de valores no permitidos.
+- `KnockoutStage.test.jsx` o test de rutas públicas: no exponer controles admin.
+- En QA Mode: `pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`, `pnpm run build` después del preflight WSL.
+
+Resultado final del Bloque 16:
+
+- `pnpm run lint`: passed.
+- `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`: 35 test files, 352 tests passed.
+- `pnpm run build`: passed con warning informativo de Vite por chunk mayor a 500 kB.
+
 ## Componentes propuestos
 
 - `AdminLayout`
@@ -583,7 +746,7 @@ Para rutas admin:
 - Las rutas hijas admin están protegidas.
 - Login/logout no exponen tokens al frontend.
 - Matches guardan resultados con payloads parciales limpios.
-- `/admin/groups` revisa standings oficiales y mantiene recálculo deshabilitado hasta confirmar endpoint.
+- `/admin/groups` revisa standings oficiales y habilita recálculo manual de standings con `POST /api/standings/:group` tras confirmación, refrescando datos del backend.
 - Transition llama al Transition Engine.
 - Finalizar eliminatoria confía en el Bracket Engine y refresca matches.
 - Correcciones de equipos están limitadas y confirmadas.
