@@ -19,7 +19,8 @@ const summaryCards = [
   },
   {
     title: 'Correcciones',
-    description: 'Ajustes excepcionales de equipos en el Bloque 16.',
+    description: 'Correcciones excepcionales de position, qualifiedTo y shieldUrl disponibles en /admin/teams-corrections.',
+    status: 'Disponible',
   },
   {
     title: 'Eliminatorias',

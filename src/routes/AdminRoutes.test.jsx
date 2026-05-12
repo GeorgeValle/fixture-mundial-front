@@ -94,6 +94,19 @@ describe('Admin routes', () => {
     expect(screen.queryByRole('heading', { name: /transición a 16avos/i })).not.toBeInTheDocument()
   })
 
+  it('redirects the admin team corrections route to login without a valid session', async () => {
+    server.use(
+      http.get('*/api/auth/me', () =>
+        HttpResponse.json({ message: 'No hay sesión activa' }, { status: 401 }),
+      ),
+    )
+
+    renderAdminRoute('/admin/teams-corrections')
+
+    expect(await screen.findByRole('heading', { name: /ingreso administrativo/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /correcciones de equipos/i })).not.toBeInTheDocument()
+  })
+
   it('clears the admin session after logout', async () => {
     const user = userEvent.setup()
     let logoutBody = ''
@@ -212,7 +225,7 @@ describe('Admin routes', () => {
 
     expect(await screen.findByRole('heading', { name: /grupos y standings oficiales/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /grupos/i })).toBeInTheDocument()
-    expect(screen.getByText(/endpoint de recálculo pendiente de confirmación/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /disponible cuando el grupo tenga sus 6 partidos finalizados/i })).toBeInTheDocument()
   })
 
   it('renders the protected admin transition route for an authenticated admin', async () => {
@@ -240,6 +253,46 @@ describe('Admin routes', () => {
     expect(await screen.findByRole('heading', { name: /transición a 16avos/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /transición/i })).toHaveAttribute('href', '/admin/transition')
     expect(screen.getByRole('button', { name: /ejecutar transición a 16avos/i })).toBeDisabled()
+  })
+
+  it('renders the protected admin team corrections route for an authenticated admin', async () => {
+    server.use(
+      http.get('*/api/teams', () =>
+        HttpResponse.json([
+          {
+            _id: 'team-1',
+            name: 'Argentina',
+            group: 'A',
+            shieldUrl: 'https://example.com/argentina.svg',
+            position: 1,
+            qualifiedTo: 'ROUND_OF_32',
+          },
+        ]),
+      ),
+    )
+
+    renderAdminRoute('/admin/teams-corrections', {
+      user: { email: 'admin@example.com', role: 'ADMIN' },
+      isAuthenticated: true,
+      hasTriedRestore: true,
+    })
+
+    expect(await screen.findByRole('heading', { name: /correcciones de equipos/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /correcciones/i })).toHaveAttribute('href', '/admin/teams-corrections')
+    expect(screen.getByText('Argentina')).toBeInTheDocument()
+  })
+
+  it('does not expose admin correction controls on public knockout or standings routes', async () => {
+    server.use(
+      http.get('*/api/matches', () => HttpResponse.json([])),
+      http.get('*/api/standings', () => HttpResponse.json({ status: 'success', data: [] })),
+    )
+
+    renderAdminRoute('/eliminatorias', { hasTriedRestore: true })
+
+    expect(await screen.findByRole('heading', { name: /camino a la final/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /guardar corrección/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/correcciones de equipos/i)).not.toBeInTheDocument()
   })
 
   it('shows a controlled error state when logout fails', async () => {

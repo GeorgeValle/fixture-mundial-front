@@ -2,13 +2,14 @@
 
 ## Current Status
 
-- Current block: none — Bloque 15 follow-up fue implementado para ejecutar transición manual por grupo desde `/admin/transition`.
+- Current block: none — Bloque 16 fue implementado y validado automáticamente.
 - Last completed planning block: Bloque 15 — Admin Transition Controls.
-- Last completed admin implementation block: Bloque 15 follow-up — Manual Group Transition Action.
-- Last completed implementation block: Bloque 15 follow-up — Manual Group Transition Action.
-- Next suggested block: Bloque 16 — Admin Team Corrections, pending approval.
-- Goal: permitir que el admin seleccione un grupo A-L y ejecute `POST /api/admin/classify-group` enviando solo `{ group }`, dejando el cálculo e inyección de clasificados al backend.
-- Manual validation status: Bloque 15 follow-up pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 32 test files, 317 tests, y `pnpm run build`). Queda pendiente validación manual de usuario si corresponde.
+- Last completed admin implementation block: Bloque 16 — Admin Team Corrections.
+- Last completed implementation block: Bloque 16 — Admin Team Corrections.
+- Estado actual: Bloque 14 fue activado con recálculo manual confirmado (`POST /api/standings/:group`) y validado como seguimiento operativo de admin.
+- Next suggested block after approval/completion: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
+- Goal: permitir correcciones excepcionales de `position`, `qualifiedTo` y `shieldUrl` desde `/admin/teams-corrections`, usando `PUT /api/teams/:id` con cookie admin y sin crear/eliminar equipos.
+- Manual validation status: Bloque 16 pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 35 test files, 352 tests, y `pnpm run build`). Queda pendiente validación manual de usuario contra backend real si corresponde.
 
 ## Critical Execution Rules
 
@@ -217,20 +218,21 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 
 - [x] Implement `/admin/groups` as a protected admin route.
 - [x] Enable `Grupos` in the admin sidebar.
-- [x] Load admin matches with `GET /api/matches` and explicit `withCredentials`.
+- [x] Load admin matches with `GET /api/matches` and explicit `withCredentials` from `adminMatchesService`.
 - [x] Load standings with `GET /api/standings` and explicit `withCredentials` from `adminStandingsService`.
 - [x] Show group selector A-L.
 - [x] Show operational counts by status: `PENDING`, `PLAYING`, `FINISHED` and expected group total.
 - [x] Normalize legacy `IN_PROGRESS` defensively to `PLAYING` for counts.
 - [x] Show current standings for the selected group as official backend data.
 - [x] Show loading, empty, error and retry states.
-- [x] Keep recalculation disabled because docs still conflict between `POST /api/standings/:group` and `POST /api/admin/standings/:group`.
+- [x] Habilitar recálculo manual con `POST /api/standings/:group` para grupos completos (6 partidos finalizados).
 - [x] Do not calculate standings, best third places, qualifiers or `qualifiedTo` in React.
 - [x] Do not implement transition, team corrections, knockout controls or bracket modification.
-- [x] Add tests for route protection, data loading, group selector, status counts, empty/error/retry, disabled recalculation and no token storage.
+- [x] Add tests for route protection, data loading, group selector, status counts, empty/error/retry, confirmación/cancelación, recálculo y refresh.
+- [x] Register manual confirmation and no POST without confirmation in tests.
 - [x] Run `pnpm run build`.
 - [x] Run `pnpm run lint`.
-- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (30 test files, 298 tests).
+- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (35 test files, 352 tests).
 
 ### Bloque 15 — Admin Transition Controls
 
@@ -272,10 +274,24 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 
 ### Bloque 16 — Admin Team Corrections
 
-- [ ] Implement `/admin/teams-corrections`.
-- [ ] Allow limited correction of `position`, `qualifiedTo` and `shieldUrl`.
-- [ ] Use strong confirmations before saving.
-- [ ] Keep this screen for exceptional cases only.
+- [x] Planificar Bloque 16 sin tocar `src/` ni ejecutar build/lint/test.
+- [x] Identificar que el siguiente paso lógico es `/admin/teams-corrections` porque la transición manual ya existe y puede requerir correcciones excepcionales de equipos antes de reprocesar un grupo.
+- [x] Documentar que el uso debe ser excepcional: empates absolutos, Fair Play/sorteos, mejores terceros, corrección de `qualifiedTo` o `shieldUrl`.
+- [x] Confirmar que React no debe calcular standings, clasificados, mejores terceros, desempates ni mapping de cruces.
+- [x] Registrar contratos confirmados para lectura de equipos: `GET /api/teams`, `GET /api/teams/:id` y `GET /api/teams/name/:name`.
+- [x] Confirmar contrato real de mutación: `PUT /api/teams/:id`, protegido en backend por `verifyAdmin`; no usar `/api/admin/teams/:id`.
+- [x] Confirmar payload permitido para corrección de equipo: `position`, `qualifiedTo`, `shieldUrl`; `qualifiedTo` acepta valores canónicos o `null`.
+- [x] Implementar `/admin/teams-corrections` como ruta protegida.
+- [x] Habilitar `Correcciones` en el sidebar.
+- [x] Crear servicio admin de equipos con `axiosClient` y `withCredentials: true` explícito.
+- [x] Listar/filtrar equipos por grupo y búsqueda usando `GET /api/teams`.
+- [x] Permitir editar únicamente `position`, `qualifiedTo` y `shieldUrl`; no editar `name`, `group`, `confederation` ni `_id`.
+- [x] Enviar payload parcial limpio y pedir confirmación fuerte antes de guardar.
+- [x] Mostrar success/error en español y sugerir reprocesar el grupo en `/admin/transition` cuando corresponde.
+- [x] Agregar tests de ruta protegida, servicio, payload parcial, confirmación/cancelación, estados loading/error/empty, `withCredentials` y no exposición pública.
+- [x] Registrar resultado final de `pnpm run lint` — passed.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 35 test files, 352 tests passed.
+- [x] Registrar resultado final de `pnpm run build` — passed con warning Vite de chunk mayor a 500 kB.
 
 ### Bloque 17 — Admin Knockouts Controls & Public Knockout Polish
 
@@ -291,9 +307,10 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - Some backend docs use legacy or conflicting admin endpoints. Current confirmed admin implementation contract is:
   - `PUT /api/matches/:id`
 - Contracts to confirm before future admin blocks:
-  - standings recalculation remains disabled in frontend until `POST /api/standings/:group` vs `POST /api/admin/standings/:group` is resolved
-  - team corrections: `PUT /api/teams/:id`
+  - recálculo de standings bloqueado por contrato sin resolver? `POST /api/standings/:group` quedó confirmado y habilitado; revisar si requiere body y/o retorna standings actualizados.
+  - team corrections: contrato confirmado `PUT /api/teams/:id`, protegido por `verifyAdmin`; no usar `PUT /api/admin/teams/:id`, `POST /api/teams` ni endpoints de creación
   - group transition: contrato confirmado para `POST /api/admin/classify-group` con body `{ group }`; frontend solo dispara por grupo con cookie admin y backend ejecuta `TransitionService.allocateGroupQualifiers(group)`
+  - team listing: no usar `GET /api/teams/group/:group`; para `/admin/teams-corrections` usar `GET /api/teams` y filtro por grupo en frontend.
 - Legacy `qualifiedTo` values need normalization:
   - `16AVOS` -> `ROUND_OF_32`
   - `OCTAVOS` -> `ROUND_OF_16`

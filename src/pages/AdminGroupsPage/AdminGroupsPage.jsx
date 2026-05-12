@@ -10,8 +10,8 @@ import {
 } from '../../features/ui/uiSlice'
 import { getAdminMatches } from '../../services/admin/adminMatchesService'
 import {
-  ADMIN_STANDINGS_RECALCULATION_STATUS,
   getAdminStandings,
+  recalculateAdminGroupStandings,
 } from '../../services/admin/adminStandingsService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
 import styles from './AdminGroupsPage.module.css'
@@ -19,6 +19,11 @@ import styles from './AdminGroupsPage.module.css'
 const EXPECTED_GROUP_MATCHES = 6
 const FRIENDLY_ERROR_MESSAGE =
   'No pudimos cargar grupos y standings para administración. Si la sesión admin expiró o el servidor estaba dormido, iniciá sesión nuevamente o probá otra vez en unos segundos.'
+const RECALCULATION_READY_LABEL = 'Actualizar standings del grupo'
+const RECALCULATION_DISABLED_LABEL = 'Disponible cuando el grupo tenga sus 6 partidos finalizados.'
+const RECALCULATION_LOADING_LABEL = 'Recalculando standings del grupo…'
+const RECALCULATION_SUCCESS_MESSAGE = 'Standings del grupo actualizados correctamente.'
+const RECALCULATION_ERROR_MESSAGE = 'No se pudieron actualizar los standings del grupo seleccionado.'
 
 function getGroupFromStage(stage) {
   const normalized = String(stage ?? '')
@@ -72,6 +77,9 @@ function AdminGroupsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [isRecalculating, setIsRecalculating] = useState(false)
+  const [recalculationSuccess, setRecalculationSuccess] = useState('')
+  const [recalculationError, setRecalculationError] = useState('')
 
   useEffect(() => {
     let isActive = true
@@ -140,17 +148,72 @@ function AdminGroupsPage() {
   const selectedStanding = standings.find((standing) => standing?.group === selectedGroup)
   const statusCounts = getStatusCounts(selectedMatches)
   const totalMatches = selectedMatches.length
-  const expectedTotal = Math.max(totalMatches, EXPECTED_GROUP_MATCHES)
-  const completionPercent = getCompletionPercent(statusCounts[MATCH_STATUS.finished], expectedTotal)
-  const hasPendingMatches = statusCounts[MATCH_STATUS.pending] > 0 || statusCounts[MATCH_STATUS.playing] > 0
   const hasAllExpectedMatchesFinished =
     totalMatches >= EXPECTED_GROUP_MATCHES && statusCounts[MATCH_STATUS.finished] >= EXPECTED_GROUP_MATCHES
+
+  const completionTotal = Math.max(totalMatches, EXPECTED_GROUP_MATCHES)
+  const completionPercent = getCompletionPercent(statusCounts[MATCH_STATUS.finished], completionTotal)
+  const hasPendingMatches =
+    statusCounts[MATCH_STATUS.pending] > 0 || statusCounts[MATCH_STATUS.playing] > 0
   const selectedTeams = selectedStanding?.teams ?? []
+
+  const isRecalculateReady =
+    hasAllExpectedMatchesFinished && selectedGroup && !isLoading && !isRecalculating
+
+  const selectedGroupName = selectedGroup ? `Grupo ${selectedGroup}` : 'un grupo'
 
   function handleRetry() {
     setIsLoading(true)
     setHasError(false)
+    setRecalculationError('')
+    setRecalculationSuccess('')
     setRetryCount((currentCount) => currentCount + 1)
+  }
+
+  async function refreshAdminData() {
+    const [nextMatches, nextStandings] = await Promise.all([getAdminMatches(), getAdminStandings()])
+
+    setMatches(nextMatches)
+    setStandings(nextStandings)
+    setHasError(false)
+  }
+
+  async function handleRecalculateGroupStandings() {
+    if (!isRecalculateReady) {
+      return
+    }
+
+    const didConfirm = window.confirm(`¿Querés actualizar los standings del ${selectedGroupName}?`)
+
+    if (!didConfirm) {
+      return
+    }
+
+    setIsRecalculating(true)
+    setRecalculationError('')
+    setRecalculationSuccess('')
+
+    try {
+      await recalculateAdminGroupStandings(selectedGroup)
+      try {
+        await refreshAdminData()
+      } catch {
+        setRecalculationError('La acción se ejecutó, pero no pudimos refrescar standings y partidos automáticamente.')
+      }
+      setRecalculationSuccess(RECALCULATION_SUCCESS_MESSAGE)
+    } catch (error) {
+      if (error?.message === RECALCULATION_ERROR_MESSAGE) {
+        setRecalculationError(RECALCULATION_ERROR_MESSAGE)
+      } else {
+        setRecalculationError(
+          error?.message && error.message !== 'No pudimos recalcular los standings del grupo.'
+            ? error.message
+            : RECALCULATION_ERROR_MESSAGE,
+        )
+      }
+    } finally {
+      setIsRecalculating(false)
+    }
   }
 
   return (
@@ -185,7 +248,7 @@ function AdminGroupsPage() {
             ))}
           </select>
         </label>
-        <p>Estás revisando el Grupo {selectedGroup}. Esta pantalla solo muestra señales operativas y datos oficiales.</p>
+        <p>Estás revisando el {selectedGroupName}. Esta pantalla solo muestra señales operativas y datos oficiales.</p>
       </section>
 
       {isLoading && (
@@ -209,9 +272,9 @@ function AdminGroupsPage() {
 
       {!isLoading && !hasError && (
         <>
-          <section className={styles.summaryGrid} aria-label={`Resumen operativo del Grupo ${selectedGroup}`}>
+          <section className={styles.summaryGrid} aria-label={`Resumen operativo del ${selectedGroupName}`}>
             <article className={styles.summaryCard}>
-              <p className={styles.kicker}>Grupo {selectedGroup}</p>
+              <p className={styles.kicker}>{selectedGroupName}</p>
               <h2>Resumen operativo</h2>
               <dl className={styles.stats}>
                 <div>
@@ -235,7 +298,7 @@ function AdminGroupsPage() {
                 <span style={{ width: `${completionPercent}%` }} />
               </div>
               <p className={styles.helperText}>
-                {statusCounts[MATCH_STATUS.finished]} de {expectedTotal} partidos detectados como finalizados.
+                {statusCounts[MATCH_STATUS.finished]} de {completionTotal} partidos detectados como finalizados.
               </p>
             </article>
 
@@ -244,8 +307,8 @@ function AdminGroupsPage() {
               <h2>{hasAllExpectedMatchesFinished ? 'Grupo listo para revisar' : 'Grupo con actividad pendiente'}</h2>
               {hasAllExpectedMatchesFinished ? (
                 <p>
-                  Los {EXPECTED_GROUP_MATCHES} partidos esperados figuran como finalizados. Revisá que el backend haya
-                  actualizado standings antes de continuar con otros flujos.
+                  Los {EXPECTED_GROUP_MATCHES} partidos esperados figuran como finalizados. Si tocó, podés actualizar
+                  standings del grupo desde el control de acción.
                 </p>
               ) : hasPendingMatches ? (
                 <p>
@@ -262,21 +325,43 @@ function AdminGroupsPage() {
           <section className={styles.recalculateCard} aria-labelledby="admin-recalculate-title">
             <div>
               <p className={styles.kicker}>Recalcular standings</p>
-              <h2 id="admin-recalculate-title">Acción pendiente de contrato backend</h2>
+              <h2 id="admin-recalculate-title">Recalcular standings del grupo</h2>
               <p>
-                La documentación disponible sigue siendo ambigua entre dos rutas privadas. Para evitar modificar datos con
-                un endpoint incorrecto, el recálculo queda deshabilitado hasta confirmar el contrato.
+                El frontend solo dispara el proceso del servidor. Los puntos, posiciones y desempates los calcula el backend.
               </p>
             </div>
-            <button className={styles.disabledButton} disabled type="button">
-              {ADMIN_STANDINGS_RECALCULATION_STATUS.message}
+            <button
+              className={isRecalculateReady ? styles.primaryButton : styles.disabledButton}
+              disabled={!isRecalculateReady}
+              type="button"
+              onClick={handleRecalculateGroupStandings}
+            >
+              {isRecalculating
+                ? RECALCULATION_LOADING_LABEL
+                : isRecalculateReady
+                  ? RECALCULATION_READY_LABEL
+                  : RECALCULATION_DISABLED_LABEL}
             </button>
+            {recalculationSuccess && (
+              <p className={styles.successText} role="status">
+                {recalculationSuccess}
+              </p>
+            )}
+            {recalculationError && (
+              <p className={styles.errorText} role="alert">
+                {recalculationError}
+              </p>
+            )}
+            {!isRecalculateReady && <p className={styles.helperText}>{RECALCULATION_DISABLED_LABEL}</p>}
+            {!recalculationSuccess && !recalculationError && (
+              <p className={styles.helperText}>Disponible cuando el grupo tenga sus 6 partidos finalizados.</p>
+            )}
           </section>
 
           <section className={styles.standingsPanel} aria-labelledby="admin-standings-title">
             <div className={styles.sectionHeader}>
               <p className={styles.kicker}>Standings oficiales</p>
-              <h2 id="admin-standings-title">Posiciones del Grupo {selectedGroup}</h2>
+              <h2 id="admin-standings-title">Posiciones del {selectedGroupName}</h2>
               <p>
                 Estos valores se muestran tal como llegan desde el backend. No hay edición manual de puntos, goles,
                 diferencia de gol, posición ni qualifiedTo.
@@ -288,7 +373,7 @@ function AdminGroupsPage() {
             ) : (
               <div className={styles.emptyState}>
                 <h3>No se encontraron standings para este grupo</h3>
-                <p>Cuando el backend devuelva posiciones para el Grupo {selectedGroup}, van a aparecer acá.</p>
+                <p>Cuando el backend devuelva posiciones para {selectedGroupName}, van a aparecer acá.</p>
               </div>
             )}
           </section>
