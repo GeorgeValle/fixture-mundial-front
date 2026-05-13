@@ -11,6 +11,7 @@ import AdminDashboardPage from '../pages/AdminDashboardPage/AdminDashboardPage'
 import AdminLoginPage from '../pages/AdminLoginPage/AdminLoginPage'
 import AdminMatchesPage from '../pages/AdminMatchesPage/AdminMatchesPage'
 import AdminGroupsPage from '../pages/AdminGroupsPage/AdminGroupsPage'
+import AdminKnockoutsPage from '../pages/AdminKnockoutsPage/AdminKnockoutsPage'
 import AdminTeamCorrectionsPage from '../pages/AdminTeamCorrectionsPage/AdminTeamCorrectionsPage'
 import AdminTransitionPage from '../pages/AdminTransitionPage/AdminTransitionPage'
 import GroupFixtures from '../pages/GroupFixtures/GroupFixtures'
@@ -108,6 +109,17 @@ function AppRoutes() {
           </AdminProtectedRoute>
         }
         path={ADMIN_ROUTES.teamCorrections}
+      />
+
+      <Route
+        element={
+          <AdminProtectedRoute>
+            <AdminLayout>
+              <AdminKnockoutsPage />
+            </AdminLayout>
+          </AdminProtectedRoute>
+        }
+        path={ADMIN_ROUTES.knockouts}
       />
 
       <Route element={<PublicRoute><Home /></PublicRoute>} path={ROUTES.home} />

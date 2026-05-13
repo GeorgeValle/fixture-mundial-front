@@ -753,6 +753,8 @@ describe('PredictionFixture', () => {
     expect(screen.getByText('Argentina vs Alemania')).toBeInTheDocument()
     expect(screen.getByText('Francia vs Inglaterra')).toBeInTheDocument()
     expect(screen.queryByLabelText('Goles de Argentina')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Penales de Argentina')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /guardar eliminatoria/i })).not.toBeInTheDocument()
 
     await user.selectOptions(knockoutSelector, 'final')
 
