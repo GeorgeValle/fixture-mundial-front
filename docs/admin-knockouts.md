@@ -142,3 +142,43 @@ pnpm run build
 Las predicciones knockout quedan fuera de alcance del Bloque 17.
 
 No deben habilitarse en este bloque salvo una validación futura explícita con cruces reales (`homeTeam` y `awayTeam`) y una planificación separada para campos visibles de penales, locking y scoring.
+
+## Estado final del Bloque 17
+
+Implementado y validado automáticamente.
+
+### Decisiones finales
+
+- `/admin/knockouts` quedó como ruta admin protegida dedicada dentro de `AdminLayout`.
+- `Eliminatorias` quedó habilitado en el sidebar admin.
+- La pantalla reutiliza `getAdminMatches` y `updateAdminMatch`, que usan `GET /api/matches` y `PUT /api/matches/:id` con `withCredentials: true`.
+- React solo envía `status`, `homeScore`, `awayScore`, `homePenaltyScore` y `awayPenaltyScore` cuando corresponden.
+- React no calcula ganadores ni modifica `homeTeam`, `awayTeam`, placeholders, `matchNumber`, `nextMatchWinner` ni `nextMatchLoser`.
+- Después de guardar, la pantalla refresca `GET /api/matches` para reflejar la progresión persistida por el Bracket Engine.
+- Las predicciones knockout siguen fuera de alcance del bloque.
+
+### Archivos creados o modificados
+
+- `src/pages/AdminKnockoutsPage/AdminKnockoutsPage.jsx`
+- `src/pages/AdminKnockoutsPage/AdminKnockoutsPage.module.css`
+- `src/pages/AdminKnockoutsPage/AdminKnockoutsPage.test.jsx`
+- `src/routes/AppRoutes.jsx`
+- `src/routes/AdminRoutes.test.jsx`
+- `src/constants/adminRoutes.js`
+- `src/pages/AdminDashboardPage/AdminDashboardPage.jsx`
+- `src/pages/KnockoutStage/KnockoutStage.test.jsx`
+- `src/pages/PredictionFixture/PredictionFixture.test.jsx`
+- `docs/task.md`
+- `docs/admin-knockouts.md`
+
+### Validaciones automáticas ejecutadas
+
+- `pnpm run lint`: aprobado.
+- `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`: aprobado, 36 archivos de test y 361 tests.
+- `pnpm run build`: aprobado con advertencia informativa de Vite por chunk mayor a 500 kB.
+
+### Pendiente de validación manual/backend real
+
+- Confirmar idempotencia al re-guardar una eliminatoria ya `FINISHED`.
+- Confirmar comportamiento del backend al corregir resultados ya propagados a rondas posteriores.
+

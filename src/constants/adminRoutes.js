@@ -15,5 +15,5 @@ export const ADMIN_NAV_ITEMS = [
   { label: 'Grupos', path: ADMIN_ROUTES.groups, isEnabled: true },
   { label: 'Transición', path: ADMIN_ROUTES.transition, isEnabled: true },
   { label: 'Correcciones', path: ADMIN_ROUTES.teamCorrections, isEnabled: true },
-  { label: 'Eliminatorias', path: ADMIN_ROUTES.knockouts, isEnabled: false },
+  { label: 'Eliminatorias', path: ADMIN_ROUTES.knockouts, isEnabled: true },
 ]

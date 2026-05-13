@@ -309,6 +309,8 @@ describe('KnockoutStage', () => {
 
     expect(await screen.findByRole('heading', { name: /camino a la final/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /ejecutar transición a 16avos/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /guardar eliminatoria/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /eliminatorias admin/i })).not.toBeInTheDocument()
     expect(screen.queryByText(/contrato backend pendiente/i)).not.toBeInTheDocument()
   })
 })

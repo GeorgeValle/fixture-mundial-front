@@ -107,6 +107,19 @@ describe('Admin routes', () => {
     expect(screen.queryByRole('heading', { name: /correcciones de equipos/i })).not.toBeInTheDocument()
   })
 
+  it('redirects the admin knockouts route to login without a valid session', async () => {
+    server.use(
+      http.get('*/api/auth/me', () =>
+        HttpResponse.json({ message: 'No hay sesión activa' }, { status: 401 }),
+      ),
+    )
+
+    renderAdminRoute('/admin/knockouts')
+
+    expect(await screen.findByRole('heading', { name: /ingreso administrativo/i })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /eliminatorias admin/i })).not.toBeInTheDocument()
+  })
+
   it('clears the admin session after logout', async () => {
     const user = userEvent.setup()
     let logoutBody = ''
@@ -282,7 +295,53 @@ describe('Admin routes', () => {
     expect(screen.getByText('Argentina')).toBeInTheDocument()
   })
 
-  it('does not expose admin correction controls on public knockout or standings routes', async () => {
+  it('renders the protected admin knockouts route for an authenticated admin', async () => {
+    server.use(
+      http.get('*/api/matches', () =>
+        HttpResponse.json([
+          {
+            _id: 'match-73',
+            homeTeam: { _id: 'team-1', name: 'México' },
+            awayTeam: { _id: 'team-2', name: 'Francia' },
+            placeholderHome: '1st Group A',
+            placeholderAway: '2nd Group B',
+            date: '2026-07-04T21:00:00.000Z',
+            stage: 'ROUND_OF_32',
+            status: 'PENDING',
+            homeScore: null,
+            awayScore: null,
+            homePenaltyScore: null,
+            awayPenaltyScore: null,
+            matchNumber: 73,
+            nextMatchWinner: 89,
+            nextMatchLoser: null,
+          },
+          {
+            _id: 'group-match-1',
+            homeTeam: { _id: 'team-3', name: 'Argentina', group: 'A' },
+            awayTeam: { _id: 'team-4', name: 'Canadá', group: 'A' },
+            date: '2026-06-11T21:00:00.000Z',
+            stage: 'GRUPO A',
+            status: 'PENDING',
+            matchNumber: 1,
+          },
+        ]),
+      ),
+    )
+
+    renderAdminRoute('/admin/knockouts', {
+      user: { email: 'admin@example.com', role: 'ADMIN' },
+      isAuthenticated: true,
+      hasTriedRestore: true,
+    })
+
+    expect(await screen.findByRole('heading', { name: /eliminatorias admin/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /eliminatorias/i })).toHaveAttribute('href', '/admin/knockouts')
+    expect(screen.getByText('México vs Francia')).toBeInTheDocument()
+    expect(screen.queryByText('Argentina vs Canadá')).not.toBeInTheDocument()
+  })
+
+  it('does not expose admin correction or knockout controls on public knockout or standings routes', async () => {
     server.use(
       http.get('*/api/matches', () => HttpResponse.json([])),
       http.get('*/api/standings', () => HttpResponse.json({ status: 'success', data: [] })),
@@ -292,6 +351,8 @@ describe('Admin routes', () => {
 
     expect(await screen.findByRole('heading', { name: /camino a la final/i })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /guardar corrección/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /guardar eliminatoria/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /eliminatorias admin/i })).not.toBeInTheDocument()
     expect(screen.queryByText(/correcciones de equipos/i)).not.toBeInTheDocument()
   })
 

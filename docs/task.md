@@ -2,14 +2,14 @@
 
 ## Estado actual
 
-- Bloque actual: Bloque 17 en planificación — sin implementación de código.
-- Último bloque de planificación completado: Bloque 15 — Admin Transition Controls.
-- Último bloque de implementación admin completado: Bloque 16 — Admin Team Corrections.
-- Último bloque de implementación completado: Bloque 16 — Admin Team Corrections.
+- Bloque actual: ninguno — Bloque 17 fue implementado y validado automáticamente.
+- Último bloque de planificación completado: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
+- Último bloque de implementación admin completado: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
+- Último bloque de implementación completado: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
 - Estado actual: Bloque 14 fue activado con recálculo manual confirmado (`POST /api/standings/:group`) y validado como seguimiento operativo de admin.
-- Siguiente bloque sugerido tras aprobación/finalización: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
-- Objetivo: planificar una consola admin específica para eliminatorias que cargue resultados con `PUT /api/matches/:id`, confíe en el Bracket Engine backend y verifique el reflejo público en `/eliminatorias`.
-- Estado de validación manual: Bloque 16 pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 35 archivos de test, 352 tests, y `pnpm run build`). Queda pendiente validación manual de usuario contra backend real si corresponde.
+- Siguiente bloque sugerido tras aprobación/finalización: pendiente de definir tras validación manual del Bloque 17.
+- Objetivo: operar una consola admin específica para eliminatorias que carga resultados con `PUT /api/matches/:id`, confía en el Bracket Engine backend y verifica que `/eliminatorias` no exponga controles admin.
+- Estado de validación manual: Bloque 17 pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 36 archivos de test, 361 tests, y `pnpm run build`). Queda pendiente validación manual de usuario contra backend real si corresponde.
 
 ## Reglas críticas de ejecución
 
@@ -295,17 +295,21 @@ Nota: los campos visibles de penales para predicciones knockout quedan diferidos
 
 ### Bloque 17 — Admin Knockouts Controls & Public Knockout Polish
 
-- [ ] Mantener el detalle de planificación en `docs/admin-knockouts.md` y este tablero como checklist liviano.
-- [ ] Planificar Bloque 17 sin tocar `src/` ni ejecutar build/lint/test.
-- [ ] Crear `/admin/knockouts` como ruta protegida dedicada durante un futuro Build Mode aprobado.
-- [ ] Habilitar `Eliminatorias` en el sidebar admin solo durante la implementación aprobada.
-- [ ] Reutilizar contratos confirmados: `GET /api/matches` y `PUT /api/matches/:id` con `withCredentials: true`.
-- [ ] Mostrar `matchNumber`, fase, equipos reales/placeholders, `nextMatchWinner`, `nextMatchLoser`, status, scores y penales.
-- [ ] No editar equipos, placeholders, `nextMatchWinner` ni `nextMatchLoser`; no calcular ganadores en React.
-- [ ] Refrescar `GET /api/matches` después de guardar para reflejar la progresión del Bracket Engine.
-- [ ] Confirmar antes de implementación la idempotencia al re-guardar eliminatorias finalizadas y el comportamiento al corregir resultados ya propagados.
-- [ ] Confirmar que `/eliminatorias` renderiza datos actualizados de `GET /api/matches` sin controles admin.
-- [ ] Mantener predicciones knockout fuera de alcance: no habilitarlas en este bloque salvo validación futura con cruces reales.
+- [x] Mantener el detalle de planificación en `docs/admin-knockouts.md` y este tablero como checklist liviano.
+- [x] Planificar Bloque 17 antes de implementar en Build Mode.
+- [x] Crear `/admin/knockouts` como ruta protegida dedicada.
+- [x] Habilitar `Eliminatorias` en el sidebar admin.
+- [x] Reutilizar contratos confirmados: `GET /api/matches` y `PUT /api/matches/:id` con `withCredentials: true`.
+- [x] Mostrar `matchNumber`, fase, equipos reales/placeholders, `nextMatchWinner`, `nextMatchLoser`, status, scores y penales.
+- [x] No editar equipos, placeholders, `nextMatchWinner` ni `nextMatchLoser`; no calcular ganadores en React.
+- [x] Refrescar `GET /api/matches` después de guardar para reflejar la progresión del Bracket Engine.
+- [ ] Confirmar contra backend real la idempotencia al re-guardar eliminatorias finalizadas y el comportamiento al corregir resultados ya propagados.
+- [x] Confirmar con tests que `/eliminatorias` renderiza sin controles admin y sigue separada del Admin Zone.
+- [x] Mantener predicciones knockout fuera de alcance: no habilitarlas en este bloque salvo validación futura con cruces reales.
+- [x] Agregar tests de ruta protegida, sidebar, filtrado knockout, metadata de bracket, payload parcial, penales obligatorios, confirmación, refresh, estados empty/error/retry, UI pública y predicciones knockout cerradas.
+- [x] Registrar resultado final de `pnpm run lint` — aprobado.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 36 archivos de test, 361 tests aprobados.
+- [x] Registrar resultado final de `pnpm run build` — aprobado con advertencia Vite de chunk mayor a 500 kB.
 
 ## Watchlist de normalización de Admin Zone
 

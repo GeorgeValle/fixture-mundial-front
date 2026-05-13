@@ -24,7 +24,8 @@ const summaryCards = [
   },
   {
     title: 'Eliminatorias',
-    description: 'Monitor y carga de resultados knockout en el Bloque 17.',
+    description: 'Monitor y carga de resultados knockout disponible en /admin/knockouts. React no mueve equipos ni calcula ganadores.',
+    status: 'Disponible',
   },
 ]
 
