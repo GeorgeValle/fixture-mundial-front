@@ -1,238 +1,238 @@
-# Project Task Board
+# Tablero de tareas del proyecto
 
-## Current Status
+## Estado actual
 
-- Current block: none — Bloque 16 fue implementado y validado automáticamente.
-- Last completed planning block: Bloque 15 — Admin Transition Controls.
-- Last completed admin implementation block: Bloque 16 — Admin Team Corrections.
-- Last completed implementation block: Bloque 16 — Admin Team Corrections.
+- Bloque actual: Bloque 17 en planificación — sin implementación de código.
+- Último bloque de planificación completado: Bloque 15 — Admin Transition Controls.
+- Último bloque de implementación admin completado: Bloque 16 — Admin Team Corrections.
+- Último bloque de implementación completado: Bloque 16 — Admin Team Corrections.
 - Estado actual: Bloque 14 fue activado con recálculo manual confirmado (`POST /api/standings/:group`) y validado como seguimiento operativo de admin.
-- Next suggested block after approval/completion: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
-- Goal: permitir correcciones excepcionales de `position`, `qualifiedTo` y `shieldUrl` desde `/admin/teams-corrections`, usando `PUT /api/teams/:id` con cookie admin y sin crear/eliminar equipos.
-- Manual validation status: Bloque 16 pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 35 test files, 352 tests, y `pnpm run build`). Queda pendiente validación manual de usuario contra backend real si corresponde.
+- Siguiente bloque sugerido tras aprobación/finalización: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
+- Objetivo: planificar una consola admin específica para eliminatorias que cargue resultados con `PUT /api/matches/:id`, confíe en el Bracket Engine backend y verifique el reflejo público en `/eliminatorias`.
+- Estado de validación manual: Bloque 16 pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 35 archivos de test, 352 tests, y `pnpm run build`). Queda pendiente validación manual de usuario contra backend real si corresponde.
 
-## Critical Execution Rules
+## Reglas críticas de ejecución
 
-- Work inside the existing React + Vite project.
-- Use JavaScript, CSS Modules and pnpm only.
-- Do not recreate or scaffold the project.
-- Do not document administrative backend routes as public frontend usage.
-- Keep long page details in page-specific docs.
-- Keep this file as a short board/checklist.
-- Build/lint/test must be executed only in QA Mode or final validation.
-- Admin Zone planning lives in `docs/admin-dashboard.md`; do not implement admin source files until the relevant block is approved.
+- Trabajar dentro del proyecto React + Vite existente.
+- Usar solo JavaScript, CSS Modules y pnpm.
+- No recrear ni re-scaffoldear el proyecto.
+- No documentar rutas administrativas del backend como uso público del frontend.
+- Mantener los detalles largos de páginas en documentos específicos por página.
+- Mantener este archivo como tablero/checklist breve.
+- `build`/`lint`/`test` deben ejecutarse solo en QA Mode o validación final.
+- La planificación de Admin Zone vive en `docs/admin-dashboard.md`; no implementar archivos fuente admin hasta que el bloque correspondiente esté aprobado.
 
-## Block Checklist
+## Checklist de bloques
 
-### Bloque 1 — Base Architecture
+### Bloque 1 — Arquitectura base
 
-- [x] Router configured.
-- [x] Redux Toolkit configured.
-- [x] Axios client configured.
-- [x] Global error/feedback base configured.
-- [x] Base tests configured.
+- [x] Router configurado.
+- [x] Redux Toolkit configurado.
+- [x] Cliente Axios configurado.
+- [x] Base global de errores/feedback configurada.
+- [x] Tests base configurados.
 
-### Bloque 2 — Shared UI Foundation
+### Bloque 2 — Base UI compartida
 
-- [x] Date utilities.
+- [x] Utilidades de fecha.
 - [x] Skeleton loaders.
-- [x] Delayed loading helpers.
-- [x] Shared UI state selectors.
+- [x] Helpers de delayed loading.
+- [x] Selectores de estado UI compartido.
 
-### Bloque 3 — Group Fixtures
+### Bloque 3 — Fixture de grupos
 
-- [x] `/grupos` page implemented.
-- [x] Group selector implemented.
-- [x] Fixture match cards implemented.
-- [x] Backend match parsing implemented.
-- [x] Tests added and manually validated.
+- [x] Página `/grupos` implementada.
+- [x] Selector de grupo implementado.
+- [x] Cards de partidos del fixture implementadas.
+- [x] Parseo de partidos del backend implementado.
+- [x] Tests agregados y validados manualmente.
 
-### Bloque 4 — Home Daily Schedule
+### Bloque 4 — Agenda diaria de Home
 
-- [x] Daily schedule endpoint integrated.
-- [x] Today/next fallback implemented.
-- [x] Loading, delayed loading, empty and error states implemented.
-- [x] Tests added and manually validated.
-- [x] Follow-up completed: format `nextDate` with a friendly Spanish date format.
+- [x] Endpoint de agenda diaria integrado.
+- [x] Fallback de hoy/siguiente fecha implementado.
+- [x] Estados de loading, delayed loading, empty y error implementados.
+- [x] Tests agregados y validados manualmente.
+- [x] Follow-up completado: formatear `nextDate` con un formato de fecha amigable en español.
 
-### Bloque 5 — Group Standings
+### Bloque 5 — Posiciones de grupos
 
-- [x] Confirm public backend response shape for `GET /api/standings`.
-- [x] Implement standings service/schema.
-- [x] Implement `/posiciones` page.
-- [x] Render standings cards/tables by group.
-- [x] Add loading, empty, error and delayed-loading states.
-- [x] Add tests.
-- [x] User manual validation.
+- [x] Confirmar la forma de respuesta pública del backend para `GET /api/standings`.
+- [x] Implementar servicio/schema de standings.
+- [x] Implementar página `/posiciones`.
+- [x] Renderizar cards/tablas de standings por grupo.
+- [x] Agregar estados de loading, empty, error y delayed loading.
+- [x] Agregar tests.
+- [x] Validación manual del usuario.
 
 ### Bloque 6 — Knockout Stage
 
-- [x] Review knockout documentation and skeleton source.
-- [x] Create local knockout skeleton data.
-- [x] Implement backend/skeleton merge strategy.
-- [x] Implement `/eliminatorias` page.
-- [x] Implement round selector.
-- [x] Implement bracket, round and match-card components.
-- [x] Render visible UI labels in Spanish.
-- [x] Handle loading, delayed loading, error, empty/skeleton and partial-data states.
-- [x] Add adapter and render tests.
-- [x] Run `pnpm run build`.
-- [x] Run `pnpm run lint`.
-- [x] Run `pnpm run test`.
-- [x] User manual validation.
+- [x] Revisar documentación de knockout y fuente del skeleton.
+- [x] Crear datos locales del skeleton de knockout.
+- [x] Implementar estrategia de merge backend/skeleton.
+- [x] Implementar página `/eliminatorias`.
+- [x] Implementar selector de ronda.
+- [x] Implementar componentes de bracket, ronda y match-card.
+- [x] Renderizar labels visibles de UI en español.
+- [x] Manejar estados de loading, delayed loading, error, empty/skeleton y datos parciales.
+- [x] Agregar adapter y tests de render.
+- [x] Ejecutar `pnpm run build`.
+- [x] Ejecutar `pnpm run lint`.
+- [x] Ejecutar `pnpm run test`.
+- [x] Validación manual del usuario.
 
 ### Bloque 7 — Prediction Fixture
 
-- [x] Define localStorage prediction model.
-- [x] Implement prediction storage, schemas, locking, scoring and validation utilities.
-- [x] Implement `/predicciones` UI base.
-- [x] Implement user name capture.
-- [x] Implement prediction cards for group-stage matches.
-- [x] Keep knockout predictions closed until real knockout prediction flow is approved.
-- [x] Prevent predictions over placeholders or skeleton-only knockout matches.
-- [x] Implement prediction locking by `status` and `date`.
-- [x] Implement group-stage scoring.
-- [x] Implement knockout scoring utilities.
-- [x] Implement penalty prediction validation utilities.
-- [ ] Implement visible penalty prediction fields for knockout ties.
-- [x] Compare user prediction against registered final result when match is finished.
-- [x] Show user prediction, registered final result, points and indicators.
-- [x] Handle corrupt localStorage with guided reset.
-- [x] Add group filter.
-- [x] Add reset controls for selected group and all editable predictions.
-- [x] Add print support with `window.print()`.
-- [x] Add summary/help modals and final UI polish.
-- [x] Add tests for scoring, locking, localStorage, validation, UI states and print.
-- [x] Run `pnpm run build`.
-- [x] Run `pnpm run lint`.
-- [x] Run `pnpm run test`.
-- [x] User manual validation.
+- [x] Definir modelo de predicciones en localStorage.
+- [x] Implementar almacenamiento de predicciones, schemas, locking, scoring y utilidades de validación.
+- [x] Implementar UI base de `/predicciones`.
+- [x] Implementar captura del nombre de usuario.
+- [x] Implementar cards de predicción para partidos de fase de grupos.
+- [x] Mantener predicciones knockout cerradas hasta que se apruebe un flujo real de predicciones knockout.
+- [x] Evitar predicciones sobre placeholders o partidos knockout solo de skeleton.
+- [x] Implementar bloqueo de predicciones por `status` y `date`.
+- [x] Implementar scoring de fase de grupos.
+- [x] Implementar utilidades de scoring knockout.
+- [x] Implementar utilidades de validación de predicciones por penales.
+- [ ] Implementar campos visibles de predicción por penales para empates knockout.
+- [x] Comparar predicción del usuario contra resultado final registrado cuando el partido esté finalizado.
+- [x] Mostrar predicción del usuario, resultado final registrado, puntos e indicadores.
+- [x] Manejar localStorage corrupto con reset guiado.
+- [x] Agregar filtro por grupo.
+- [x] Agregar controles de reset para el grupo seleccionado y todas las predicciones editables.
+- [x] Agregar soporte de impresión con `window.print()`.
+- [x] Agregar modales de resumen/ayuda y pulido final de UI.
+- [x] Agregar tests para scoring, locking, localStorage, validación, estados de UI e impresión.
+- [x] Ejecutar `pnpm run build`.
+- [x] Ejecutar `pnpm run lint`.
+- [x] Ejecutar `pnpm run test`.
+- [x] Validación manual del usuario.
 
-Note: visible penalty fields for knockout predictions are deferred until real knockout prediction UI is approved.
+Nota: los campos visibles de penales para predicciones knockout quedan diferidos hasta que se apruebe una UI real de predicciones knockout.
 
-### Bloque 8 — Documentation and Final Review
+### Bloque 8 — Documentación y revisión final
 
-- [x] Review current documentation.
-- [x] Replace generic Vite README with project README.
-- [x] Create public frontend API contract.
-- [x] Update page-specific documentation.
-- [x] Clean task board and documentation index.
-- [x] Align project requirements with current scope.
-- [x] Optional future copy polish in visible UI.
-- [x] Final QA Mode validation.
-
-
-### Bloque 9 — Visual Polish, Accessibility and Production Readiness
-
-- [x] Review `DESIGN.md` before visual changes.
-- [x] Document Block 9 scope and QA checklist.
-- [x] Increase Axios timeout to support slow server wake-up copy.
-- [x] Add human slow-server copy explaining wake-up can take up to 30 seconds.
-- [x] Add retry buttons to backend-powered error states.
-- [x] Replace visible technical copy such as backend/skeleton/placeholders where user-facing.
-- [x] Add favorite group persistence with localStorage.
-- [x] Use favorite group as initial group in `/grupos` and `/posiciones`.
-- [x] Add custom 404 page for route `*`.
-- [x] Polish cards, state containers, badges, headers and spacing.
-- [x] Add subtle decorative CSS/SVG-style details without harming readability.
-- [x] Improve accessibility for modals and new favorite/retry/404 buttons.
-- [x] Add basic installable PWA manifest, icons and theme color.
-- [x] Update favicon, title, meta description and Open Graph metadata.
-- [x] Add or update tests for 404, favorite group, retry/loading copy and key accessibility behaviors.
-- [x] Final QA Mode validation after implementation.
+- [x] Revisar documentación actual.
+- [x] Reemplazar README genérico de Vite por README del proyecto.
+- [x] Crear contrato público de API para el frontend.
+- [x] Actualizar documentación específica por página.
+- [x] Limpiar tablero de tareas e índice de documentación.
+- [x] Alinear requisitos del proyecto con el alcance actual.
+- [x] Pulido opcional futuro de textos en UI visible.
+- [x] Validación final en QA Mode.
 
 
-### Bloque 10 — Onboarding, Navbar and Progressive UI Polish
+### Bloque 9 — Pulido visual, accesibilidad y readiness de producción
 
-- [x] Review `DESIGN.md`, `docs/task.md` and Block 9 documentation before visual changes.
-- [x] Verify WSL Node/pnpm runtime before implementation.
-- [x] Verify SVG asset filenames and references.
-- [x] Normalize stadium illustration filename to lowercase when confirmed unused.
-- [x] Create Block 10 documentation.
-- [x] Implement Part 1 — Onboarding, Navbar and SVG Assets.
-- [x] Add Home first-visit tutorial with localStorage persistence.
-- [x] Add manual `Ver tutorial` entry point from Navbar.
-- [x] Replace Navbar ball visual with `soccerballnoshadow.svg` while preserving menu logic.
-- [x] Use `silbato-web.svg` for the tutorial/help button.
-- [x] Preserve `aria-label`, `aria-expanded`, `aria-controls`, Escape behavior and focus-visible states.
-- [x] Add tests for Part 1 behavior.
-- [x] Run final validation for Part 1.
-- [x] Fix manual validation issue where the Home tutorial rendered below page elements and blocked/failed button clicks.
-- [x] Fix second manual validation issue: align spotlight to real `data-tour` targets, avoid panel/target overlap and prevent tutorial from competing with feedback/loading overlays.
-- [x] Fix third manual validation issue: keep the `home-sections` tutorial step stable with fixed panel placement and conservative scroll.
-- [x] User manual validation of corrected Part 1 tutorial UI.
-- [x] Implement Part 2 — Home, Group Fixtures and Standings Refinement.
-- [x] Convert Home chips into real quick links.
-- [x] Refine Home hero visual balance.
-- [x] Refine `/grupos` top control panel and safe group summary.
-- [x] Refine `/posiciones` hero and standings control panel.
-- [x] Add/update Part 2 tests.
-- [x] Implement Part 3 — Knockout, Predictions, Consistency and Tests.
-- [x] Refine `/eliminatorias` as Camino a la final without inventing data.
-- [x] Add accessible knockout round chips synchronized with the select filter.
-- [x] Refine `/predicciones` as a predictions dashboard without changing scoring/storage.
-- [x] Apply controlled consistency polish for chips, badges, cards, focus states and danger zone in Part 3 scope.
-- [x] Add/update Part 3 tests.
-- [x] Block 10 ready for final QA review.
-- [x] Run final QA validation for Block 10.
-- [x] Close Block 10.
+- [x] Revisar `DESIGN.md` antes de cambios visuales.
+- [x] Documentar alcance del Bloque 9 y checklist de QA.
+- [x] Aumentar timeout de Axios para soportar copy de server wake-up lento.
+- [x] Agregar copy humano para servidor lento explicando que el wake-up puede tardar hasta 30 segundos.
+- [x] Agregar botones de retry a estados de error alimentados por backend.
+- [x] Reemplazar copy técnico visible como backend/skeleton/placeholders cuando sea user-facing.
+- [x] Agregar persistencia de grupo favorito con localStorage.
+- [x] Usar grupo favorito como grupo inicial en `/grupos` y `/posiciones`.
+- [x] Agregar página 404 personalizada para ruta `*`.
+- [x] Pulir cards, contenedores de estado, badges, headers y espaciado.
+- [x] Agregar detalles decorativos sutiles CSS/SVG sin afectar la legibilidad.
+- [x] Mejorar accesibilidad de modales y nuevos botones de favorito/retry/404.
+- [x] Agregar manifest PWA instalable básico, íconos y theme color.
+- [x] Actualizar favicon, title, meta description y metadatos Open Graph.
+- [x] Agregar o actualizar tests para 404, grupo favorito, copy de retry/loading y comportamientos clave de accesibilidad.
+- [x] Validación final en QA Mode después de la implementación.
 
-### Bloque 11 — Admin Zone Planning & Backend Engine Alignment
 
-- [x] Create `docs/admin-dashboard.md`.
-- [x] Align the Admin Zone plan with Standings, Transition and Bracket backend engines.
-- [x] Define admin routes, sectors, services, components and flow.
-- [x] Register legacy inconsistencies that need normalization before or during implementation.
-- [x] Keep this block documentation-only; no `src/` changes, build, lint or tests.
+### Bloque 10 — Onboarding, Navbar y pulido progresivo de UI
 
-### Bloque 12 — Admin Auth & Protected Layout
+- [x] Revisar `DESIGN.md`, `docs/task.md` y documentación del Bloque 9 antes de cambios visuales.
+- [x] Verificar runtime WSL Node/pnpm antes de la implementación.
+- [x] Verificar nombres de archivos SVG asset y referencias.
+- [x] Normalizar a minúsculas el nombre del archivo de ilustración de estadio cuando se confirmó que no estaba usado.
+- [x] Crear documentación del Bloque 10.
+- [x] Implementar Parte 1 — Onboarding, Navbar y SVG Assets.
+- [x] Agregar tutorial de primera visita en Home con persistencia en localStorage.
+- [x] Agregar entrada manual `Ver tutorial` desde Navbar.
+- [x] Reemplazar visual de pelota del Navbar con `soccerballnoshadow.svg` preservando la lógica de menú.
+- [x] Usar `silbato-web.svg` para el botón de tutorial/ayuda.
+- [x] Preservar `aria-label`, `aria-expanded`, `aria-controls`, comportamiento Escape y estados focus-visible.
+- [x] Agregar tests para comportamiento de Parte 1.
+- [x] Ejecutar validación final de Parte 1.
+- [x] Corregir issue de validación manual donde el tutorial de Home se renderizaba debajo de elementos de página y bloqueaba/fallaba clicks de botones.
+- [x] Corregir segundo issue de validación manual: alinear spotlight a targets reales `data-tour`, evitar solapamiento panel/target y prevenir que el tutorial compita con overlays de feedback/loading.
+- [x] Corregir tercer issue de validación manual: mantener estable el paso de tutorial `home-sections` con ubicación fija de panel y scroll conservador.
+- [x] Validación manual del usuario sobre la UI corregida del tutorial de Parte 1.
+- [x] Implementar Parte 2 — refinamiento de Home, Group Fixtures y Standings.
+- [x] Convertir chips de Home en quick links reales.
+- [x] Refinar balance visual del hero de Home.
+- [x] Refinar panel superior de controles de `/grupos` y resumen seguro de grupo.
+- [x] Refinar hero de `/posiciones` y panel de controles de standings.
+- [x] Agregar/actualizar tests de Parte 2.
+- [x] Implementar Parte 3 — Knockout, Predictions, consistencia y tests.
+- [x] Refinar `/eliminatorias` como Camino a la final sin inventar datos.
+- [x] Agregar chips accesibles de ronda knockout sincronizados con el filtro select.
+- [x] Refinar `/predicciones` como dashboard de predicciones sin cambiar scoring/storage.
+- [x] Aplicar pulido controlado de consistencia para chips, badges, cards, estados focus y danger zone dentro del alcance de Parte 3.
+- [x] Agregar/actualizar tests de Parte 3.
+- [x] Bloque 10 listo para revisión final de QA.
+- [x] Ejecutar validación final de QA para Bloque 10.
+- [x] Cerrar Bloque 10.
 
-- [x] Implement `/admin/login`.
-- [x] Implement `/admin` and `/admin/dashboard` redirects.
-- [x] Implement `AdminProtectedRoute`.
-- [x] Implement `AdminLayout` with sidebar.
-- [x] Implement `authSlice` or equivalent auth state.
-- [x] Implement login/logout with `HttpOnly` cookie and `withCredentials`.
-- [x] Restore session with `GET /api/auth/me` if available.
-- [x] Add admin auth/routing tests.
-- [x] Final fix: logout sends `{}` with `withCredentials`, clears Redux auth state and redirects to `/admin/login`.
-- [x] Run `pnpm run build`.
-- [x] Run `pnpm run lint`.
-- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` after default Vitest temp path failed under `/mnt/c`.
+### Bloque 11 — Planificación de Admin Zone y alineación con motores backend
 
-### Bloque 13 — Admin Match Result Controls
+- [x] Crear `docs/admin-dashboard.md`.
+- [x] Alinear el plan de Admin Zone con los motores backend de Standings, Transition y Bracket.
+- [x] Definir rutas admin, sectores, servicios, componentes y flujo.
+- [x] Registrar inconsistencias legacy que necesitan normalización antes o durante la implementación.
+- [x] Mantener este bloque solo documental; sin cambios en `src/`, build, lint ni tests.
 
-- [x] Implement `/admin/matches`.
-- [x] List and filter matches by group, stage and status.
-- [x] Load regular goals and status.
-- [x] Handle `PLAYING` and `FINISHED`.
-- [x] Load penalties for tied knockout matches.
-- [x] Send partial payloads with `PUT /api/matches/:id`.
-- [x] Refresh matches after save.
-- [x] Do not move teams or recalculate brackets from React.
-- [x] Run `pnpm run build`.
-- [x] Run `pnpm run lint`.
-- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (28 test files, 289 tests).
+### Bloque 12 — Admin Auth y layout protegido
 
-### Bloque 14 — Admin Groups & Standings Controls
+- [x] Implementar `/admin/login`.
+- [x] Implementar redirects de `/admin` y `/admin/dashboard`.
+- [x] Implementar `AdminProtectedRoute`.
+- [x] Implementar `AdminLayout` con sidebar.
+- [x] Implementar `authSlice` o estado de auth equivalente.
+- [x] Implementar login/logout con cookie `HttpOnly` y `withCredentials`.
+- [x] Restaurar sesión con `GET /api/auth/me` si está disponible.
+- [x] Agregar tests de auth/routing admin.
+- [x] Corrección final: logout envía `{}` con `withCredentials`, limpia estado de auth Redux y redirige a `/admin/login`.
+- [x] Ejecutar `pnpm run build`.
+- [x] Ejecutar `pnpm run lint`.
+- [x] Ejecutar `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` después de que el temp path por defecto de Vitest falló bajo `/mnt/c`.
 
-- [x] Implement `/admin/groups` as a protected admin route.
-- [x] Enable `Grupos` in the admin sidebar.
-- [x] Load admin matches with `GET /api/matches` and explicit `withCredentials` from `adminMatchesService`.
-- [x] Load standings with `GET /api/standings` and explicit `withCredentials` from `adminStandingsService`.
-- [x] Show group selector A-L.
-- [x] Show operational counts by status: `PENDING`, `PLAYING`, `FINISHED` and expected group total.
-- [x] Normalize legacy `IN_PROGRESS` defensively to `PLAYING` for counts.
-- [x] Show current standings for the selected group as official backend data.
-- [x] Show loading, empty, error and retry states.
+### Bloque 13 — Controles admin de resultados de partidos
+
+- [x] Implementar `/admin/matches`.
+- [x] Listar y filtrar partidos por grupo, stage y status.
+- [x] Cargar goles regulares y status.
+- [x] Manejar `PLAYING` y `FINISHED`.
+- [x] Cargar penales para partidos knockout empatados.
+- [x] Enviar payloads parciales con `PUT /api/matches/:id`.
+- [x] Refrescar partidos después de guardar.
+- [x] No mover equipos ni recalcular brackets desde React.
+- [x] Ejecutar `pnpm run build`.
+- [x] Ejecutar `pnpm run lint`.
+- [x] Ejecutar `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (28 archivos de test, 289 tests).
+
+### Bloque 14 — Controles admin de grupos y standings
+
+- [x] Implementar `/admin/groups` como ruta admin protegida.
+- [x] Habilitar `Grupos` en el sidebar admin.
+- [x] Cargar partidos admin con `GET /api/matches` y `withCredentials` explícito desde `adminMatchesService`.
+- [x] Cargar standings con `GET /api/standings` y `withCredentials` explícito desde `adminStandingsService`.
+- [x] Mostrar selector de grupo A-L.
+- [x] Mostrar conteos operativos por status: `PENDING`, `PLAYING`, `FINISHED` y total esperado del grupo.
+- [x] Normalizar defensivamente `IN_PROGRESS` legacy a `PLAYING` para conteos.
+- [x] Mostrar standings actuales del grupo seleccionado como datos oficiales del backend.
+- [x] Mostrar estados de loading, empty, error y retry.
 - [x] Habilitar recálculo manual con `POST /api/standings/:group` para grupos completos (6 partidos finalizados).
-- [x] Do not calculate standings, best third places, qualifiers or `qualifiedTo` in React.
-- [x] Do not implement transition, team corrections, knockout controls or bracket modification.
-- [x] Add tests for route protection, data loading, group selector, status counts, empty/error/retry, confirmación/cancelación, recálculo y refresh.
-- [x] Register manual confirmation and no POST without confirmation in tests.
-- [x] Run `pnpm run build`.
-- [x] Run `pnpm run lint`.
-- [x] Run `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (35 test files, 352 tests).
+- [x] No calcular standings, mejores terceros, clasificados ni `qualifiedTo` en React.
+- [x] No implementar transition, correcciones de equipos, controles knockout ni modificación de bracket.
+- [x] Agregar tests de protección de ruta, carga de datos, selector de grupo, conteos de status, empty/error/retry, confirmación/cancelación, recálculo y refresh.
+- [x] Registrar en tests la confirmación manual y que no haya POST sin confirmación.
+- [x] Ejecutar `pnpm run build`.
+- [x] Ejecutar `pnpm run lint`.
+- [x] Ejecutar `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` (35 archivos de test, 352 tests).
 
 ### Bloque 15 — Admin Transition Controls
 
@@ -245,32 +245,32 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - [x] Registrar que el frontend no debe calcular standings, mejores terceros, desempates, `qualifiedTo` ni mapping definitivo de 16avos.
 - [x] Registrar contrato backend pendiente antes de habilitar mutaciones reales, aunque la documentación disponible mencione `POST /api/admin/classify-group`.
 - [x] Confirmar con backend la ruta real, método y body de `POST /api/admin/classify-group`; quedan como consideraciones operativas los detalles de idempotencia completa y casos de negocio.
-- [ ] Confirmar si el contrato expone una preview de clasificados o si la preview debe ser read-only desde `GET /api/standings` + `GET /api/matches`.
+- [ ] Confirmar si el contrato expone una vista previa de clasificados o si la vista previa debe ser de solo lectura desde `GET /api/standings` + `GET /api/matches`.
 - [ ] Confirmar cómo se resuelven mejores terceros, empates absolutos, Fair Play/sorteos y slots tipo `3rd Group A/B/C/D/F`.
 - [x] En Build Mode, crear `AdminTransitionPage` protegida en `/admin/transition`.
-- [x] En Build Mode, habilitar `Transición` en el sidebar como pantalla de revisión/preview.
+- [x] En Build Mode, habilitar `Transición` en el sidebar como pantalla de revisión/vista previa.
 - [x] En Build Mode, crear `adminTransitionService` con lecturas `GET /api/standings` y `GET /api/matches`, ambas con `withCredentials: true`.
 - [x] En Build Mode, no crear función activa `transitionGroupsToKnockout` para evitar mutaciones accidentales con contrato pendiente.
-- [x] En Build Mode, mostrar estado inicial, loading, error, empty, preview read-only y acción deshabilitada por contrato pendiente.
+- [x] En Build Mode, mostrar estado inicial, loading, error, empty, vista previa de solo lectura y acción deshabilitada por contrato pendiente.
 - [x] En Build Mode inicial, mantener bloqueada la acción real `Ejecutar transición a 16avos` hasta confirmar contrato backend.
 - [x] En Build Mode, agregar botón `Refrescar datos` para recargar standings y partidos sin mutar backend.
 - [x] En Build Mode, agregar tests de ruta protegida, acción deshabilitada, preview, no POST sin contrato, `withCredentials` y ausencia de controles admin en UI pública.
-- [x] Registrar resultado final de `pnpm run lint` — passed.
-- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 32 test files, 310 tests passed en la primera implementación segura.
-- [x] Registrar resultado final de `pnpm run build` — passed con warning Vite de chunk mayor a 500 kB.
-- [x] Follow-up Block 15: habilitar transición manual por grupo dentro de `/admin/transition`.
+- [x] Registrar resultado final de `pnpm run lint` — aprobado.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 32 archivos de test, 310 tests aprobados en la primera implementación segura.
+- [x] Registrar resultado final de `pnpm run build` — aprobado con advertencia Vite de chunk mayor a 500 kB.
+- [x] Follow-up del Bloque 15: habilitar transición manual por grupo dentro de `/admin/transition`.
 - [x] Confirmar contrato backend para transición manual: `POST /api/admin/classify-group` con body `{ group: "A" }`.
 - [x] Agregar selector `Grupo a procesar` con opciones A-L y valores enviados `A`-`L`.
 - [x] Habilitar `Ejecutar transición a 16avos` solo cuando hay grupo seleccionado y no hay carga/request en curso.
 - [x] Agregar confirmación previa con el grupo seleccionado antes de enviar el POST.
 - [x] Implementar `processGroupTransition(group)` con `axiosClient.post('/api/admin/classify-group', { group }, { withCredentials: true })`.
 - [x] Mantener React como disparador administrativo: no envía teams, standings, posiciones ni slots; no calcula clasificados, mejores terceros, desempates ni mapping.
-- [x] Mostrar success/error devueltos por backend y fallback claro en español.
+- [x] Mostrar éxito/error devueltos por backend y mensaje alternativo claro en español.
 - [x] Refrescar standings y matches después de una transición exitosa manteniendo seleccionado el grupo procesado.
-- [x] Actualizar tests de servicio y página para selector, confirmación, cancelación, success/error, refresh y payload mínimo.
-- [x] Registrar resultado final de `pnpm run lint` del follow-up — passed.
-- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` del follow-up — 32 test files, 317 tests passed.
-- [x] Registrar resultado final de `pnpm run build` del follow-up — passed con warning Vite de chunk mayor a 500 kB.
+- [x] Actualizar tests de servicio y página para selector, confirmación, cancelación, éxito/error, refresh y payload mínimo.
+- [x] Registrar resultado final de `pnpm run lint` del follow-up — aprobado.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` del follow-up — 32 archivos de test, 317 tests aprobados.
+- [x] Registrar resultado final de `pnpm run build` del follow-up — aprobado con advertencia Vite de chunk mayor a 500 kB.
 
 ### Bloque 16 — Admin Team Corrections
 
@@ -287,68 +287,75 @@ Note: visible penalty fields for knockout predictions are deferred until real kn
 - [x] Listar/filtrar equipos por grupo y búsqueda usando `GET /api/teams`.
 - [x] Permitir editar únicamente `position`, `qualifiedTo` y `shieldUrl`; no editar `name`, `group`, `confederation` ni `_id`.
 - [x] Enviar payload parcial limpio y pedir confirmación fuerte antes de guardar.
-- [x] Mostrar success/error en español y sugerir reprocesar el grupo en `/admin/transition` cuando corresponde.
+- [x] Mostrar éxito/error en español y sugerir reprocesar el grupo en `/admin/transition` cuando corresponde.
 - [x] Agregar tests de ruta protegida, servicio, payload parcial, confirmación/cancelación, estados loading/error/empty, `withCredentials` y no exposición pública.
-- [x] Registrar resultado final de `pnpm run lint` — passed.
-- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 35 test files, 352 tests passed.
-- [x] Registrar resultado final de `pnpm run build` — passed con warning Vite de chunk mayor a 500 kB.
+- [x] Registrar resultado final de `pnpm run lint` — aprobado.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 35 archivos de test, 352 tests aprobados.
+- [x] Registrar resultado final de `pnpm run build` — aprobado con advertencia Vite de chunk mayor a 500 kB.
 
 ### Bloque 17 — Admin Knockouts Controls & Public Knockout Polish
 
-- [ ] Implement `/admin/knockouts` or integrate knockout filtering into `/admin/matches`.
-- [ ] Show `matchNumber`, placeholders, `nextMatchWinner` and `nextMatchLoser`.
-- [ ] Load knockout results and penalties.
-- [ ] Confirm public `/eliminatorias` renders updated data from `GET /api/matches`.
-- [ ] Confirm knockout predictions only enable with real `homeTeam` and `awayTeam`.
+- [ ] Mantener el detalle de planificación en `docs/admin-knockouts.md` y este tablero como checklist liviano.
+- [ ] Planificar Bloque 17 sin tocar `src/` ni ejecutar build/lint/test.
+- [ ] Crear `/admin/knockouts` como ruta protegida dedicada durante un futuro Build Mode aprobado.
+- [ ] Habilitar `Eliminatorias` en el sidebar admin solo durante la implementación aprobada.
+- [ ] Reutilizar contratos confirmados: `GET /api/matches` y `PUT /api/matches/:id` con `withCredentials: true`.
+- [ ] Mostrar `matchNumber`, fase, equipos reales/placeholders, `nextMatchWinner`, `nextMatchLoser`, status, scores y penales.
+- [ ] No editar equipos, placeholders, `nextMatchWinner` ni `nextMatchLoser`; no calcular ganadores en React.
+- [ ] Refrescar `GET /api/matches` después de guardar para reflejar la progresión del Bracket Engine.
+- [ ] Confirmar antes de implementación la idempotencia al re-guardar eliminatorias finalizadas y el comportamiento al corregir resultados ya propagados.
+- [ ] Confirmar que `/eliminatorias` renderiza datos actualizados de `GET /api/matches` sin controles admin.
+- [ ] Mantener predicciones knockout fuera de alcance: no habilitarlas en este bloque salvo validación futura con cruces reales.
 
-## Admin Zone Normalization Watchlist
+## Watchlist de normalización de Admin Zone
 
-- `docs/worldcup2026/*` backend documents requested for review are not present in the workspace; root-level backend docs were used instead.
-- Some backend docs use legacy or conflicting admin endpoints. Current confirmed admin implementation contract is:
+- Los documentos backend `docs/worldcup2026/*` solicitados para revisión no están presentes en el workspace; se usaron en su lugar los docs backend de raíz.
+- Algunos docs backend usan endpoints admin legacy o contradictorios. El contrato confirmado actual de implementación admin es:
   - `PUT /api/matches/:id`
-- Contracts to confirm before future admin blocks:
+- Contratos a confirmar antes de futuros bloques admin:
   - recálculo de standings bloqueado por contrato sin resolver? `POST /api/standings/:group` quedó confirmado y habilitado; revisar si requiere body y/o retorna standings actualizados.
   - team corrections: contrato confirmado `PUT /api/teams/:id`, protegido por `verifyAdmin`; no usar `PUT /api/admin/teams/:id`, `POST /api/teams` ni endpoints de creación
   - group transition: contrato confirmado para `POST /api/admin/classify-group` con body `{ group }`; frontend solo dispara por grupo con cookie admin y backend ejecuta `TransitionService.allocateGroupQualifiers(group)`
   - team listing: no usar `GET /api/teams/group/:group`; para `/admin/teams-corrections` usar `GET /api/teams` y filtro por grupo en frontend.
-- Legacy `qualifiedTo` values need normalization:
+- Valores `qualifiedTo` legacy que necesitan normalización:
   - `16AVOS` -> `ROUND_OF_32`
   - `OCTAVOS` -> `ROUND_OF_16`
   - `CUARTOS` -> `QUARTER_FINALS`
   - `SEMIFINAL` -> `SEMI_FINALS`
   - `3RO` -> `THIRD_PLACE_MATCH`
   - `ELIMINADO` -> `ELIMINATED`
-- Legacy match status needs normalization:
+- Status de partido legacy que necesita normalización:
   - `IN_PROGRESS` -> `PLAYING`
-- Legacy team image field needs normalization:
+- Campo legacy de imagen de equipo que necesita normalización:
   - `flagUrl` -> `shieldUrl`
 
-## Documentation Index
+## Índice de documentación
 
-- Main README: `README.md`
-- Project requirements: `docs/project-requirements.md`
-- Public API contract: `docs/api-contract.md`
-- Admin Zone planning: `docs/admin-dashboard.md`
+- README principal: `README.md`
+- Requisitos del proyecto: `docs/project-requirements.md`
+- Contrato público de API: `docs/api-contract.md`
+- Planificación de Admin Zone: `docs/admin-dashboard.md`
+- Planificación de Admin Knockouts: `docs/admin-knockouts.md`
 - Home: `docs/home.md`
-- Group fixtures: `docs/group-fixtures.md`
-- Group standings: `docs/group-standings.md`
+- Fixture de grupos: `docs/group-fixtures.md`
+- Standings de grupos: `docs/group-standings.md`
 - Knockout stage: `docs/knockout-stage.md`
-- Knockout skeleton reference: `docs/knockout-stage-skeleton.md`
+- Referencia de skeleton knockout: `docs/knockout-stage-skeleton.md`
 - Prediction fixture: `docs/prediction-fixture.md`
-- Expanded backend reference: `docs/API-Backend-Mundial-2026.md`
-- Backend API notes: `docs/api-back.md`
+- Referencia backend expandida: `docs/API-Backend-Mundial-2026.md`
+- Notas de API backend: `docs/api-back.md`
 - Standings Engine: `docs/Backed_Standings_Engine.md`
 - Bracket Engine: `docs/Backend_Bracket_Engine.md`
 - Transition Engine: `docs/Backend_Transition_Engine.md`
 - Design system: `DESIGN.md`
-- Block 9 polish/readiness: `docs/block-9-polish.md`
-- Block 10 onboarding/UI polish: `docs/block-10-onboarding-and-ui-polish.md`
+- Pulido/readiness del Bloque 9: `docs/block-9-polish.md`
+- Onboarding/pulido UI del Bloque 10: `docs/block-10-onboarding-and-ui-polish.md`
 
-## Final QA Checklist
+## Checklist final de QA
 
-Run only when QA Mode or final validation is approved.
+Ejecutar solo cuando QA Mode o la validación final estén aprobados.
 
-### WSL runtime preflight
+### Preflight de runtime WSL
 
 ```bash
 source ~/.nvm/nvm.sh && nvm use 24
@@ -358,9 +365,9 @@ type -a node
 type -a pnpm
 ```
 
-Expected active runtime must resolve first to Linux-native WSL paths under `/home/yorch/.nvm/versions/node/...`.
+El runtime activo esperado debe resolver primero a rutas WSL Linux-native bajo `/home/yorch/.nvm/versions/node/...`.
 
-### Automated checks
+### Checks automáticos
 
 ```bash
 pnpm run build
@@ -368,13 +375,13 @@ pnpm run lint
 pnpm run test
 ```
 
-If Vitest uses a Windows temp path from WSL, use Linux temp variables:
+Si Vitest usa una ruta temporal de Windows desde WSL, usar variables temporales Linux:
 
 ```bash
 TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test
 ```
 
-### Manual review
+### Revisión manual
 
 - [ ] `/` Home.
 - [ ] `/grupos` Fixture de grupos.
@@ -382,24 +389,24 @@ TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test
 - [ ] `/eliminatorias` Eliminatorias.
 - [ ] `/predicciones` Predicciones.
 - [ ] Responsive mobile/tablet/desktop.
-- [ ] Loading states.
-- [ ] Delayed loading modal and server wake-up copy.
-- [ ] Error states with retry buttons.
-- [ ] Empty states.
+- [ ] Estados de loading.
+- [ ] Modal de delayed loading y copy de server wake-up.
+- [ ] Estados de error con botones de retry.
+- [ ] Estados empty.
 - [ ] Textos visibles en español.
-- [ ] No raw technical backend errors in UI.
-- [ ] README links and commands.
-- [ ] Public API docs do not present administrative routes as frontend usage.
+- [ ] Sin errores técnicos crudos del backend en UI.
+- [ ] Links y comandos del README.
+- [ ] Docs de API pública no presentan rutas administrativas como uso del frontend público.
 
-## Optional Future Copy Polish
+## Pulido opcional futuro de textos
 
-Pending optional subtask: replace visible technical copy in source after documentation closure.
+Subtarea opcional pendiente: reemplazar copy técnico visible en el código fuente después del cierre documental.
 
-Suggested replacements:
+Reemplazos sugeridos:
 
-- `backend` → `servidor`, `datos de la base de datos` or `información recibida`.
-- `API` → `datos recibidos` or `fuente de datos`.
-- `skeleton` → `estructura base` or `cuadro base`.
+- `backend` → `servidor`, `datos de la base de datos` o `información recibida`.
+- `API` → `datos recibidos` o `fuente de datos`.
+- `skeleton` → `estructura base` o `cuadro base`.
 - `placeholders` / `TBD` → `equipos por definir`.
 - `PENDING` → `Pendiente`.
 - `Portfolio project` → `Proyecto de portfolio`.
