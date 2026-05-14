@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-8);
 }
 
 .hero,
@@ -11,14 +11,31 @@
 .bracketPanel {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.88);
+  background: color-mix(in srgb, var(--color-surface) 89%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
 }
 
 .hero {
+  position: relative;
   display: grid;
   gap: var(--space-5);
+  overflow: hidden;
   padding: var(--space-6);
+}
+
+.hero::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--color-gold) 16%, transparent), transparent 14rem),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-cyan) 8%, transparent), transparent 52%);
+  content: '';
+}
+
+.hero > * {
+  position: relative;
 }
 
 .kicker {
@@ -68,6 +85,7 @@
   border: 1px solid color-mix(in srgb, var(--color-gold) 40%, var(--color-border));
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-gold) 10%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
 }
 
 .contractCard strong {
@@ -93,11 +111,14 @@
   gap: var(--space-4);
   border-style: dashed;
   border-color: color-mix(in srgb, var(--color-gold) 44%, var(--color-border));
-  background: color-mix(in srgb, var(--color-gold) 8%, white);
+  background:
+    radial-gradient(circle at 96% 8%, color-mix(in srgb, var(--color-gold) 18%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-gold) 8%, white);
 }
 
 .actionButtons {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
   gap: var(--space-3);
 }
@@ -127,6 +148,20 @@
   background: white;
   color: var(--color-text);
   font: inherit;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+}
+
+.groupSelector select:hover {
+  border-color: color-mix(in srgb, var(--color-cyan) 34%, var(--color-border));
+}
+
+.groupSelector select:focus-visible {
+  border-color: color-mix(in srgb, var(--color-cyan) 70%, var(--color-border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-cyan) 18%, transparent);
+  outline: 0;
 }
 
 .primaryButton,
@@ -139,6 +174,11 @@
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
   font-weight: 900;
+  transition:
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .primaryButton,
@@ -147,21 +187,47 @@
 }
 
 .primaryButton {
-  margin-top: var(--space-4);
   border: 0;
   background: var(--color-primary);
   color: white;
 }
 
+.stateCard .primaryButton {
+  margin-top: var(--space-4);
+}
+
+.primaryButton:hover:not(:disabled),
+.secondaryButton:hover:not(:disabled) {
+  box-shadow: 0 12px 26px rgba(6, 21, 47, 0.16);
+  transform: translateY(-1px);
+}
+
+.primaryButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 88%, var(--color-cyan));
+}
+
 .primaryButton:disabled {
   cursor: not-allowed;
   opacity: 0.62;
+  transform: none;
 }
 
 .secondaryButton {
   border: 1px solid var(--color-border);
   background: white;
   color: var(--color-primary);
+}
+
+.secondaryButton:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--color-cyan) 42%, var(--color-border));
+  background: color-mix(in srgb, var(--color-cyan) 9%, white);
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.disabledButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 72%, white);
+  outline-offset: 3px;
 }
 
 .secondaryButton:disabled {
@@ -192,15 +258,21 @@
 .formSuccess,
 .formError {
   margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: 800;
 }
 
 .formSuccess {
+  border: 1px solid color-mix(in srgb, var(--color-green) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-green) 8%, white);
   color: color-mix(in srgb, var(--color-primary) 68%, var(--color-green));
 }
 
 .formError {
+  border: 1px solid color-mix(in srgb, var(--color-red) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-red) 7%, white);
   color: var(--color-red);
 }
 
@@ -214,8 +286,26 @@
 }
 
 .summaryCard {
+  position: relative;
   display: grid;
   gap: var(--space-4);
+  overflow: hidden;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.summaryCard::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  content: '';
+  opacity: 0.72;
+}
+
+.summaryCard:hover {
+  box-shadow: var(--shadow-soft);
 }
 
 .stats {
@@ -231,6 +321,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-cyan) 8%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
 }
 
 .stats dt {
@@ -258,12 +349,31 @@
 }
 
 .groupCard {
+  position: relative;
   display: grid;
   gap: var(--space-4);
   padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-surface-soft) 64%, white);
+  overflow: hidden;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease;
+}
+
+.groupCard::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  content: '';
+  opacity: 0.64;
+}
+
+.groupCard:hover {
+  border-color: color-mix(in srgb, var(--color-cyan) 26%, var(--color-border));
+  box-shadow: 0 12px 26px rgba(6, 21, 47, 0.08);
 }
 
 .teamList,
@@ -279,13 +389,19 @@
 .matchPreviewList li {
   display: grid;
   gap: var(--space-2);
-  padding: var(--space-3) 0;
+  padding: var(--space-3);
   border-bottom: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
 .teamList li:last-child,
 .matchPreviewList li:last-child {
   border-bottom: 0;
+}
+
+.teamList li:hover,
+.matchPreviewList li:hover {
+  background: color-mix(in srgb, var(--color-cyan) 6%, white);
 }
 
 .teamList strong,

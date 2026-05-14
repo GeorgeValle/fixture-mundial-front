@@ -6,8 +6,9 @@
   padding: var(--space-5) var(--space-6);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.82);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(18px);
 }
 
 .kicker {
@@ -26,6 +27,8 @@
 
 .topbar strong {
   color: var(--color-primary);
+  font-size: var(--font-size-lg);
+  line-height: 1.25;
 }
 
 .topbar span {
@@ -39,11 +42,16 @@
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--space-3);
+  min-width: min(100%, 19rem);
 }
 
 .error {
   flex-basis: 100%;
-  margin: 0;
+  margin: var(--space-1) 0 0;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-red) 28%, var(--color-border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-red) 7%, white);
   color: var(--color-red);
   font-size: var(--font-size-sm);
   font-weight: 700;
@@ -57,22 +65,47 @@
   justify-content: center;
   min-height: 2.6rem;
   padding: 0 var(--space-4);
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font-weight: 800;
   text-decoration: none;
+  transition:
+    background var(--duration-fast) ease,
+    border-color var(--duration-fast) ease,
+    color var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .publicLink {
   border: 1px solid var(--color-border);
-  background: white;
+  background: color-mix(in srgb, var(--color-surface) 92%, var(--color-cyan));
   color: var(--color-primary);
 }
 
 .logoutButton {
-  border: 0;
   background: var(--color-red);
   color: white;
   cursor: pointer;
+}
+
+.publicLink:hover,
+.logoutButton:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.publicLink:hover {
+  border-color: color-mix(in srgb, var(--color-cyan) 48%, var(--color-border));
+  background: color-mix(in srgb, var(--color-cyan) 10%, white);
+}
+
+.logoutButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-red) 86%, var(--color-primary));
+}
+
+.publicLink:focus-visible,
+.logoutButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 72%, white);
+  outline-offset: 3px;
 }
 
 .logoutButton:disabled {
