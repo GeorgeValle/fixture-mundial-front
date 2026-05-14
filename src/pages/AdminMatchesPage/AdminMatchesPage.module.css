@@ -173,11 +173,46 @@
 }
 
 .stateCard {
+  position: relative;
+  overflow: hidden;
   padding: var(--space-6);
+  border-color: color-mix(in srgb, var(--color-cyan) 22%, var(--color-border));
+  background:
+    radial-gradient(circle at 96% 10%, color-mix(in srgb, var(--color-cyan) 12%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-surface) 92%, var(--color-cyan));
+}
+
+.stateCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green));
+  content: '';
+}
+
+.stateCard[aria-busy='true']::after {
+  display: block;
+  width: min(100%, 28rem);
+  height: 0.8rem;
+  margin-top: var(--space-5);
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.76), transparent),
+    color-mix(in srgb, var(--color-cyan) 14%, white);
+  background-size: 220% 100%, 100% 100%;
+  content: '';
+  animation: adminStatePulse 1.25s ease-in-out infinite;
 }
 
 .errorState {
   border-color: color-mix(in srgb, var(--color-red) 38%, var(--color-border));
+  background:
+    radial-gradient(circle at 96% 10%, color-mix(in srgb, var(--color-red) 12%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-red) 7%, white);
+}
+
+.errorState::before {
+  background: var(--color-red);
 }
 
 .retryButton,
@@ -393,9 +428,27 @@
 }
 
 .saveButton:disabled {
+  background: color-mix(in srgb, var(--color-red) 58%, var(--color-muted));
+  box-shadow: none;
   cursor: wait;
   opacity: 0.68;
   transform: none;
+}
+
+@keyframes adminStatePulse {
+  0% {
+    background-position: 180% 0, 0 0;
+    opacity: 0.62;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    background-position: -80% 0, 0 0;
+    opacity: 0.62;
+  }
 }
 
 @media (min-width: 720px) {

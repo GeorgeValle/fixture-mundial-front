@@ -151,8 +151,46 @@
   padding: var(--space-6);
 }
 
+.stateCard {
+  position: relative;
+  overflow: hidden;
+  border-color: color-mix(in srgb, var(--color-cyan) 22%, var(--color-border));
+  background:
+    radial-gradient(circle at 96% 10%, color-mix(in srgb, var(--color-cyan) 12%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-surface) 92%, var(--color-cyan));
+}
+
+.stateCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green));
+  content: '';
+}
+
+.stateCard[aria-busy='true']::after {
+  display: block;
+  width: min(100%, 28rem);
+  height: 0.8rem;
+  margin-top: var(--space-5);
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.76), transparent),
+    color-mix(in srgb, var(--color-cyan) 14%, white);
+  background-size: 220% 100%, 100% 100%;
+  content: '';
+  animation: adminStatePulse 1.25s ease-in-out infinite;
+}
+
 .errorState {
   border-color: color-mix(in srgb, var(--color-red) 38%, var(--color-border));
+  background:
+    radial-gradient(circle at 96% 10%, color-mix(in srgb, var(--color-red) 12%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-red) 7%, white);
+}
+
+.errorState::before {
+  background: var(--color-red);
 }
 
 .successText,
@@ -213,9 +251,11 @@
 }
 
 .disabledButton {
+  border: 1px solid color-mix(in srgb, var(--color-muted) 22%, var(--color-border));
   background: color-mix(in srgb, var(--color-muted) 18%, white);
   color: color-mix(in srgb, var(--color-primary) 72%, var(--color-muted));
   cursor: not-allowed;
+  opacity: 0.78;
 }
 
 .summaryGrid {
@@ -324,10 +364,26 @@
 }
 
 .emptyState {
+  position: relative;
   padding: var(--space-5);
   border: 1px dashed color-mix(in srgb, var(--color-muted) 48%, var(--color-border));
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--color-surface-soft) 64%, white);
+  background:
+    radial-gradient(circle at 96% 0%, color-mix(in srgb, var(--color-cyan) 10%, transparent), transparent 10rem),
+    color-mix(in srgb, var(--color-surface-soft) 64%, white);
+}
+
+.emptyState::before {
+  display: inline-grid;
+  width: 2rem;
+  height: 2rem;
+  margin-bottom: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--color-cyan) 14%, white);
+  color: color-mix(in srgb, var(--color-primary) 72%, var(--color-cyan));
+  content: '•';
+  font-weight: 900;
+  place-items: center;
 }
 
 .matchStatusList {
@@ -403,5 +459,21 @@
 
   .stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@keyframes adminStatePulse {
+  0% {
+    background-position: 180% 0, 0 0;
+    opacity: 0.62;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    background-position: -80% 0, 0 0;
+    opacity: 0.62;
   }
 }

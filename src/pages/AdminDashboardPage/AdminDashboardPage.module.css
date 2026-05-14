@@ -112,11 +112,14 @@
 .badge {
   justify-self: start;
   padding: var(--space-1) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--color-gold) 24%, transparent);
   border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--color-gold) 20%, white);
   color: color-mix(in srgb, var(--color-primary) 78%, var(--color-gold));
   font-size: var(--font-size-xs);
   font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
   text-transform: uppercase;
 }
 
@@ -172,6 +175,7 @@
 }
 
 .availableBadge {
+  border-color: color-mix(in srgb, var(--color-green) 24%, transparent);
   background: color-mix(in srgb, var(--color-green) 18%, white);
   color: color-mix(in srgb, var(--color-primary) 68%, var(--color-green));
 }
