@@ -1,6 +1,6 @@
 .page {
   display: grid;
-  gap: var(--space-8);
+  gap: var(--space-6);
 }
 
 .hero,
@@ -21,7 +21,7 @@
   display: grid;
   gap: var(--space-5);
   overflow: hidden;
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 .hero::before {
@@ -55,12 +55,13 @@
 .groupCard h3,
 .emptyState h3 {
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--color-primary);
 }
 
 .hero h1 {
   max-width: 14ch;
-  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  font-size: clamp(2rem, 11vw, 4.4rem);
   line-height: 0.96;
 }
 
@@ -103,7 +104,7 @@
 .summaryCard,
 .previewPanel,
 .bracketPanel {
-  padding: var(--space-6);
+  padding: var(--space-5);
 }
 
 .stateCard {
@@ -152,6 +153,11 @@
   align-items: center;
   flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+.actionButtons .primaryButton,
+.actionButtons .secondaryButton {
+  flex: 1 1 100%;
 }
 
 .transitionForm {
@@ -359,7 +365,7 @@
 .stats div {
   display: grid;
   gap: var(--space-1);
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-cyan) 8%, white);
@@ -377,7 +383,7 @@
 .stats dd {
   margin: 0;
   color: var(--color-primary);
-  font-size: var(--font-size-2xl);
+  font-size: clamp(var(--font-size-xl), 8vw, var(--font-size-2xl));
   font-weight: 900;
 }
 
@@ -394,7 +400,7 @@
   position: relative;
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-surface-soft) 64%, white);
@@ -448,6 +454,8 @@
 
 .teamList strong,
 .matchPreviewList strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--color-primary);
 }
 
@@ -491,12 +499,42 @@
   place-items: center;
 }
 
+@media (min-width: 560px) {
+  .page {
+    gap: var(--space-8);
+  }
+
+  .hero,
+  .actionsPanel,
+  .stateCard,
+  .summaryCard,
+  .previewPanel,
+  .bracketPanel {
+    padding: var(--space-6);
+  }
+
+  .actionButtons .primaryButton,
+  .actionButtons .secondaryButton {
+    flex: 1 1 12rem;
+  }
+
+  .stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .groupCard {
+    padding: var(--space-4);
+  }
+}
+
 @media (min-width: 720px) {
   .hero {
     grid-template-columns: minmax(0, 1fr) minmax(17rem, 24rem);
     align-items: end;
   }
+}
 
+@media (min-width: 900px) {
   .actionsPanel {
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
@@ -509,11 +547,15 @@
   .summaryGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
+@media (min-width: 1080px) {
   .stats {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+}
 
+@media (min-width: 820px) {
   .groupPreviewGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

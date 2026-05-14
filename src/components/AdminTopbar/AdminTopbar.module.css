@@ -1,9 +1,11 @@
 .topbar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-direction: column;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-6);
+  min-width: 0;
+  padding: var(--space-4);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--color-surface) 88%, transparent);
@@ -26,6 +28,7 @@
 }
 
 .topbar strong {
+  overflow-wrap: anywhere;
   color: var(--color-primary);
   font-size: var(--font-size-lg);
   line-height: 1.25;
@@ -40,9 +43,10 @@
 .actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: stretch;
   gap: var(--space-3);
-  min-width: min(100%, 19rem);
+  width: 100%;
+  min-width: 0;
 }
 
 .error {
@@ -60,6 +64,7 @@
 
 .publicLink,
 .logoutButton {
+  flex: 1 1 11rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -113,22 +118,30 @@
   opacity: 0.68;
 }
 
-@media (max-width: 720px) {
+@media (min-width: 640px) {
   .topbar {
-    align-items: stretch;
-    flex-direction: column;
+    padding: var(--space-5);
   }
+}
 
+@media (min-width: 760px) {
+  .topbar {
+    align-items: center;
+    flex-direction: row;
+    padding: var(--space-5) var(--space-6);
+  }
   .actions {
-    justify-content: stretch;
+    justify-content: flex-end;
+    width: auto;
+    min-width: min(100%, 19rem);
   }
 
   .error {
-    text-align: left;
+    text-align: right;
   }
 
   .publicLink,
   .logoutButton {
-    flex: 1;
+    flex: 0 1 auto;
   }
 }
