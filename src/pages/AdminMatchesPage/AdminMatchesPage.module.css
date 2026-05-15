@@ -9,14 +9,46 @@
 .matchCard {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.88);
+  background: color-mix(in srgb, var(--color-surface) 89%, transparent);
   box-shadow: var(--shadow-card);
+  backdrop-filter: blur(14px);
 }
 
 .hero {
+  position: relative;
   display: grid;
   gap: var(--space-5);
-  padding: var(--space-6);
+  overflow: hidden;
+  padding: var(--space-5);
+}
+
+.hero::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--color-red) 10%, transparent), transparent 14rem),
+    linear-gradient(90deg, color-mix(in srgb, var(--color-cyan) 8%, transparent), transparent 54%);
+  content: '';
+}
+
+.hero::after {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  width: min(36vw, 14rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--color-cyan) 16%, transparent);
+  border-radius: var(--radius-pill);
+  content: '';
+  opacity: 0.32;
+}
+
+.hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .kicker,
@@ -33,12 +65,13 @@
 .stateCard h2,
 .matchHeader h2 {
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--color-primary);
 }
 
 .hero h1 {
   max-width: 16ch;
-  font-size: clamp(2.2rem, 6vw, 4.4rem);
+  font-size: clamp(2rem, 11vw, 4.4rem);
   line-height: 0.96;
 }
 
@@ -59,10 +92,11 @@
 .stats div {
   display: grid;
   gap: var(--space-1);
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-cyan) 8%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
 }
 
 .stats dt,
@@ -76,19 +110,27 @@
 
 .stats dd,
 .matchDetails dd {
+  min-width: 0;
   margin: 0;
+  overflow-wrap: anywhere;
   color: var(--color-primary);
   font-weight: 900;
 }
 
 .stats dd {
-  font-size: var(--font-size-2xl);
+  font-size: clamp(var(--font-size-xl), 8vw, var(--font-size-2xl));
 }
 
 .filters {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-5);
+  padding: var(--space-4);
+  border-color: color-mix(in srgb, var(--color-cyan) 18%, var(--color-border));
+  background:
+    linear-gradient(90deg, transparent 0 49.85%, color-mix(in srgb, var(--color-green) 9%, transparent) 50%, transparent 50.15%),
+    linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 94%, var(--color-cyan)) 0%, var(--color-surface) 100%);
 }
 
 .filters label,
@@ -118,6 +160,33 @@
   background: white;
   color: var(--color-text);
   font: inherit;
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    background var(--duration-fast) ease;
+}
+
+.filters select:hover,
+.filters input:hover,
+.statusField select:hover,
+.scoreField input:hover {
+  border-color: color-mix(in srgb, var(--color-cyan) 34%, var(--color-border));
+}
+
+.filters select:focus-visible,
+.filters input:focus-visible,
+.statusField select:focus-visible,
+.scoreField input:focus-visible {
+  border-color: color-mix(in srgb, var(--color-cyan) 70%, var(--color-border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-cyan) 18%, transparent);
+  outline: 0;
+}
+
+.scoreField input:disabled,
+.statusField select:disabled {
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--color-muted) 8%, white);
+  color: var(--color-muted);
 }
 
 .searchField {
@@ -125,11 +194,46 @@
 }
 
 .stateCard {
-  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-5);
+  border-color: color-mix(in srgb, var(--color-cyan) 22%, var(--color-border));
+  background:
+    radial-gradient(circle at 96% 10%, color-mix(in srgb, var(--color-cyan) 12%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-surface) 92%, var(--color-cyan));
+}
+
+.stateCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green));
+  content: '';
+}
+
+.stateCard[aria-busy='true']::after {
+  display: block;
+  width: min(100%, 28rem);
+  height: 0.8rem;
+  margin-top: var(--space-5);
+  border-radius: var(--radius-pill);
+  background:
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.76), transparent),
+    color-mix(in srgb, var(--color-cyan) 14%, white);
+  background-size: 220% 100%, 100% 100%;
+  content: '';
+  animation: adminStatePulse 1.25s ease-in-out infinite;
 }
 
 .errorState {
   border-color: color-mix(in srgb, var(--color-red) 38%, var(--color-border));
+  background:
+    radial-gradient(circle at 96% 10%, color-mix(in srgb, var(--color-red) 12%, transparent), transparent 12rem),
+    color-mix(in srgb, var(--color-red) 7%, white);
+}
+
+.errorState::before {
+  background: var(--color-red);
 }
 
 .retryButton,
@@ -145,6 +249,10 @@
   color: white;
   cursor: pointer;
   font-weight: 900;
+  transition:
+    background var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
 }
 
 .retryButton {
@@ -157,10 +265,31 @@
 }
 
 .matchCard {
+  position: relative;
   display: grid;
   gap: var(--space-4);
   overflow: hidden;
-  padding: var(--space-5);
+  padding: var(--space-4);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-cyan) 7%, transparent), transparent 11rem),
+    color-mix(in srgb, var(--color-surface) 89%, transparent);
+  transition:
+    border-color var(--duration-fast) ease,
+    box-shadow var(--duration-fast) ease,
+    transform var(--duration-fast) ease;
+}
+
+.matchCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green), var(--color-gold));
+  content: '';
+}
+
+.matchCard:hover {
+  border-color: color-mix(in srgb, var(--color-cyan) 28%, var(--color-border));
+  box-shadow: var(--shadow-soft);
 }
 
 .matchCardFinished {
@@ -168,9 +297,14 @@
   background: color-mix(in srgb, var(--color-muted) 10%, white);
 }
 
+.matchCardFinished::before {
+  background: color-mix(in srgb, var(--color-muted) 70%, white);
+}
+
 .matchHeader {
   display: flex;
   align-items: flex-start;
+  flex-direction: column;
   justify-content: space-between;
   gap: var(--space-4);
 }
@@ -182,23 +316,29 @@
 .statusBadge {
   flex: 0 0 auto;
   padding: var(--space-1) var(--space-3);
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font-size: var(--font-size-xs);
   font-weight: 900;
+  letter-spacing: 0.04em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
   text-transform: uppercase;
 }
 
 .statusPENDING {
+  border-color: color-mix(in srgb, var(--color-gold) 24%, transparent);
   background: color-mix(in srgb, var(--color-gold) 22%, white);
   color: color-mix(in srgb, var(--color-primary) 72%, var(--color-gold));
 }
 
 .statusPLAYING {
+  border-color: color-mix(in srgb, var(--color-green) 24%, transparent);
   background: color-mix(in srgb, var(--color-green) 18%, white);
   color: color-mix(in srgb, var(--color-primary) 65%, var(--color-green));
 }
 
 .statusFINISHED {
+  border-color: color-mix(in srgb, var(--color-muted) 20%, transparent);
   background: color-mix(in srgb, var(--color-muted) 18%, white);
   color: color-mix(in srgb, var(--color-primary) 82%, var(--color-muted));
 }
@@ -215,12 +355,28 @@
 }
 
 .resultForm {
+  position: relative;
   display: grid;
   gap: var(--space-4);
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-surface-soft) 64%, white);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+  overflow: hidden;
+}
+
+.resultForm::before {
+  position: absolute;
+  top: 0;
+  left: var(--space-2);
+  right: var(--space-2);
+  height: 2px;
+  border-radius: calc(var(--radius-md) / 2.4);
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  content: '';
+  opacity: 0.46;
 }
 
 .scoreGrid {
@@ -231,7 +387,7 @@
 .penaltyPanel {
   display: grid;
   gap: var(--space-3);
-  padding: var(--space-4);
+  padding: var(--space-3);
   border: 1px dashed color-mix(in srgb, var(--color-red) 34%, var(--color-border));
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-red) 6%, white);
@@ -257,20 +413,47 @@
 .formSuccess {
   font-size: var(--font-size-sm);
   font-weight: 900;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
 }
 
 .formError {
+  border: 1px solid color-mix(in srgb, var(--color-red) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-red) 7%, white);
   color: var(--color-red);
 }
 
 .formSuccess {
+  border: 1px solid color-mix(in srgb, var(--color-green) 28%, var(--color-border));
+  background: color-mix(in srgb, var(--color-green) 8%, white);
   color: color-mix(in srgb, var(--color-primary) 64%, var(--color-green));
 }
 
 .saveButton {
-  justify-self: start;
+  width: 100%;
+  justify-self: stretch;
   background: var(--color-red);
   color: white;
+}
+
+.retryButton:hover,
+.saveButton:hover:not(:disabled) {
+  box-shadow: 0 12px 26px rgba(6, 21, 47, 0.16);
+  transform: translateY(-1px);
+}
+
+.retryButton:hover {
+  background: color-mix(in srgb, var(--color-primary) 88%, var(--color-cyan));
+}
+
+.saveButton:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-red) 86%, var(--color-primary));
+}
+
+.retryButton:focus-visible,
+.saveButton:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 72%, white);
+  outline-offset: 3px;
 }
 
 .matchCardFinished .resultForm,
@@ -287,8 +470,61 @@
 }
 
 .saveButton:disabled {
+  background: color-mix(in srgb, var(--color-red) 58%, var(--color-muted));
+  box-shadow: none;
   cursor: wait;
   opacity: 0.68;
+  transform: none;
+}
+
+@keyframes adminStatePulse {
+  0% {
+    background-position: 180% 0, 0 0;
+    opacity: 0.62;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    background-position: -80% 0, 0 0;
+    opacity: 0.62;
+  }
+}
+
+@media (min-width: 560px) {
+  .page {
+    gap: var(--space-8);
+  }
+
+  .hero,
+  .stateCard {
+    padding: var(--space-6);
+  }
+
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: var(--space-5);
+  }
+
+  .matchCard {
+    padding: var(--space-5);
+  }
+
+  .matchHeader {
+    flex-direction: row;
+  }
+
+  .resultForm,
+  .penaltyPanel {
+    padding: var(--space-4);
+  }
+
+  .saveButton {
+    width: auto;
+    justify-self: start;
+  }
 }
 
 @media (min-width: 720px) {
@@ -301,17 +537,19 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .filters {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .matchDetails,
   .scoreGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (min-width: 1120px) {
+@media (min-width: 1040px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
   .filters {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
