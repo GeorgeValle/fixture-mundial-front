@@ -80,6 +80,7 @@
 .card {
   position: relative;
   display: grid;
+  grid-template-rows: auto auto 1fr auto;
   gap: var(--space-3);
   padding: var(--space-5);
   overflow: hidden;
@@ -126,12 +127,19 @@
   margin: 0;
 }
 
+.card h2 {
+  min-height: 2.55rem;
+}
+
 .card p {
+  min-height: 4.5rem;
   color: var(--color-muted);
+  line-height: 1.45;
 }
 
 .badge {
   justify-self: start;
+  margin-top: auto;
   padding: var(--space-1) var(--space-3);
   border: 1px solid color-mix(in srgb, var(--color-gold) 24%, transparent);
   border-radius: var(--radius-pill);
