@@ -27,6 +27,7 @@
 .hero::before {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
   background:
     radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--color-gold) 16%, transparent), transparent 14rem),
@@ -34,8 +35,22 @@
   content: '';
 }
 
+.hero::after {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  width: min(36vw, 14rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 18%, transparent);
+  border-radius: var(--radius-pill);
+  content: '';
+  opacity: 0.34;
+}
+
 .hero > * {
   position: relative;
+  z-index: 1;
 }
 
 .kicker {
@@ -139,13 +154,26 @@
 }
 
 .actionsPanel {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: var(--space-4);
   border-style: dashed;
   border-color: color-mix(in srgb, var(--color-gold) 44%, var(--color-border));
   background:
+    linear-gradient(90deg, transparent 0 49.85%, color-mix(in srgb, var(--color-gold) 10%, transparent) 50%, transparent 50.15%),
     radial-gradient(circle at 96% 8%, color-mix(in srgb, var(--color-gold) 18%, transparent), transparent 12rem),
     color-mix(in srgb, var(--color-gold) 8%, white);
+}
+
+.actionsPanel::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--color-gold), var(--color-green));
+  content: '';
+  opacity: 0.68;
 }
 
 .actionButtons {
@@ -338,6 +366,9 @@
   display: grid;
   gap: var(--space-4);
   overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-cyan) 7%, transparent), transparent 11rem),
+    color-mix(in srgb, var(--color-surface) 89%, transparent);
   transition:
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease;
@@ -347,7 +378,7 @@
   position: absolute;
   inset: 0 0 auto;
   height: 4px;
-  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green), var(--color-gold));
   content: '';
   opacity: 0.72;
 }
@@ -414,9 +445,29 @@
   position: absolute;
   inset: 0 0 auto;
   height: 3px;
-  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green), var(--color-gold));
   content: '';
   opacity: 0.64;
+}
+
+.previewPanel,
+.bracketPanel {
+  position: relative;
+  overflow: hidden;
+}
+
+.previewPanel::before,
+.bracketPanel::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-cyan) 8%, transparent), transparent 12rem);
+  content: '';
+}
+
+.previewPanel > *,
+.bracketPanel > * {
+  position: relative;
 }
 
 .groupCard:hover {

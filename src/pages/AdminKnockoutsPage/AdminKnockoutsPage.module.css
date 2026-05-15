@@ -26,6 +26,7 @@
 .hero::before {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
   background:
     radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--color-gold) 13%, transparent), transparent 14rem),
@@ -33,8 +34,22 @@
   content: '';
 }
 
+.hero::after {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  width: min(36vw, 14rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--color-gold) 18%, transparent);
+  border-radius: var(--radius-pill);
+  content: '';
+  opacity: 0.34;
+}
+
 .hero > * {
   position: relative;
+  z-index: 1;
 }
 
 .kicker,
@@ -79,6 +94,22 @@
 
 .stats div,
 .slotCard {
+  position: relative;
+  overflow: hidden;
+}
+
+.slotCard::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green));
+  content: '';
+  opacity: 0.54;
+}
+
+.stats div,
+.slotCard {
   display: grid;
   gap: var(--space-1);
   padding: var(--space-3);
@@ -119,18 +150,33 @@
 }
 
 .safetyCard {
+  position: relative;
+  overflow: hidden;
   border-color: color-mix(in srgb, var(--color-green) 28%, var(--color-border));
   background:
     radial-gradient(circle at 96% 8%, color-mix(in srgb, var(--color-green) 12%, transparent), transparent 12rem),
     color-mix(in srgb, var(--color-green) 8%, white);
 }
 
+.safetyCard::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--color-green), var(--color-cyan));
+  content: '';
+  opacity: 0.56;
+}
+
 .filters {
+  position: relative;
+  overflow: hidden;
   display: grid;
   gap: var(--space-4);
   padding: var(--space-4);
   border-color: color-mix(in srgb, var(--color-cyan) 18%, var(--color-border));
   background:
+    linear-gradient(90deg, transparent 0 49.85%, color-mix(in srgb, var(--color-green) 9%, transparent) 50%, transparent 50.15%),
     linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 94%, var(--color-cyan)) 0%, var(--color-surface) 100%);
 }
 
@@ -263,6 +309,9 @@
   gap: var(--space-5);
   overflow: hidden;
   padding: var(--space-4);
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-gold) 8%, transparent), transparent 11rem),
+    color-mix(in srgb, var(--color-surface) 89%, transparent);
   transition:
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease;
@@ -272,7 +321,7 @@
   position: absolute;
   inset: 0 auto 0 0;
   width: 5px;
-  background: linear-gradient(180deg, var(--color-cyan), var(--color-green));
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green), var(--color-gold));
   content: '';
 }
 
@@ -307,6 +356,7 @@
   font-size: var(--font-size-xs);
   font-weight: 900;
   letter-spacing: 0.04em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
   text-transform: uppercase;
 }
 
@@ -345,11 +395,23 @@
 }
 
 .resultForm {
+  position: relative;
   padding: var(--space-3);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--color-surface-soft) 64%, white);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62);
+}
+
+.resultForm::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green), var(--color-gold));
+  content: '';
+  opacity: 0.46;
 }
 
 .penaltyPanel {

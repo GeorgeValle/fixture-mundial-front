@@ -22,6 +22,7 @@
 .hero::before {
   position: absolute;
   inset: 0;
+  z-index: 0;
   pointer-events: none;
   background:
     radial-gradient(circle at 88% 12%, color-mix(in srgb, var(--color-cyan) 18%, transparent), transparent 14rem),
@@ -29,8 +30,22 @@
   content: '';
 }
 
+.hero::after {
+  position: absolute;
+  right: var(--space-6);
+  bottom: var(--space-6);
+  width: min(38vw, 15rem);
+  aspect-ratio: 1;
+  pointer-events: none;
+  border: 1px solid color-mix(in srgb, var(--color-green) 18%, transparent);
+  border-radius: var(--radius-pill);
+  content: '';
+  opacity: 0.34;
+}
+
 .hero > * {
   position: relative;
+  z-index: 1;
 }
 
 .kicker {
@@ -68,6 +83,9 @@
   gap: var(--space-3);
   padding: var(--space-5);
   overflow: hidden;
+  background:
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-cyan) 8%, transparent), transparent 10rem),
+    color-mix(in srgb, var(--color-surface) 88%, transparent);
   transition:
     border-color var(--duration-fast) ease,
     box-shadow var(--duration-fast) ease,
@@ -78,7 +96,7 @@
   position: absolute;
   inset: 0 0 auto;
   height: 4px;
-  background: linear-gradient(90deg, var(--color-cyan), var(--color-green));
+  background: linear-gradient(90deg, var(--color-cyan), var(--color-green), var(--color-gold));
   content: '';
   opacity: 0.78;
 }
@@ -94,7 +112,10 @@
   width: 2.25rem;
   height: 2.25rem;
   border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--color-cyan) 12%, white);
+  border: 1px solid color-mix(in srgb, var(--color-cyan) 20%, transparent);
+  background:
+    radial-gradient(circle, color-mix(in srgb, var(--color-surface) 78%, transparent) 0 34%, transparent 35%),
+    color-mix(in srgb, var(--color-cyan) 12%, white);
   color: color-mix(in srgb, var(--color-primary) 70%, var(--color-cyan));
   font-size: var(--font-size-xl);
   place-items: center;
@@ -124,7 +145,19 @@
 }
 
 .routesPanel {
+  position: relative;
+  overflow: hidden;
   padding: var(--space-5);
+}
+
+.routesPanel::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--color-cyan), var(--color-green), var(--color-gold));
+  content: '';
+  opacity: 0.68;
 }
 
 .routesPanel h2 {
