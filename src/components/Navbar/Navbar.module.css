@@ -2,15 +2,46 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
+  isolation: isolate;
   display: grid;
   padding: var(--space-4);
-  background:
-    linear-gradient(135deg, rgba(6, 21, 47, 0.96), rgba(12, 37, 84, 0.9)),
-    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-cyan) 24%, transparent), transparent 18rem),
-    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-red) 22%, transparent), transparent 18rem);
+  overflow: visible;
+  background: transparent;
   border-bottom: 1px solid color-mix(in srgb, var(--color-surface) 16%, transparent);
   box-shadow: 0 16px 36px rgba(6, 21, 47, 0.22);
   backdrop-filter: blur(18px);
+}
+
+.header::before,
+.header::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+}
+
+.header::before {
+  z-index: -2;
+  background:
+    linear-gradient(135deg, rgba(6, 21, 47, 0.98), rgba(12, 37, 84, 0.94)),
+    radial-gradient(circle at 0% 0%, color-mix(in srgb, var(--color-cyan) 24%, transparent), transparent 18rem),
+    radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--color-red) 22%, transparent), transparent 18rem);
+}
+
+.header::after {
+  z-index: -1;
+  background-image:
+    linear-gradient(90deg, transparent 0%, transparent 32%, rgba(0, 0, 0, 0.18) 54%, rgba(0, 0, 0, 0.34) 100%),
+    url('../../assets/illustrations/goal-background.svg');
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    min(74rem, 78vw) auto;
+  background-position:
+    center,
+    center right -6rem;
+  filter: invert(1);
+  opacity: 0.16;
 }
 
 .brandPanel {
@@ -401,7 +432,7 @@
 
 .nav {
   z-index: 70 !important;
-  overflow: hidden !important;
+  overflow: visible !important;
   color: var(--color-primary) !important;
   background:
     linear-gradient(160deg, rgba(255, 250, 225, 0.98) 0%, rgba(255, 229, 142, 0.98) 54%, rgba(244, 196, 74, 0.98) 100%) !important;
@@ -421,9 +452,13 @@
     linear-gradient(90deg, var(--color-red), var(--color-gold), var(--color-green), var(--color-cyan)),
     linear-gradient(135deg, rgba(255, 255, 255, 0.32), transparent 42%);
   background-size:
-    100% 4px,
+    calc(100% - 2.875rem) 4px,
     100% 100%;
+  background-position:
+    1.125rem 0,
+    0 0;
   background-repeat: no-repeat;
+  border-radius: inherit;
   opacity: 0.95;
 }
 
@@ -522,6 +557,16 @@
 }
 
 @media (max-width: 520px) {
+  .header::after {
+    background-size:
+      100% 100%,
+      42rem auto;
+    background-position:
+      center,
+      center right -14rem;
+    opacity: 0.1;
+  }
+
   .brandPanel {
     align-items: flex-start;
     flex-wrap: wrap;
