@@ -462,20 +462,6 @@
   opacity: 0.95;
 }
 
-.nav::after {
-  content: '' !important;
-  position: absolute;
-  right: 1.1rem;
-  top: 1.05rem;
-  width: 2.1rem;
-  height: 0.45rem;
-  border-radius: var(--radius-pill);
-  background: rgba(6, 21, 47, 0.18);
-  box-shadow: 0 0.72rem 0 rgba(6, 21, 47, 0.1);
-  transform: rotate(-4deg);
-  pointer-events: none;
-}
-
 .menuKicker {
   position: relative;
   color: rgba(6, 21, 47, 0.72) !important;
