@@ -189,11 +189,6 @@ function Home() {
       <div className={styles.hero} data-tour="home-hero">
         <span className={styles.heroWatermark} aria-hidden="true" />
         <div className={styles.heroContent}>
-          <div className={styles.badgeRow}>
-            <span className={styles.badge}>Proyecto de portfolio</span>
-            <span className={styles.badge}>React + Vite</span>
-          </div>
-
           <p className={styles.kicker}>Experiencia de fútbol internacional</p>
           <h2 className={styles.title}>
             Fixture, tablas, eliminatorias y predicciones en una sola experiencia
