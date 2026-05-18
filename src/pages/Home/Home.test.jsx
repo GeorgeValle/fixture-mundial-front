@@ -107,7 +107,9 @@ describe('Home', () => {
         name: /fixture, tablas, eliminatorias y predicciones/i,
       }),
     ).toBeInTheDocument()
-    expect(screen.getByText('Proyecto de portfolio')).toBeInTheDocument()
+    expect(screen.getByText('Experiencia de fútbol internacional')).toBeInTheDocument()
+    expect(screen.queryByText('Proyecto de portfolio')).not.toBeInTheDocument()
+    expect(screen.queryByText('React + Vite')).not.toBeInTheDocument()
     expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
   })
 
