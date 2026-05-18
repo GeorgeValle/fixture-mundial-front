@@ -16,7 +16,7 @@ import { hasSeenHomeTutorial } from '../../services/preferences/onboardingStorag
 import { getTodayISODate } from '../../utils/dateAdapter'
 import { ROUTES } from '../../constants/routes'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
-import stadiumIllustration from '../../assets/illustrations/soccer-football-stadium.svg'
+import stadiumHero from '../../assets/illustrations/stadium-hero.png'
 import styles from './Home.module.css'
 
 
@@ -189,11 +189,6 @@ function Home() {
       <div className={styles.hero} data-tour="home-hero">
         <span className={styles.heroWatermark} aria-hidden="true" />
         <div className={styles.heroContent}>
-          <div className={styles.badgeRow}>
-            <span className={styles.badge}>Proyecto de portfolio</span>
-            <span className={styles.badge}>React + Vite</span>
-          </div>
-
           <p className={styles.kicker}>Experiencia de fútbol internacional</p>
           <h2 className={styles.title}>
             Fixture, tablas, eliminatorias y predicciones en una sola experiencia
@@ -218,20 +213,16 @@ function Home() {
         </div>
 
         <div className={styles.visualPanel} aria-hidden="true">
-          <img
-            alt=""
-            aria-hidden="true"
-            className={styles.stadiumWatermark}
-            src={stadiumIllustration}
-          />
-          <div className={styles.fieldCard}>
-            <span className={styles.fieldLine}></span>
-            <span className={styles.centerCircle}></span>
-            <span className={styles.ball}></span>
-          </div>
-          <div className={styles.scoreCard}>
-            <span>2026</span>
-            <strong>Listo para el inicio</strong>
+          <div className={styles.stadiumHeroStage}>
+            <img
+              alt=""
+              aria-hidden="true"
+              className={styles.stadiumHeroImage}
+              src={stadiumHero}
+            />
+            <span className={`${styles.firework} ${styles.fireworkCyan}`} aria-hidden="true" />
+            <span className={`${styles.firework} ${styles.fireworkGold}`} aria-hidden="true" />
+            <span className={`${styles.firework} ${styles.fireworkMagenta}`} aria-hidden="true" />
           </div>
         </div>
       </div>
