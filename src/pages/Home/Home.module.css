@@ -142,120 +142,127 @@
   position: relative;
   z-index: 1;
   display: grid;
-  min-height: 18rem;
+  min-height: clamp(15rem, 58vw, 20rem);
+  overflow: visible;
   place-items: center;
 }
 
-.stadiumWatermark {
-  position: absolute;
-  top: -1.5rem;
-  right: -2rem;
-  width: min(80%, 20rem);
-  max-height: 15rem;
-  object-fit: contain;
-  pointer-events: none;
-  opacity: 0.1;
-  transform: rotate(2deg);
-}
-
-.fieldCard {
+.stadiumHeroStage {
   position: relative;
-  width: min(100%, 24rem);
-  min-height: 15rem;
-  overflow: hidden;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 49%, rgba(255, 255, 255, 0.46) 50%, rgba(255, 255, 255, 0.12) 51%),
-    linear-gradient(135deg, var(--color-primary), var(--color-primary-soft));
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 28px 70px rgba(7, 26, 61, 0.2);
-  transform: rotate(-2deg);
-}
-
-.fieldCard::before,
-.fieldCard::after,
-.fieldLine,
-.centerCircle {
-  position: absolute;
-  border: 2px solid rgba(255, 255, 255, 0.34);
-  content: '';
-}
-
-.fieldCard::before {
-  inset: var(--space-4);
-  border-radius: var(--radius-md);
-}
-
-.fieldCard::after {
-  top: 50%;
-  left: 50%;
-  width: 6.4rem;
-  height: 6.4rem;
-  border-radius: var(--radius-pill);
-  transform: translate(-50%, -50%);
-}
-
-.fieldLine {
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  border-width: 0 0 0 2px;
-}
-
-.centerCircle {
-  top: 50%;
-  left: 50%;
-  width: 0.7rem;
-  height: 0.7rem;
-  background: var(--color-surface);
-  border-radius: var(--radius-pill);
-  transform: translate(-50%, -50%);
-}
-
-.ball {
-  position: absolute;
-  right: 19%;
-  bottom: 18%;
-  width: 3.6rem;
-  height: 3.6rem;
-  background:
-    radial-gradient(circle at 50% 50%, var(--color-primary) 0 16%, transparent 17%),
-    conic-gradient(
-      from 18deg,
-      var(--color-surface),
-      var(--color-cyan),
-      var(--color-surface),
-      var(--color-gold),
-      var(--color-surface)
-    );
-  border: 3px solid rgba(255, 255, 255, 0.88);
-  border-radius: var(--radius-pill);
-  box-shadow: var(--shadow-card);
-}
-
-.scoreCard {
-  position: absolute;
-  right: 3%;
-  bottom: 5%;
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-4);
-  color: var(--color-primary);
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-card);
+  width: min(100%, 31rem);
+  max-width: 100%;
+  isolation: isolate;
+  place-items: center;
+  pointer-events: none;
 }
 
-.scoreCard span {
-  font-size: var(--font-size-xs);
-  font-weight: 900;
-  letter-spacing: 0.18em;
+.stadiumHeroStage::before {
+  position: absolute;
+  right: 7%;
+  bottom: 2%;
+  left: 7%;
+  z-index: -1;
+  height: clamp(var(--space-6), 9vw, var(--space-12));
+  background:
+    radial-gradient(ellipse, color-mix(in srgb, var(--color-primary) 24%, transparent), transparent 68%),
+    radial-gradient(ellipse, color-mix(in srgb, var(--color-cyan) 20%, transparent), transparent 70%);
+  border-radius: var(--radius-pill);
+  content: '';
+  filter: blur(16px);
+  opacity: 0.68;
+}
+
+.stadiumHeroImage {
+  display: block;
+  width: min(100%, 31rem);
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+  animation: stadiumHeroIntro 900ms cubic-bezier(0.2, 0.85, 0.25, 1.15) both;
+  filter:
+    drop-shadow(0 26px 34px rgba(6, 21, 47, 0.18))
+    drop-shadow(0 10px 20px color-mix(in srgb, var(--color-cyan) 18%, transparent));
+  transform-origin: center bottom;
+  user-select: none;
+}
+
+.firework {
+  position: absolute;
+  z-index: 2;
+  width: 0.34rem;
+  height: 0.34rem;
+  color: rgba(255, 255, 255, 0.9);
+  background: currentColor;
+  border-radius: var(--radius-pill);
+  opacity: 0;
+  pointer-events: none;
+  animation: fireworkBurst 1100ms ease-out 930ms both;
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
+.fireworkCyan {
+  top: 26%;
+  left: 29%;
+  color: var(--color-cyan);
+}
+
+.fireworkGold {
+  top: 15%;
+  left: 53%;
+  color: var(--color-gold);
+  animation-delay: 1050ms;
+}
+
+.fireworkMagenta {
+  top: 28%;
+  right: 24%;
   color: var(--color-magenta);
+  animation-delay: 1160ms;
 }
 
-.scoreCard strong {
-  font-size: var(--font-size-md);
+@keyframes stadiumHeroIntro {
+  from {
+    opacity: 0;
+    transform: scale(0.82) translateY(var(--space-5));
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes fireworkBurst {
+  0% {
+    opacity: 0;
+    transform: scale(0.22);
+    box-shadow:
+      0 0 0 0 currentColor,
+      0 0 0 0 rgba(255, 255, 255, 0.92),
+      0 0 0 0 currentColor,
+      0 0 0 0 currentColor,
+      0 0 0 0 rgba(255, 255, 255, 0.85);
+  }
+
+  18% {
+    opacity: 0.9;
+  }
+
+  64% {
+    opacity: 0.72;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+    box-shadow:
+      0 -2.15rem 0 -0.06rem currentColor,
+      1.65rem -1.1rem 0 -0.08rem rgba(255, 255, 255, 0.88),
+      -1.65rem -1.1rem 0 -0.08rem currentColor,
+      1.25rem 1.2rem 0 -0.1rem currentColor,
+      -1.25rem 1.2rem 0 -0.1rem rgba(255, 255, 255, 0.82);
+  }
 }
 
 .grid {
@@ -336,6 +343,17 @@
     padding: var(--space-10) clamp(var(--space-10), 7vw, 5.5rem);
   }
 
+  .visualPanel {
+    justify-self: end;
+    min-height: 22rem;
+    width: 100%;
+  }
+
+  .stadiumHeroStage,
+  .stadiumHeroImage {
+    width: min(100%, 34rem);
+  }
+
   .grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -343,12 +361,12 @@
 
 .heroWatermark {
   position: absolute;
-  right: 3rem;
-  top: 2rem;
+  right: 2.2rem;
+  top: 1.4rem;
   width: 8rem;
   height: 8rem;
   pointer-events: none;
-  opacity: 0.08;
+  opacity: 0.055;
   border: 0.8rem solid var(--color-primary);
   border-radius: var(--radius-pill);
 }
@@ -392,4 +410,20 @@
 .card > *:not(.cardWatermark) {
   position: relative;
   z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stadiumHeroImage,
+  .firework {
+    animation: none;
+  }
+
+  .stadiumHeroImage {
+    opacity: 1;
+    transform: none;
+  }
+
+  .firework {
+    display: none;
+  }
 }
