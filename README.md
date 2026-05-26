@@ -109,6 +109,37 @@ VITE_API_BASE_URL=http://localhost:3000
 
 No se deben commitear secretos ni credenciales.
 
+## Deploy en Cloudflare Pages
+
+Configuración recomendada para publicar este frontend en Cloudflare Pages:
+
+- **Framework preset**: Vite o React/Vite.
+- **Build command**: `pnpm run build`.
+- **Build output directory**: `dist`.
+- **Root directory**: raíz del repositorio.
+- **Production branch**: `main`.
+- **Environment variable**:
+
+```env
+VITE_API_BASE_URL=<URL_DEL_BACKEND>
+```
+
+Para un dominio raíz de Cloudflare Pages como `https://fixture-mundial-front.pages.dev`, Vite debe usar `base: '/'` o dejar `base` sin configurar. No se necesita un `basename` en `BrowserRouter` mientras la app se sirva desde la raíz del dominio.
+
+El archivo `public/_redirects` incluye el fallback SPA:
+
+```text
+/* /index.html 200
+```
+
+Esto permite refrescar o abrir directamente rutas de React Router como `/grupos`, `/posiciones`, `/eliminatorias`, `/predicciones` y rutas admin como `/admin/login`.
+
+Advertencias para backend, auth y admin en producción:
+
+- El backend debe permitir CORS desde el dominio de Cloudflare Pages.
+- Si la autenticación admin usa cookies `HttpOnly` cross-site, validar `SameSite=None` y `Secure` en producción.
+- Validar manualmente login, refresh de sesión y logout desde el dominio desplegado.
+
 ## Conexión con backend
 
 El frontend usa un cliente Axios centralizado en:
