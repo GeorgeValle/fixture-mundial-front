@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import soccerBallIcon from '../../assets/icons/soccerballnoshadow.svg'
 import whistleIcon from '../../assets/icons/silbato-web.svg'
 import { NAV_ITEMS } from '../../constants/routes'
@@ -15,11 +15,13 @@ const MENU_ID = 'main-football-menu'
 
 function Navbar() {
   const dispatch = useDispatch()
+  const location = useLocation()
   const { isOpen: isFeedbackModalOpen } = useSelector(selectFeedbackModal)
   const { isGlobalLoading, hasDelayedLoading } = useSelector(selectLoadingState)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const navRef = useRef(null)
   const isTutorialBlocked = isGlobalLoading || hasDelayedLoading || isFeedbackModalOpen
+  const isHomeRoute = location.pathname === '/'
 
   useEffect(() => {
     function handlePointerDown(event) {
@@ -111,21 +113,23 @@ function Navbar() {
           <p className={styles.subtitle}>Fixture, tablas, eliminatorias y predicciones</p>
         </div>
 
-        <button
-          aria-label="Ver tutorial de la app"
-          className={styles.helpButton}
-          disabled={isTutorialBlocked}
-          onClick={handleOpenTutorial}
-          type="button"
-        >
-          <img
-            alt=""
-            aria-hidden="true"
-            className={styles.helpIcon}
-            src={whistleIcon}
-          />
-          <span>Ver tutorial</span>
-        </button>
+        {isHomeRoute && (
+          <button
+            aria-label="Ver tutorial de la app"
+            className={styles.helpButton}
+            disabled={isTutorialBlocked}
+            onClick={handleOpenTutorial}
+            type="button"
+          >
+            <img
+              alt=""
+              aria-hidden="true"
+              className={styles.helpIcon}
+              src={whistleIcon}
+            />
+            <span>Ver tutorial</span>
+          </button>
+        )}
       </div>
     </header>
   )

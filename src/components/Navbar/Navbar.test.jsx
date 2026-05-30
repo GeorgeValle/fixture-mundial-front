@@ -75,6 +75,18 @@ describe('Navbar', () => {
     )
   })
 
+  it('renders the Home tutorial help button only on the Home route', () => {
+    const { unmount } = renderNavbar('/')
+
+    expect(screen.getByRole('button', { name: /ver tutorial de la app/i })).toBeInTheDocument()
+
+    unmount()
+    renderNavbar('/grupos')
+
+    expect(screen.queryByRole('button', { name: /ver tutorial de la app/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Abrir menú principal' })).toBeInTheDocument()
+  })
+
   it('opens the Home tutorial from the help button', async () => {
     const user = userEvent.setup()
     const { store } = renderNavbar()
