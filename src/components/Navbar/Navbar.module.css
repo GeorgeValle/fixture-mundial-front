@@ -563,9 +563,17 @@
   }
 
   .helpButton {
-    width: 100%;
+    width: auto;
+    min-height: 2.35rem;
     justify-content: center;
-    margin-left: 0;
+    margin-left: auto;
+    padding: 0 var(--space-3);
+    font-size: var(--font-size-xs);
+  }
+
+  .helpIcon {
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .nav {
