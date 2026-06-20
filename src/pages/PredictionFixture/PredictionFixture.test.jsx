@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { configureStore } from '@reduxjs/toolkit'
@@ -136,6 +136,11 @@ function renderPredictionsRoute() {
     </Provider>,
   )
 }
+
+beforeEach(() => {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(new Date('2026-06-10T12:00:00.000Z'))
+})
 
 afterEach(() => {
   vi.useRealTimers()
@@ -796,6 +801,7 @@ describe('PredictionFixture', () => {
       }),
     )
     vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-06-10T12:00:00.000Z'))
     renderPredictionFixture({ includeModal: true })
 
     expect(screen.getByText('Estamos buscando partidos para predecir')).toBeInTheDocument()
