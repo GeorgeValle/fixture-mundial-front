@@ -69,9 +69,7 @@ export function parseAdminTeamsResponse(payload) {
 }
 
 export async function getAdminTeams() {
-  const response = await axiosClient.get(ADMIN_TEAMS_ENDPOINT, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.get(ADMIN_TEAMS_ENDPOINT)
 
   try {
     return parseAdminTeamsResponse(response.data)
@@ -99,9 +97,7 @@ export async function updateAdminTeamCorrection(teamId, payload) {
     throw appError
   }
 
-  const response = await axiosClient.put(`${ADMIN_TEAMS_ENDPOINT}/${teamId}`, result.payload, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.put(`${ADMIN_TEAMS_ENDPOINT}/${teamId}`, result.payload)
 
   return response.data
 }

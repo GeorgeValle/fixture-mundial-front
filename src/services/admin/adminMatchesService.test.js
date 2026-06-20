@@ -7,7 +7,7 @@ describe('adminMatchesService', () => {
     vi.restoreAllMocks()
   })
 
-  it('loads admin matches through the shared matches endpoint with credentials', async () => {
+  it('loads admin matches through the shared matches endpoint through axiosClient', async () => {
     const getSpy = vi.spyOn(axiosClient, 'get').mockResolvedValue({
       data: [{ _id: 'match-1', stage: 'GRUPO A', status: 'PENDING' }],
     })
@@ -16,7 +16,7 @@ describe('adminMatchesService', () => {
       { _id: 'match-1', stage: 'GRUPO A', status: 'PENDING' },
     ])
 
-    expect(getSpy).toHaveBeenCalledWith('/api/matches', { withCredentials: true })
+    expect(getSpy).toHaveBeenCalledWith('/api/matches')
   })
 
   it('updates matches with PUT /api/matches/:id and does not use admin-prefixed match routes', async () => {
@@ -32,7 +32,6 @@ describe('adminMatchesService', () => {
     expect(putSpy).toHaveBeenCalledWith(
       '/api/matches/match-1',
       { status: 'FINISHED', homeScore: 2, awayScore: 1 },
-      { withCredentials: true },
     )
     expect(putSpy.mock.calls[0][0]).not.toContain('/api/admin/matches')
   })

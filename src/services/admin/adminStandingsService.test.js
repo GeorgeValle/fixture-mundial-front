@@ -7,7 +7,7 @@ describe('adminStandingsService', () => {
     vi.restoreAllMocks()
   })
 
-  it('loads standings through GET /api/standings with credentials', async () => {
+  it('loads standings through GET /api/standings', async () => {
     const getSpy = vi.spyOn(axiosClient, 'get').mockResolvedValue({
       data: {
         status: 'success',
@@ -22,10 +22,10 @@ describe('adminStandingsService', () => {
 
     await expect(getAdminStandings()).resolves.toEqual([{ group: 'A', teams: [] }])
 
-    expect(getSpy).toHaveBeenCalledWith('/api/standings', { withCredentials: true })
+    expect(getSpy).toHaveBeenCalledWith('/api/standings')
   })
 
-  it('recalculates a group through POST /api/standings/A with credentials', async () => {
+  it('recalculates a group through POST /api/standings/A', async () => {
     const postSpy = vi
       .spyOn(axiosClient, 'post')
       .mockResolvedValue({ data: { status: 'success', message: 'Standings actualizados' } })
@@ -35,7 +35,7 @@ describe('adminStandingsService', () => {
       message: 'Standings actualizados',
     })
 
-    expect(postSpy).toHaveBeenCalledWith('/api/standings/A', null, { withCredentials: true })
+    expect(postSpy).toHaveBeenCalledWith('/api/standings/A', null)
   })
 
   it('rejects an empty group before calling the backend', async () => {
@@ -65,7 +65,7 @@ describe('adminStandingsService', () => {
 
     await recalculateAdminGroupStandings('a')
 
-    expect(postSpy).toHaveBeenCalledWith('/api/standings/A', null, { withCredentials: true })
+    expect(postSpy).toHaveBeenCalledWith('/api/standings/A', null)
   })
 
   it('does not use /api/admin/standings/:group', async () => {

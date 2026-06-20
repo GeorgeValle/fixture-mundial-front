@@ -25,25 +25,19 @@ function normalizeAdminUser(payload) {
 }
 
 export async function loginAdmin(credentials) {
-  const response = await axiosClient.post(ADMIN_AUTH_ENDPOINTS.login, credentials, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.post(ADMIN_AUTH_ENDPOINTS.login, credentials)
 
   return normalizeAdminUser(response.data)
 }
 
 export async function logoutAdmin() {
-  const response = await axiosClient.post(ADMIN_AUTH_ENDPOINTS.logout, {}, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.post(ADMIN_AUTH_ENDPOINTS.logout, {})
 
   return response.data
 }
 
 export async function getCurrentAdmin() {
-  const response = await axiosClient.get(ADMIN_AUTH_ENDPOINTS.me, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.get(ADMIN_AUTH_ENDPOINTS.me)
 
   return normalizeAdminUser(response.data)
 }

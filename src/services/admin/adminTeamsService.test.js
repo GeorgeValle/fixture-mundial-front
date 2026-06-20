@@ -16,12 +16,12 @@ describe('adminTeamsService', () => {
     vi.restoreAllMocks()
   })
 
-  it('loads teams through GET /api/teams with credentials', async () => {
+  it('loads teams through GET /api/teams', async () => {
     const getSpy = vi.spyOn(axiosClient, 'get').mockResolvedValue({ data: [team] })
 
     await expect(adminTeamsService.getAdminTeams()).resolves.toEqual([team])
 
-    expect(getSpy).toHaveBeenCalledWith('/api/teams', { withCredentials: true })
+    expect(getSpy).toHaveBeenCalledWith('/api/teams')
   })
 
   it('normalizes wrapped teams responses', async () => {
@@ -38,10 +38,10 @@ describe('adminTeamsService', () => {
         shieldUrl: 'https://example.com/legacy.svg',
       }),
     ])
-    expect(getSpy).toHaveBeenCalledWith('/api/teams', { withCredentials: true })
+    expect(getSpy).toHaveBeenCalledWith('/api/teams')
   })
 
-  it('updates team corrections with PUT /api/teams/:id and credentials', async () => {
+  it('updates team corrections with PUT /api/teams/:id', async () => {
     const putSpy = vi.spyOn(axiosClient, 'put').mockResolvedValue({ data: { status: 'success' } })
     const postSpy = vi.spyOn(axiosClient, 'post')
 
@@ -58,7 +58,6 @@ describe('adminTeamsService', () => {
         qualifiedTo: 'ROUND_OF_16',
         shieldUrl: 'https://example.com/new.svg',
       },
-      { withCredentials: true },
     )
     expect(putSpy.mock.calls[0][0]).not.toContain('/api/admin/teams')
     expect(postSpy).not.toHaveBeenCalled()
@@ -76,7 +75,6 @@ describe('adminTeamsService', () => {
     expect(putSpy).toHaveBeenCalledWith(
       '/api/teams/team-1',
       { qualifiedTo: 'ELIMINATED' },
-      { withCredentials: true },
     )
   })
 
