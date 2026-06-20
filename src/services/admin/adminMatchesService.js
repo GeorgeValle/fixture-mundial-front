@@ -14,9 +14,7 @@ function createAdminMatchesError(message, details = null) {
 }
 
 export async function getAdminMatches() {
-  const response = await axiosClient.get(ADMIN_MATCHES_ENDPOINT, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.get(ADMIN_MATCHES_ENDPOINT)
 
   try {
     return parseMatchesResponse(response.data)
@@ -44,9 +42,7 @@ export async function updateAdminMatch(matchId, payload) {
     Object.entries(payload ?? {}).filter(([, value]) => value !== undefined && value !== ''),
   )
 
-  const response = await axiosClient.put(`${ADMIN_MATCHES_ENDPOINT}/${matchId}`, cleanPayload, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.put(`${ADMIN_MATCHES_ENDPOINT}/${matchId}`, cleanPayload)
 
   return response.data
 }

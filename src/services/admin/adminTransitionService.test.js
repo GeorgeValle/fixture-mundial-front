@@ -12,7 +12,7 @@ describe('adminTransitionService', () => {
     vi.restoreAllMocks()
   })
 
-  it('loads transition standings through GET /api/standings with credentials', async () => {
+  it('loads transition standings through GET /api/standings', async () => {
     const getSpy = vi.spyOn(axiosClient, 'get').mockResolvedValue({
       data: {
         status: 'success',
@@ -22,10 +22,10 @@ describe('adminTransitionService', () => {
 
     await expect(getAdminTransitionStandings()).resolves.toEqual([{ group: 'A', teams: [] }])
 
-    expect(getSpy).toHaveBeenCalledWith('/api/standings', { withCredentials: true })
+    expect(getSpy).toHaveBeenCalledWith('/api/standings')
   })
 
-  it('loads transition matches through GET /api/matches with credentials', async () => {
+  it('loads transition matches through GET /api/matches', async () => {
     const getSpy = vi.spyOn(axiosClient, 'get').mockResolvedValue({
       data: [{ _id: 'match-73', matchNumber: 73, stage: 'ROUND_OF_32', status: 'PENDING' }],
     })
@@ -34,10 +34,10 @@ describe('adminTransitionService', () => {
       { _id: 'match-73', matchNumber: 73, stage: 'ROUND_OF_32', status: 'PENDING' },
     ])
 
-    expect(getSpy).toHaveBeenCalledWith('/api/matches', { withCredentials: true })
+    expect(getSpy).toHaveBeenCalledWith('/api/matches')
   })
 
-  it('processes a group transition with the confirmed endpoint, body and credentials', async () => {
+  it('processes a group transition with the confirmed endpoint, body', async () => {
     const postSpy = vi.spyOn(axiosClient, 'post').mockResolvedValue({
       data: {
         status: 'success',
@@ -53,7 +53,6 @@ describe('adminTransitionService', () => {
     expect(postSpy).toHaveBeenCalledWith(
       '/api/admin/classify-group',
       { group: 'A' },
-      { withCredentials: true },
     )
     expect(postSpy.mock.calls[0][1]).toEqual({ group: 'A' })
     expect(postSpy.mock.calls[0][1]).not.toHaveProperty('teams')
@@ -72,7 +71,6 @@ describe('adminTransitionService', () => {
     expect(postSpy).toHaveBeenCalledWith(
       '/api/admin/classify-group',
       { group: 'A' },
-      { withCredentials: true },
     )
   })
 

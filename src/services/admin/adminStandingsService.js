@@ -23,9 +23,7 @@ function createAdminStandingsError(message, details = null) {
 }
 
 export async function getAdminStandings() {
-  const response = await axiosClient.get(ADMIN_STANDINGS_ENDPOINT, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.get(ADMIN_STANDINGS_ENDPOINT)
 
   try {
     return parseStandingsResponse(response.data)
@@ -53,13 +51,7 @@ export async function recalculateAdminGroupStandings(group) {
   }
 
   try {
-    const response = await axiosClient.post(
-      `${ADMIN_STANDINGS_ENDPOINT}/${normalizedGroup}`,
-      null,
-      {
-        withCredentials: true,
-      },
-    )
+    const response = await axiosClient.post(`${ADMIN_STANDINGS_ENDPOINT}/${normalizedGroup}`, null)
 
     return response.data
   } catch (error) {

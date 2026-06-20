@@ -6,6 +6,7 @@ const defaultBaseUrl = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export const axiosClient = axios.create({
   baseURL: defaultBaseUrl,
+  withCredentials: true,
   timeout: 35000,
   headers: {
     'Content-Type': 'application/json',

@@ -50,9 +50,7 @@ function normalizeGroup(group) {
 }
 
 export async function getAdminTransitionStandings() {
-  const response = await axiosClient.get(ADMIN_TRANSITION_STANDINGS_ENDPOINT, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.get(ADMIN_TRANSITION_STANDINGS_ENDPOINT)
 
   try {
     return parseStandingsResponse(response.data)
@@ -67,9 +65,7 @@ export async function getAdminTransitionStandings() {
 }
 
 export async function getAdminTransitionMatches() {
-  const response = await axiosClient.get(ADMIN_TRANSITION_MATCHES_ENDPOINT, {
-    withCredentials: true,
-  })
+  const response = await axiosClient.get(ADMIN_TRANSITION_MATCHES_ENDPOINT)
 
   try {
     return parseMatchesResponse(response.data)
@@ -96,11 +92,7 @@ export async function processGroupTransition(group) {
     throw appError
   }
 
-  const response = await axiosClient.post(
-    ADMIN_TRANSITION_PROCESS_ENDPOINT,
-    { group: normalizedGroup },
-    { withCredentials: true },
-  )
+  const response = await axiosClient.post(ADMIN_TRANSITION_PROCESS_ENDPOINT, { group: normalizedGroup })
 
   return response.data
 }
