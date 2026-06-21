@@ -1,6 +1,7 @@
 import { axiosClient } from '../api/axiosClient'
 import { logAppError } from '../errors/errorLogger'
 import { parseDailyScheduleResponse, parseMatchesResponse } from '../../schemas/matchSchema'
+import { getBrowserDayUtcRange } from '../../utils/dateAdapter'
 
 export async function getMatches() {
   const response = await axiosClient.get('/api/matches')
@@ -22,9 +23,10 @@ export async function getMatches() {
   }
 }
 
-export async function getDailySchedule(date) {
+export async function getDailySchedule(currentDate) {
+  const { start, end } = getBrowserDayUtcRange(currentDate)
   const response = await axiosClient.get('/api/matches/schedule/daily', {
-    params: { date },
+    params: { start, end },
   })
 
   try {

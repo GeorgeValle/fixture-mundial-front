@@ -13,7 +13,6 @@ import {
 } from '../../features/ui/uiSlice'
 import { getDailySchedule } from '../../services/matches/matchesService'
 import { hasSeenHomeTutorial } from '../../services/preferences/onboardingStorageService'
-import { getTodayISODate } from '../../utils/dateAdapter'
 import { ROUTES } from '../../constants/routes'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
 import stadiumHero from '../../assets/illustrations/stadium-hero.png'
@@ -141,7 +140,7 @@ function Home() {
       )
     }, DELAYED_LOADING_THRESHOLD_MS)
 
-    getDailySchedule(getTodayISODate())
+    getDailySchedule()
       .then((schedule) => {
         if (!isActive) {
           return
