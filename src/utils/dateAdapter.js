@@ -93,6 +93,20 @@ export function getTodayISODate(currentDate = new Date()) {
   return `${year}-${month}-${day}`
 }
 
+export function getBrowserDayUtcRange(currentDate = new Date()) {
+  const date = toDate(currentDate) ?? new Date()
+  const start = new Date(date.getTime())
+  const end = new Date(date.getTime())
+
+  start.setHours(0, 0, 0, 0)
+  end.setHours(23, 59, 59, 999)
+
+  return {
+    start: start.toISOString(),
+    end: end.toISOString(),
+  }
+}
+
 export function sortMatchesByDate(matches = []) {
   return [...matches].sort((firstMatch, secondMatch) => {
     const firstDate = getMatchDate(firstMatch)

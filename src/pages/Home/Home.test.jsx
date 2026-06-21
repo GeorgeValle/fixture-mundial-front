@@ -113,6 +113,34 @@ describe('Home', () => {
     expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
   })
 
+  it('requests the daily schedule with start and end query params instead of date', async () => {
+    let requestUrl
+
+    server.use(
+      http.get('*/api/matches/schedule/daily', ({ request }) => {
+        requestUrl = new URL(request.url)
+
+        return HttpResponse.json({
+          status: 'success',
+          data: { today: [], next: [], nextDate: null },
+        })
+      }),
+    )
+
+    renderHome()
+
+    expect(await screen.findByText('Calendario sin actividad')).toBeInTheDocument()
+    expect(requestUrl.searchParams.has('start')).toBe(true)
+    expect(requestUrl.searchParams.has('end')).toBe(true)
+    expect(requestUrl.searchParams.has('date')).toBe(false)
+    expect(new Date(requestUrl.searchParams.get('start')).toISOString()).toBe(
+      requestUrl.searchParams.get('start'),
+    )
+    expect(new Date(requestUrl.searchParams.get('end')).toISOString()).toBe(
+      requestUrl.searchParams.get('end'),
+    )
+  })
+
 
   it('renders accessible quick links with the expected routes and keeps the tour target', async () => {
     mockDailyScheduleResponse({ today: [], next: [], nextDate: null })

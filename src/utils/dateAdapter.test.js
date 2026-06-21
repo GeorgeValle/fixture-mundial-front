@@ -3,6 +3,7 @@ import {
   formatDisplayDate,
   formatDisplayTime,
   formatScheduleCalendarDate,
+  getBrowserDayUtcRange,
   getTodayISODate,
   isMatchStarted,
   isPastMatch,
@@ -40,6 +41,20 @@ describe('dateAdapter', () => {
 
   it('returns the current local ISO date without time', () => {
     expect(getTodayISODate(new Date(2026, 5, 11, 21, 30))).toBe('2026-06-11')
+  })
+
+  it('returns the browser local day boundaries as UTC ISO strings', () => {
+    const currentDate = new Date(2026, 5, 11, 21, 30)
+    const expectedStart = new Date(currentDate.getTime())
+    const expectedEnd = new Date(currentDate.getTime())
+
+    expectedStart.setHours(0, 0, 0, 0)
+    expectedEnd.setHours(23, 59, 59, 999)
+
+    expect(getBrowserDayUtcRange(currentDate)).toEqual({
+      start: expectedStart.toISOString(),
+      end: expectedEnd.toISOString(),
+    })
   })
 
   it('sorts matches by date and keeps undated matches at the end', () => {
