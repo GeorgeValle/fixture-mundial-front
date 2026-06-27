@@ -193,7 +193,21 @@ describe('knockoutStageAdapter', () => {
     expect(rounds.map((round) => round.matches.length)).toEqual([16, 8, 4, 2, 1, 1])
   })
 
-  it('orders visual bracket rounds by upstream sources instead of chronological quarter-final order', () => {
+  it('uses the documented explicit visual order for every knockout round', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds(matches)
+    const getRoundMatchNumbers = (roundKey) =>
+      rounds.find((round) => round.roundKey === roundKey).matches.map((match) => match.matchNumber)
+
+    expect(getRoundMatchNumbers('round-of-32')).toEqual([74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87])
+    expect(getRoundMatchNumbers('round-of-16')).toEqual([89, 90, 93, 94, 91, 92, 95, 96])
+    expect(getRoundMatchNumbers('quarter-finals')).toEqual([97, 98, 99, 100])
+    expect(getRoundMatchNumbers('semi-finals')).toEqual([101, 102])
+    expect(getRoundMatchNumbers('third-place')).toEqual([103])
+    expect(getRoundMatchNumbers('final')).toEqual([104])
+  })
+
+  it('uses the explicit visual quarter-final order regardless of chronological or shuffled input', () => {
     const matches = buildKnockoutStageMatches([])
     const chronologicalQuarterFinals = [97, 98, 99, 100].map((matchNumber) =>
       matches.find((match) => match.matchNumber === matchNumber),
@@ -207,15 +221,8 @@ describe('knockoutStageAdapter', () => {
     const quarterFinals = rounds.find((round) => round.roundKey === 'quarter-finals')
 
     expect(chronologicalQuarterFinals.map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
-    expect(quarterFinals.matches.map((match) => match.matchNumber)).toEqual([97, 99, 98, 100])
-    expect(quarterFinals.matches.find((match) => match.matchNumber === 98)).toMatchObject({
-      homePlaceholder: 'Ganador Partido 93',
-      awayPlaceholder: 'Ganador Partido 94',
-    })
-    expect(quarterFinals.matches.find((match) => match.matchNumber === 99)).toMatchObject({
-      homePlaceholder: 'Ganador Partido 91',
-      awayPlaceholder: 'Ganador Partido 92',
-    })
+    expect(quarterFinals.matches.map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
+    expect(quarterFinals.matches.map((match) => match.matchNumber)).not.toEqual([97, 99, 98, 100])
 
     const shuffledQuarterFinals = [98, 100, 97, 99].map((matchNumber) =>
       matches.find((match) => match.matchNumber === matchNumber),
@@ -229,7 +236,45 @@ describe('knockoutStageAdapter', () => {
       roundsFromShuffledQuarterFinals
         .find((round) => round.roundKey === 'quarter-finals')
         .matches.map((match) => match.matchNumber),
-    ).toEqual([97, 99, 98, 100])
+    ).toEqual([97, 98, 99, 100])
+  })
+
+  it('keeps quarter-finals adjacent to the semifinals they feed', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds(matches)
+    const quarterFinalMatchNumbers = rounds
+      .find((round) => round.roundKey === 'quarter-finals')
+      .matches.map((match) => match.matchNumber)
+    const semifinal101 = rounds
+      .find((round) => round.roundKey === 'semi-finals')
+      .matches.find((match) => match.matchNumber === 101)
+    const semifinal102 = rounds
+      .find((round) => round.roundKey === 'semi-finals')
+      .matches.find((match) => match.matchNumber === 102)
+
+    expect(quarterFinalMatchNumbers.slice(0, 2)).toEqual([97, 98])
+    expect(quarterFinalMatchNumbers.slice(2, 4)).toEqual([99, 100])
+    expect(semifinal101).toMatchObject({
+      homePlaceholder: 'Ganador Partido 97',
+      awayPlaceholder: 'Ganador Partido 98',
+    })
+    expect(semifinal102).toMatchObject({
+      homePlaceholder: 'Ganador Partido 99',
+      awayPlaceholder: 'Ganador Partido 100',
+    })
+  })
+
+  it('places matches outside the explicit visual map at the end of their round with a stable fallback order', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds([
+      ...matches,
+      { roundKey: 'quarter-finals', templateCode: 'AUX-B', date: '2026-07-12' },
+      { roundKey: 'quarter-finals', templateCode: 'AUX-A', date: '2026-07-11' },
+    ])
+    const quarterFinals = rounds.find((round) => round.roundKey === 'quarter-finals').matches
+
+    expect(quarterFinals.slice(0, 4).map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
+    expect(quarterFinals.slice(4).map((match) => match.templateCode)).toEqual(['AUX-A', 'AUX-B'])
   })
 
   it('labels visual bracket slot states in Spanish', () => {

@@ -367,175 +367,74 @@ export function groupKnockoutMatchesByRound(matches = []) {
   })).filter((round) => round.matches.length > 0)
 }
 
-function toMatchNumber(value) {
-  const numericValue = Number(value)
-
-  return Number.isInteger(numericValue) ? numericValue : null
+const BRACKET_VISUAL_ORDER_BY_ROUND = {
+  'round-of-32': [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87],
+  'round-of-16': [89, 90, 93, 94, 91, 92, 95, 96],
+  'quarter-finals': [97, 98, 99, 100],
+  'semi-finals': [101, 102],
+  'third-place': [103],
+  final: [104],
 }
 
-function getReferenceMatchNumber(reference) {
-  if (!reference) {
-    return null
-  }
-
-  if (typeof reference === 'object') {
-    const directMatchNumber = toMatchNumber(reference.matchNumber ?? reference.number ?? reference.matchNo)
-
-    if (directMatchNumber) {
-      return directMatchNumber
-    }
-
-    const templateCodeMatch = toStringValue(reference.templateCode ?? reference.code).match(/KO[-_ ]?(\d+)/i)
-    return templateCodeMatch ? Number(templateCodeMatch[1]) : null
-  }
-
-  const directMatchNumber = toMatchNumber(reference)
+function getBracketMatchNumber(match) {
+  const directMatchNumber = getBackendMatchNumber(match)
 
   if (directMatchNumber) {
     return directMatchNumber
   }
 
-  const textMatch = toStringValue(reference).match(/(?:KO[-_ ]?|partido\s*#?\s*|match\s*#?\s*|p\s*)(\d+)/i)
-  return textMatch ? Number(textMatch[1]) : null
+  const templateCodeMatch = toStringValue(match?.templateCode ?? match?.code).match(/KO[-_ ]?(\d+)/i)
+  return templateCodeMatch ? Number(templateCodeMatch[1]) : null
 }
 
-function getSourceMatchNumber(source) {
-  if (!source) {
-    return null
+function getVisualOrderPosition(roundKey, match) {
+  const visualOrder = BRACKET_VISUAL_ORDER_BY_ROUND[roundKey] ?? []
+  const matchNumber = getBracketMatchNumber(match)
+
+  if (!matchNumber) {
+    return Number.MAX_SAFE_INTEGER
   }
 
-  if (typeof source === 'object' && source.type && !['winner', 'loser'].includes(source.type)) {
-    return null
-  }
-
-  return getReferenceMatchNumber(source)
+  const visualIndex = visualOrder.indexOf(matchNumber)
+  return visualIndex === -1 ? Number.MAX_SAFE_INTEGER : visualIndex
 }
 
-function getPlaceholderSourceMatchNumbers(value) {
-  const sourceNumbers = []
-  const placeholderText = toStringValue(value)
-  const sourcePattern = /\b(?:partido|match|p)\s*#?\s*(\d+)\b/gi
-  let sourceMatch = sourcePattern.exec(placeholderText)
+function getFallbackSortKey(match) {
+  const templateCode = toStringValue(match?.templateCode ?? match?.code).trim()
+  const date = toDateKey(match?.date ?? match?.matchDate)
+  const matchNumber = getBracketMatchNumber(match)
 
-  while (sourceMatch) {
-    sourceNumbers.push(Number(sourceMatch[1]))
-    sourceMatch = sourcePattern.exec(placeholderText)
-  }
-
-  return sourceNumbers
+  return [templateCode, date, matchNumber ?? ''].join('|')
 }
 
-function getMatchNumber(match) {
-  return getReferenceMatchNumber(match?.matchNumber ?? match?.templateCode)
-}
+function sortRoundMatchesByExplicitBracketOrder(matches, roundKey) {
+  return matches
+    .map((match, originalIndex) => ({ match, originalIndex }))
+    .sort((firstMatch, secondMatch) => {
+      const positionDifference =
+        getVisualOrderPosition(roundKey, firstMatch.match) - getVisualOrderPosition(roundKey, secondMatch.match)
 
-function uniqueMatchNumbers(matchNumbers) {
-  return [...new Set(matchNumbers.filter((matchNumber) => Number.isInteger(matchNumber)))]
-}
-
-function buildOutgoingSourceIndex(matches) {
-  const incomingSourcesByMatchNumber = new Map()
-
-  for (const match of matches) {
-    const sourceMatchNumber = getMatchNumber(match)
-
-    if (!sourceMatchNumber) {
-      continue
-    }
-
-    for (const targetReference of [match.nextMatchWinner, match.nextMatchLoser]) {
-      const targetMatchNumber = getReferenceMatchNumber(targetReference)
-
-      if (!targetMatchNumber) {
-        continue
+      if (positionDifference !== 0) {
+        return positionDifference
       }
 
-      incomingSourcesByMatchNumber.set(targetMatchNumber, [
-        ...(incomingSourcesByMatchNumber.get(targetMatchNumber) ?? []),
-        sourceMatchNumber,
-      ])
-    }
-  }
+      const fallbackDifference = getFallbackSortKey(firstMatch.match).localeCompare(getFallbackSortKey(secondMatch.match))
 
-  return incomingSourcesByMatchNumber
-}
-
-function getMatchSourceNumbers(match, incomingSourcesByMatchNumber) {
-  const matchNumber = getMatchNumber(match)
-
-  return uniqueMatchNumbers([
-    getSourceMatchNumber(match?.homeSource),
-    getSourceMatchNumber(match?.awaySource),
-    ...getPlaceholderSourceMatchNumbers(match?.homePlaceholder),
-    ...getPlaceholderSourceMatchNumbers(match?.awayPlaceholder),
-    ...getPlaceholderSourceMatchNumbers(match?.placeholderHome),
-    ...getPlaceholderSourceMatchNumbers(match?.placeholderAway),
-    ...(incomingSourcesByMatchNumber.get(matchNumber) ?? []),
-  ])
-}
-
-function getVisualSortData(match, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber) {
-  const sourcePositions = getMatchSourceNumbers(match, incomingSourcesByMatchNumber)
-    .map((sourceMatchNumber) => sourcePositionsByMatchNumber.get(sourceMatchNumber))
-    .filter((sourcePosition) => Number.isFinite(sourcePosition))
-
-  if (sourcePositions.length > 0) {
-    const orderedSourcePositions = [...sourcePositions].sort((firstPosition, secondPosition) => firstPosition - secondPosition)
-    const averageSourcePosition =
-      orderedSourcePositions.reduce((total, sourcePosition) => total + sourcePosition, 0) / orderedSourcePositions.length
-
-    return {
-      primary: averageSourcePosition,
-      secondary: orderedSourcePositions[0],
-    }
-  }
-
-  const matchNumber = getMatchNumber(match) ?? Number.MAX_SAFE_INTEGER
-
-  return {
-    primary: matchNumber,
-    secondary: matchNumber,
-  }
-}
-
-function sortRoundMatchesByBracketSources(matches, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber) {
-  return [...matches].sort((firstMatch, secondMatch) => {
-    const firstSortData = getVisualSortData(firstMatch, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber)
-    const secondSortData = getVisualSortData(secondMatch, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber)
-
-    return (
-      firstSortData.primary - secondSortData.primary ||
-      firstSortData.secondary - secondSortData.secondary ||
-      (getMatchNumber(firstMatch) ?? Number.MAX_SAFE_INTEGER) - (getMatchNumber(secondMatch) ?? Number.MAX_SAFE_INTEGER)
-    )
-  })
+      return fallbackDifference || firstMatch.originalIndex - secondMatch.originalIndex
+    })
+    .map(({ match }) => match)
 }
 
 export function buildKnockoutBracketViewRounds(matches = []) {
   const safeMatches = Array.isArray(matches) ? matches : []
-  const incomingSourcesByMatchNumber = buildOutgoingSourceIndex(safeMatches)
-  const visualPositionsByMatchNumber = new Map()
 
-  return KNOCKOUT_ROUNDS.map((round) => {
-    const sortedMatches = sortRoundMatchesByBracketSources(
+  return KNOCKOUT_ROUNDS.map((round) => ({
+    ...round,
+    matches: sortRoundMatchesByExplicitBracketOrder(
       safeMatches.filter((match) => match.roundKey === round.roundKey),
-      visualPositionsByMatchNumber,
-      incomingSourcesByMatchNumber,
-    )
-
-    for (const [matchIndex, match] of sortedMatches.entries()) {
-      const matchNumber = getMatchNumber(match)
-
-      if (matchNumber) {
-        visualPositionsByMatchNumber.set(matchNumber, matchIndex)
-      }
-    }
-
-    return {
-      ...round,
-      matches: sortedMatches,
-    }
-  })
+      round.roundKey,
+    ),
+  }))
 }
 
 export function getKnockoutSummary(matches = []) {
