@@ -69,6 +69,38 @@ function createStandingsGroups() {
   }))
 }
 
+function createThirdPlaceStandingsGroups() {
+  return groupLetters.map((group, index) => ({
+    group,
+    teams: [
+      createStandingRow(
+        `Equipo ${group}1`,
+        group,
+        { pj: 3, pg: 2, pe: 1, pp: 0, gf: 7, gc: 2, dif: 5, pts: 7 },
+        { position: 1 },
+      ),
+      createStandingRow(
+        `Equipo ${group}2`,
+        group,
+        { pj: 3, pg: 1, pe: 2, pp: 0, gf: 5, gc: 3, dif: 2, pts: 5 },
+        { position: 2 },
+      ),
+      createStandingRow(
+        `Tercero ${group}`,
+        group,
+        { pj: 3, pg: 1, pe: 0, pp: 2, gf: 4, gc: 4, dif: 0, pts: 12 - index },
+        { position: 3 },
+      ),
+      createStandingRow(
+        `Equipo ${group}4`,
+        group,
+        { pj: 3, pg: 0, pe: 1, pp: 2, gf: 2, gc: 6, dif: -4, pts: 1 },
+        { position: 4 },
+      ),
+    ],
+  }))
+}
+
 function renderGroupStandings({ includeModal = false } = {}) {
   const store = configureStore({ reducer: { ui: uiReducer } })
 
@@ -161,14 +193,17 @@ describe('GroupStandings', () => {
 
     const overviewButton = await screen.findByRole('button', { name: /vista general/i })
     const focusButton = screen.getByRole('button', { name: /vista foco/i })
+    const thirdPlacesButton = screen.getByRole('button', { name: /mejores terceros/i })
 
     expect(overviewButton).toHaveAttribute('aria-pressed', 'true')
     expect(focusButton).toHaveAttribute('aria-pressed', 'false')
+    expect(thirdPlacesButton).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo A' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo B' })).toBeInTheDocument()
     expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
     expect(screen.getByText(/vista general muestra todos los grupos/i)).toBeInTheDocument()
     expect(screen.getByText(/vista foco permite revisar un grupo en detalle/i)).toBeInTheDocument()
+    expect(screen.getByText(/mejores terceros compara/i)).toBeInTheDocument()
   })
 
   it('switches to Vista foco and changes the selected group', async () => {
@@ -203,6 +238,60 @@ describe('GroupStandings', () => {
     expect(
       screen.queryByRole('heading', { name: 'Posiciones del grupo A' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('switches to Mejores terceros and renders a single third-place ranking', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createThirdPlaceStandingsGroups())
+
+    renderGroupStandings()
+
+    const thirdPlacesButton = await screen.findByRole('button', { name: /mejores terceros/i })
+
+    await user.click(thirdPlacesButton)
+
+    expect(thirdPlacesButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /vista general/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    expect(screen.getByRole('button', { name: /vista foco/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    expect(screen.getByRole('heading', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
+    expect(screen.getByText('Tercero A')).toBeInTheDocument()
+    expect(screen.getByText('Grupo A')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Posiciones del grupo A' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
+  })
+
+  it('marks top 8 third-place teams as qualified and positions 9 to 12 as not qualified', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createThirdPlaceStandingsGroups())
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(8)
+    expect(screen.getAllByText('No clasifica')).toHaveLength(4)
+  })
+
+  it('shows a friendly empty state when there are not enough teams to rank third places', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createStandingsGroups())
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.getByText(/todavía no hay terceros suficientes/i)).toBeInTheDocument()
+    expect(screen.getByText(/se va a completar automáticamente/i)).toBeInTheDocument()
   })
 
 
