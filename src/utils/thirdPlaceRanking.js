@@ -76,6 +76,7 @@ export function buildThirdPlaceRanking(standings = []) {
     .map((row, index) => ({
       ...row,
       rank: index + 1,
-      isQualifiedThirdPlace: index < QUALIFIED_THIRD_PLACES,
+      isInTopEight: index < QUALIFIED_THIRD_PLACES,
+      isQualifiedThirdPlace: row?.team?.qualifiedTo === 'ROUND_OF_32',
     }))
 }

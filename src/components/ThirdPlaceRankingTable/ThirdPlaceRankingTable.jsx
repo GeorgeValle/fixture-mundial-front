@@ -7,7 +7,27 @@ function getTeamName(row) {
 }
 
 function getQualificationLabel(row) {
-  return row?.isQualifiedThirdPlace ? 'Clasifica a 16avos' : 'No clasifica'
+  if (row?.isQualifiedThirdPlace) {
+    return 'Clasifica a 16avos'
+  }
+
+  if (row?.isInTopEight) {
+    return 'Zona provisional'
+  }
+
+  return 'No clasifica'
+}
+
+function getBadgeClassName(row) {
+  if (row?.isQualifiedThirdPlace) {
+    return styles.qualifiedBadge
+  }
+
+  if (row?.isInTopEight) {
+    return styles.provisionalBadge
+  }
+
+  return styles.notQualifiedBadge
 }
 
 function ThirdPlaceRankingTable({ ranking = [] }) {
@@ -20,7 +40,11 @@ function ThirdPlaceRankingTable({ ranking = [] }) {
             Ranking de mejores terceros
           </h3>
           <p className={styles.description}>
-            Las mejores 8 selecciones ubicadas terceras en sus grupos clasifican a 16avos.
+            Las mejores 8 selecciones ubicadas terceras en sus grupos quedan en zona de 16avos.
+          </p>
+          <p className={styles.helperText}>
+            El ranking muestra la zona provisional; la clasificación oficial depende de la
+            confirmación del backend.
           </p>
         </div>
         <span className={styles.summaryBadge}>{ranking.length} terceros</span>
@@ -41,9 +65,7 @@ function ThirdPlaceRankingTable({ ranking = [] }) {
             <tbody>
               {ranking.map((row) => {
                 const teamName = getTeamName(row)
-                const badgeClassName = row.isQualifiedThirdPlace
-                  ? styles.qualifiedBadge
-                  : styles.notQualifiedBadge
+                const badgeClassName = getBadgeClassName(row)
 
                 return (
                   <tr key={row?.team?._id ?? `${row.group}-${teamName}-${row.rank}`}>

@@ -151,15 +151,34 @@ describe('thirdPlaceRanking', () => {
     ])
   })
 
-  it('marks the top 8 third-place teams as qualified', () => {
+  it('marks top 8 third-place teams as provisional zone without official qualification', () => {
     const standings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index), { pts: 12 - index }))
 
     const ranking = buildThirdPlaceRanking(standings)
 
     expect(ranking).toHaveLength(12)
-    expect(ranking.filter((row) => row.isQualifiedThirdPlace)).toHaveLength(8)
-    expect(ranking[0]).toMatchObject({ rank: 1, isQualifiedThirdPlace: true })
-    expect(ranking[7]).toMatchObject({ rank: 8, isQualifiedThirdPlace: true })
-    expect(ranking[8]).toMatchObject({ rank: 9, isQualifiedThirdPlace: false })
+    expect(ranking.filter((row) => row.isInTopEight)).toHaveLength(8)
+    expect(ranking.filter((row) => row.isQualifiedThirdPlace)).toHaveLength(0)
+    expect(ranking[0]).toMatchObject({ rank: 1, isInTopEight: true, isQualifiedThirdPlace: false })
+    expect(ranking[7]).toMatchObject({ rank: 8, isInTopEight: true, isQualifiedThirdPlace: false })
+    expect(ranking[8]).toMatchObject({ rank: 9, isInTopEight: false, isQualifiedThirdPlace: false })
+  })
+
+  it('marks third-place teams as officially qualified only when backend confirms ROUND_OF_32', () => {
+    const ranking = buildThirdPlaceRanking([
+      createStanding('A', { pts: 6 }, { qualifiedTo: 'ROUND_OF_32' }),
+      createStanding('B', { pts: 5 }, { qualifiedTo: null }),
+    ])
+
+    expect(ranking[0]).toMatchObject({
+      group: 'A',
+      isInTopEight: true,
+      isQualifiedThirdPlace: true,
+    })
+    expect(ranking[1]).toMatchObject({
+      group: 'B',
+      isInTopEight: true,
+      isQualifiedThirdPlace: false,
+    })
   })
 })

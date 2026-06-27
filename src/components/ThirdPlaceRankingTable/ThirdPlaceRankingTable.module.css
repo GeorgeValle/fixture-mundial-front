@@ -70,6 +70,15 @@
   line-height: 1.55;
 }
 
+.helperText {
+  max-width: 48rem;
+  margin: var(--space-1) 0 0;
+  color: var(--color-primary-soft);
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
 .summaryBadge {
   display: inline-flex;
   flex: 0 0 auto;
@@ -197,6 +206,12 @@
   color: var(--color-green);
   background: color-mix(in srgb, var(--color-green) 10%, var(--color-surface));
   border-color: color-mix(in srgb, var(--color-green) 32%, transparent);
+}
+
+.provisionalBadge {
+  color: color-mix(in srgb, var(--color-gold) 72%, var(--color-primary));
+  background: color-mix(in srgb, var(--color-gold) 16%, var(--color-surface));
+  border-color: color-mix(in srgb, var(--color-gold) 42%, transparent);
 }
 
 .notQualifiedBadge {

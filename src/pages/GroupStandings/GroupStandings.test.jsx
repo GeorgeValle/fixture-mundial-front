@@ -262,13 +262,14 @@ describe('GroupStandings', () => {
     )
     expect(screen.getByRole('heading', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
+    expect(screen.getByText(/la clasificación oficial depende de la confirmación del backend/i)).toBeInTheDocument()
     expect(screen.getByText('Tercero A')).toBeInTheDocument()
     expect(screen.getByText('Grupo A')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Posiciones del grupo A' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
   })
 
-  it('marks top 8 third-place teams as qualified and positions 9 to 12 as not qualified', async () => {
+  it('marks top 8 third-place teams as provisional when backend has not confirmed qualification', async () => {
     const user = userEvent.setup()
 
     mockStandingsResponse(createThirdPlaceStandingsGroups())
@@ -277,7 +278,24 @@ describe('GroupStandings', () => {
 
     await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
 
-    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(8)
+    expect(screen.queryByText('Clasifica a 16avos')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Zona provisional')).toHaveLength(8)
+    expect(screen.getAllByText('No clasifica')).toHaveLength(4)
+  })
+
+  it('marks third-place teams as officially qualified only when backend confirms ROUND_OF_32', async () => {
+    const user = userEvent.setup()
+    const standings = createThirdPlaceStandingsGroups()
+    standings[0].teams[2].team.qualifiedTo = 'ROUND_OF_32'
+
+    mockStandingsResponse(standings)
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(1)
+    expect(screen.getAllByText('Zona provisional')).toHaveLength(7)
     expect(screen.getAllByText('No clasifica')).toHaveLength(4)
   })
 
