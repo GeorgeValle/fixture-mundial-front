@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { buildThirdPlaceRanking, isConfirmedKnockoutQualification } from './thirdPlaceRanking'
+import {
+  areAllGroupsClosed,
+  buildThirdPlaceRanking,
+  THIRD_PLACE_RANKING_STATUS,
+} from './thirdPlaceRanking'
 
 function createStandingRow(name, group, stats = {}, teamOverrides = {}) {
   return {
@@ -36,20 +40,16 @@ function createStanding(group, thirdStats = {}, thirdTeamOverrides = {}) {
 }
 
 describe('thirdPlaceRanking', () => {
-  it('detects confirmed knockout qualification states without treating eliminated as qualified', () => {
-    for (const qualifiedTo of [
-      'ROUND_OF_32',
-      'ROUND_OF_16',
-      'QUARTER_FINALS',
-      'SEMI_FINALS',
-      'THIRD_PLACE_MATCH',
-      'FINAL',
-    ]) {
-      expect(isConfirmedKnockoutQualification(qualifiedTo)).toBe(true)
-    }
+  it('detects group-stage closure only when 12 groups have 4 teams with 3 matches played', () => {
+    const closedStandings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index)))
+    const incompleteStandings = Array.from({ length: 12 }, (_, index) =>
+      createStanding(String.fromCharCode(65 + index), { pj: index === 0 ? 2 : 3 }),
+    )
 
-    expect(isConfirmedKnockoutQualification(null)).toBe(false)
-    expect(isConfirmedKnockoutQualification('ELIMINATED')).toBe(false)
+    expect(areAllGroupsClosed(closedStandings)).toBe(true)
+    expect(areAllGroupsClosed(closedStandings.slice(0, 11))).toBe(false)
+    expect(areAllGroupsClosed([{ group: 'A', teams: closedStandings[0].teams.slice(0, 3) }])).toBe(false)
+    expect(areAllGroupsClosed(incompleteStandings)).toBe(false)
   })
 
   it('extracts third-place teams from each group', () => {
@@ -167,51 +167,102 @@ describe('thirdPlaceRanking', () => {
     ])
   })
 
-  it('marks top 8 third-place teams as provisional zone without official qualification', () => {
-    const standings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index), { pts: 12 - index }))
+  it('marks top 8 as provisional and ranks 9 to 12 as outside zone while groups are open', () => {
+    const standings = Array.from({ length: 12 }, (_, index) =>
+      createStanding(String.fromCharCode(65 + index), { pj: 2, pts: 12 - index }),
+    )
 
     const ranking = buildThirdPlaceRanking(standings)
 
     expect(ranking).toHaveLength(12)
     expect(ranking.filter((row) => row.isInTopEight)).toHaveLength(8)
     expect(ranking.filter((row) => row.isQualifiedThirdPlace)).toHaveLength(0)
-    expect(ranking[0]).toMatchObject({ rank: 1, isInTopEight: true, isQualifiedThirdPlace: false })
-    expect(ranking[7]).toMatchObject({ rank: 8, isInTopEight: true, isQualifiedThirdPlace: false })
-    expect(ranking[8]).toMatchObject({ rank: 9, isInTopEight: false, isQualifiedThirdPlace: false })
+    expect(ranking[0]).toMatchObject({
+      rank: 1,
+      isInTopEight: true,
+      isFinalThirdPlaceRanking: false,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.provisional,
+      isQualifiedThirdPlace: false,
+    })
+    expect(ranking[7]).toMatchObject({
+      rank: 8,
+      isInTopEight: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.provisional,
+    })
+    expect(ranking[8]).toMatchObject({
+      rank: 9,
+      isInTopEight: false,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.outsideZone,
+      isQualifiedThirdPlace: false,
+    })
   })
 
-  it('marks third-place teams as officially qualified for any confirmed knockout backend state', () => {
-    const ranking = buildThirdPlaceRanking([
-      createStanding('A', { pts: 6 }, { qualifiedTo: 'ROUND_OF_32' }),
-      createStanding('B', { pts: 5 }, { qualifiedTo: 'ROUND_OF_16' }),
-      createStanding('C', { pts: 4 }, { qualifiedTo: 'QUARTER_FINALS' }),
-      createStanding('D', { pts: 3 }, { qualifiedTo: 'ELIMINATED' }),
-      createStanding('E', { pts: 2 }, { qualifiedTo: null }),
-    ])
+  it('marks top 8 as qualified and ranks 9 to 12 as not qualified when all groups are closed', () => {
+    const standings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index), { pts: 12 - index }))
+
+    const ranking = buildThirdPlaceRanking(standings)
 
     expect(ranking[0]).toMatchObject({
       group: 'A',
       isInTopEight: true,
+      isFinalThirdPlaceRanking: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
+      isQualifiedThirdPlace: true,
+    })
+    expect(ranking[7]).toMatchObject({
+      rank: 8,
+      isInTopEight: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
+      isQualifiedThirdPlace: true,
+    })
+    expect(ranking[8]).toMatchObject({
+      rank: 9,
+      isInTopEight: false,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.notQualified,
+      isQualifiedThirdPlace: false,
+    })
+  })
+
+  it('does not use team.qualifiedTo to determine third-place ranking badge status', () => {
+    const standings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index), { pts: 12 - index }))
+    standings[0].teams[2].team.qualifiedTo = 'ELIMINATED'
+    standings[1].teams[2].team.qualifiedTo = 'ROUND_OF_16'
+    standings[8].teams[2].team.qualifiedTo = 'ROUND_OF_32'
+
+    const ranking = buildThirdPlaceRanking(standings)
+
+    expect(ranking[0]).toMatchObject({
+      group: 'A',
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
       isQualifiedThirdPlace: true,
     })
     expect(ranking[1]).toMatchObject({
       group: 'B',
-      isInTopEight: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
       isQualifiedThirdPlace: true,
     })
-    expect(ranking[2]).toMatchObject({
-      group: 'C',
-      isInTopEight: true,
-      isQualifiedThirdPlace: true,
-    })
-    expect(ranking[3]).toMatchObject({
-      group: 'D',
-      isInTopEight: true,
+    expect(ranking[8]).toMatchObject({
+      group: 'I',
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.notQualified,
       isQualifiedThirdPlace: false,
     })
-    expect(ranking[4]).toMatchObject({
-      group: 'E',
-      isInTopEight: true,
+
+    const openStandings = Array.from({ length: 12 }, (_, index) =>
+      createStanding(String.fromCharCode(65 + index), { pj: 2, pts: 12 - index }),
+    )
+    openStandings[0].teams[2].team.qualifiedTo = 'ROUND_OF_32'
+    openStandings[8].teams[2].team.qualifiedTo = 'ELIMINATED'
+
+    const openRanking = buildThirdPlaceRanking(openStandings)
+
+    expect(openRanking[0]).toMatchObject({
+      group: 'A',
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.provisional,
+      isQualifiedThirdPlace: false,
+    })
+    expect(openRanking[8]).toMatchObject({
+      group: 'I',
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.outsideZone,
       isQualifiedThirdPlace: false,
     })
   })

@@ -69,32 +69,34 @@ function createStandingsGroups() {
   }))
 }
 
-function createThirdPlaceStandingsGroups() {
+function createThirdPlaceStandingsGroups({ isClosed = false } = {}) {
+  const matchesPlayed = isClosed ? 3 : 2
+
   return groupLetters.map((group, index) => ({
     group,
     teams: [
       createStandingRow(
         `Equipo ${group}1`,
         group,
-        { pj: 3, pg: 2, pe: 1, pp: 0, gf: 7, gc: 2, dif: 5, pts: 7 },
+        { pj: matchesPlayed, pg: 2, pe: 1, pp: 0, gf: 7, gc: 2, dif: 5, pts: 7 },
         { position: 1 },
       ),
       createStandingRow(
         `Equipo ${group}2`,
         group,
-        { pj: 3, pg: 1, pe: 2, pp: 0, gf: 5, gc: 3, dif: 2, pts: 5 },
+        { pj: matchesPlayed, pg: 1, pe: 2, pp: 0, gf: 5, gc: 3, dif: 2, pts: 5 },
         { position: 2 },
       ),
       createStandingRow(
         `Tercero ${group}`,
         group,
-        { pj: 3, pg: 1, pe: 0, pp: 2, gf: 4, gc: 4, dif: 0, pts: 12 - index },
+        { pj: matchesPlayed, pg: 1, pe: 0, pp: 2, gf: 4, gc: 4, dif: 0, pts: 12 - index },
         { position: 3 },
       ),
       createStandingRow(
         `Equipo ${group}4`,
         group,
-        { pj: 3, pg: 0, pe: 1, pp: 2, gf: 2, gc: 6, dif: -4, pts: 1 },
+        { pj: matchesPlayed, pg: 0, pe: 1, pp: 2, gf: 2, gc: 6, dif: -4, pts: 1 },
         { position: 4 },
       ),
     ],
@@ -262,14 +264,14 @@ describe('GroupStandings', () => {
     )
     expect(screen.getByRole('heading', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
-    expect(screen.getByText(/la clasificación oficial depende de la confirmación del backend/i)).toBeInTheDocument()
+    expect(screen.getByText(/el ranking es provisional hasta que finalicen todos los grupos/i)).toBeInTheDocument()
     expect(screen.getByText('Tercero A')).toBeInTheDocument()
     expect(screen.getByText('Grupo A')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Posiciones del grupo A' })).not.toBeInTheDocument()
     expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
   })
 
-  it('marks top 8 third-place teams as provisional when backend has not confirmed qualification', async () => {
+  it('marks top 8 third-place teams as provisional while group stage is still open', async () => {
     const user = userEvent.setup()
 
     mockStandingsResponse(createThirdPlaceStandingsGroups())
@@ -279,17 +281,33 @@ describe('GroupStandings', () => {
     await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
 
     expect(screen.queryByText('Clasifica a 16avos')).not.toBeInTheDocument()
+    expect(screen.queryByText('No clasifica')).not.toBeInTheDocument()
     expect(screen.getAllByText('Zona provisional')).toHaveLength(8)
+    expect(screen.getAllByText('Fuera de zona')).toHaveLength(4)
+  })
+
+  it('marks top 8 as qualified and ranks 9 to 12 as not qualified after every group is closed', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createThirdPlaceStandingsGroups({ isClosed: true }))
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.getByText(/ranking final de terceros según puntos/i)).toBeInTheDocument()
+    expect(screen.queryByText('Zona provisional')).not.toBeInTheDocument()
+    expect(screen.queryByText('Fuera de zona')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(8)
     expect(screen.getAllByText('No clasifica')).toHaveLength(4)
   })
 
-  it('marks third-place teams as officially qualified for confirmed knockout backend states', async () => {
+  it('does not let team.qualifiedTo change badges when group closure and rank stay the same', async () => {
     const user = userEvent.setup()
-    const standings = createThirdPlaceStandingsGroups()
-    standings[0].teams[2].team.qualifiedTo = 'ROUND_OF_32'
+    const standings = createThirdPlaceStandingsGroups({ isClosed: true })
+    standings[0].teams[2].team.qualifiedTo = 'ELIMINATED'
     standings[1].teams[2].team.qualifiedTo = 'ROUND_OF_16'
-    standings[2].teams[2].team.qualifiedTo = 'QUARTER_FINALS'
-    standings[3].teams[2].team.qualifiedTo = 'ELIMINATED'
+    standings[8].teams[2].team.qualifiedTo = 'ROUND_OF_32'
 
     mockStandingsResponse(standings)
 
@@ -303,11 +321,7 @@ describe('GroupStandings', () => {
 
     expect(within(getTeamRow('Tercero A')).getByText('Clasifica a 16avos')).toBeInTheDocument()
     expect(within(getTeamRow('Tercero B')).getByText('Clasifica a 16avos')).toBeInTheDocument()
-    expect(within(getTeamRow('Tercero C')).getByText('Clasifica a 16avos')).toBeInTheDocument()
-    expect(within(getTeamRow('Tercero D')).getByText('No clasifica')).toBeInTheDocument()
-    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(3)
-    expect(screen.getAllByText('Zona provisional')).toHaveLength(4)
-    expect(screen.getAllByText('No clasifica')).toHaveLength(5)
+    expect(within(getTeamRow('Tercero I')).getByText('No clasifica')).toBeInTheDocument()
   })
 
   it('shows a friendly empty state when there are not enough teams to rank third places', async () => {

@@ -1,33 +1,27 @@
 import styles from './ThirdPlaceRankingTable.module.css'
 
 const columns = ['#', 'Equipo', 'Grupo', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DIF', 'PTS']
+const STATUS_LABELS = {
+  qualified: 'Clasifica a 16avos',
+  provisional: 'Zona provisional',
+  'not-qualified': 'No clasifica',
+  'outside-zone': 'Fuera de zona',
+}
 
 function getTeamName(row) {
   return row?.team?.name || 'Equipo por confirmar'
 }
 
-function isEliminated(row) {
-  return row?.team?.qualifiedTo === 'ELIMINATED'
-}
-
 function getQualificationLabel(row) {
-  if (row?.isQualifiedThirdPlace) {
-    return 'Clasifica a 16avos'
-  }
-
-  if (row?.isInTopEight && !isEliminated(row)) {
-    return 'Zona provisional'
-  }
-
-  return 'No clasifica'
+  return STATUS_LABELS[row?.qualificationStatus] ?? STATUS_LABELS.provisional
 }
 
 function getBadgeClassName(row) {
-  if (row?.isQualifiedThirdPlace) {
+  if (row?.qualificationStatus === 'qualified') {
     return styles.qualifiedBadge
   }
 
-  if (row?.isInTopEight && !isEliminated(row)) {
+  if (row?.qualificationStatus === 'provisional') {
     return styles.provisionalBadge
   }
 
@@ -35,6 +29,11 @@ function getBadgeClassName(row) {
 }
 
 function ThirdPlaceRankingTable({ ranking = [] }) {
+  const isFinalThirdPlaceRanking = ranking.some((row) => row.isFinalThirdPlaceRanking)
+  const helperText = isFinalThirdPlaceRanking
+    ? 'Ranking final de terceros según puntos, diferencia de gol y goles a favor.'
+    : 'El ranking es provisional hasta que finalicen todos los grupos.'
+
   return (
     <section className={styles.card} aria-labelledby="third-place-ranking-title">
       <header className={styles.header}>
@@ -46,10 +45,7 @@ function ThirdPlaceRankingTable({ ranking = [] }) {
           <p className={styles.description}>
             Las mejores 8 selecciones ubicadas terceras en sus grupos quedan en zona de 16avos.
           </p>
-          <p className={styles.helperText}>
-            El ranking muestra la zona provisional; la clasificación oficial depende de la
-            confirmación del backend.
-          </p>
+          <p className={styles.helperText}>{helperText}</p>
         </div>
         <span className={styles.summaryBadge}>{ranking.length} terceros</span>
       </header>

@@ -1,16 +1,38 @@
 const THIRD_PLACE_POSITION = 3
 const QUALIFIED_THIRD_PLACES = 8
-const CONFIRMED_KNOCKOUT_QUALIFIED_TO = new Set([
-  'ROUND_OF_32',
-  'ROUND_OF_16',
-  'QUARTER_FINALS',
-  'SEMI_FINALS',
-  'THIRD_PLACE_MATCH',
-  'FINAL',
-])
+const GROUP_STAGE_GROUPS = 12
+const GROUP_STAGE_TEAMS_PER_GROUP = 4
+const GROUP_STAGE_MATCHES_PER_TEAM = 3
 
-export function isConfirmedKnockoutQualification(qualifiedTo) {
-  return CONFIRMED_KNOCKOUT_QUALIFIED_TO.has(qualifiedTo)
+export const THIRD_PLACE_RANKING_STATUS = {
+  qualified: 'qualified',
+  provisional: 'provisional',
+  notQualified: 'not-qualified',
+  outsideZone: 'outside-zone',
+}
+
+export function areAllGroupsClosed(standings = []) {
+  const safeStandings = Array.isArray(standings) ? standings : []
+
+  return (
+    safeStandings.length === GROUP_STAGE_GROUPS &&
+    safeStandings.every((standing) => {
+      const teams = Array.isArray(standing?.teams) ? standing.teams : []
+
+      return (
+        teams.length === GROUP_STAGE_TEAMS_PER_GROUP &&
+        teams.every((row) => Number(row?.pj) === GROUP_STAGE_MATCHES_PER_TEAM)
+      )
+    })
+  )
+}
+
+function getThirdPlaceRankingStatus({ isInTopEight, isFinalThirdPlaceRanking }) {
+  if (isFinalThirdPlaceRanking) {
+    return isInTopEight ? THIRD_PLACE_RANKING_STATUS.qualified : THIRD_PLACE_RANKING_STATUS.notQualified
+  }
+
+  return isInTopEight ? THIRD_PLACE_RANKING_STATUS.provisional : THIRD_PLACE_RANKING_STATUS.outsideZone
 }
 
 function getTeamName(row) {
@@ -50,6 +72,7 @@ function getThirdPlaceRow(standing) {
 
 export function buildThirdPlaceRanking(standings = []) {
   const safeStandings = Array.isArray(standings) ? standings : []
+  const isFinalThirdPlaceRanking = areAllGroupsClosed(safeStandings)
   const seenTeamKeys = new Set()
   const thirdPlaceRows = []
 
@@ -85,10 +108,20 @@ export function buildThirdPlaceRanking(standings = []) {
         compareText(firstRow.group, secondRow.group) ||
         firstRow.originalGroupIndex - secondRow.originalGroupIndex,
     )
-    .map((row, index) => ({
-      ...row,
-      rank: index + 1,
-      isInTopEight: index < QUALIFIED_THIRD_PLACES,
-      isQualifiedThirdPlace: isConfirmedKnockoutQualification(row?.team?.qualifiedTo),
-    }))
+    .map((row, index) => {
+      const isInTopEight = index < QUALIFIED_THIRD_PLACES
+      const qualificationStatus = getThirdPlaceRankingStatus({
+        isInTopEight,
+        isFinalThirdPlaceRanking,
+      })
+
+      return {
+        ...row,
+        rank: index + 1,
+        isInTopEight,
+        isFinalThirdPlaceRanking,
+        qualificationStatus,
+        isQualifiedThirdPlace: qualificationStatus === THIRD_PLACE_RANKING_STATUS.qualified,
+      }
+    })
 }
