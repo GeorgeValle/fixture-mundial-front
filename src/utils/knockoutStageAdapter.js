@@ -367,11 +367,175 @@ export function groupKnockoutMatchesByRound(matches = []) {
   })).filter((round) => round.matches.length > 0)
 }
 
+function toMatchNumber(value) {
+  const numericValue = Number(value)
+
+  return Number.isInteger(numericValue) ? numericValue : null
+}
+
+function getReferenceMatchNumber(reference) {
+  if (!reference) {
+    return null
+  }
+
+  if (typeof reference === 'object') {
+    const directMatchNumber = toMatchNumber(reference.matchNumber ?? reference.number ?? reference.matchNo)
+
+    if (directMatchNumber) {
+      return directMatchNumber
+    }
+
+    const templateCodeMatch = toStringValue(reference.templateCode ?? reference.code).match(/KO[-_ ]?(\d+)/i)
+    return templateCodeMatch ? Number(templateCodeMatch[1]) : null
+  }
+
+  const directMatchNumber = toMatchNumber(reference)
+
+  if (directMatchNumber) {
+    return directMatchNumber
+  }
+
+  const textMatch = toStringValue(reference).match(/(?:KO[-_ ]?|partido\s*#?\s*|match\s*#?\s*|p\s*)(\d+)/i)
+  return textMatch ? Number(textMatch[1]) : null
+}
+
+function getSourceMatchNumber(source) {
+  if (!source) {
+    return null
+  }
+
+  if (typeof source === 'object' && source.type && !['winner', 'loser'].includes(source.type)) {
+    return null
+  }
+
+  return getReferenceMatchNumber(source)
+}
+
+function getPlaceholderSourceMatchNumbers(value) {
+  const sourceNumbers = []
+  const placeholderText = toStringValue(value)
+  const sourcePattern = /\b(?:partido|match|p)\s*#?\s*(\d+)\b/gi
+  let sourceMatch = sourcePattern.exec(placeholderText)
+
+  while (sourceMatch) {
+    sourceNumbers.push(Number(sourceMatch[1]))
+    sourceMatch = sourcePattern.exec(placeholderText)
+  }
+
+  return sourceNumbers
+}
+
+function getMatchNumber(match) {
+  return getReferenceMatchNumber(match?.matchNumber ?? match?.templateCode)
+}
+
+function uniqueMatchNumbers(matchNumbers) {
+  return [...new Set(matchNumbers.filter((matchNumber) => Number.isInteger(matchNumber)))]
+}
+
+function buildOutgoingSourceIndex(matches) {
+  const incomingSourcesByMatchNumber = new Map()
+
+  for (const match of matches) {
+    const sourceMatchNumber = getMatchNumber(match)
+
+    if (!sourceMatchNumber) {
+      continue
+    }
+
+    for (const targetReference of [match.nextMatchWinner, match.nextMatchLoser]) {
+      const targetMatchNumber = getReferenceMatchNumber(targetReference)
+
+      if (!targetMatchNumber) {
+        continue
+      }
+
+      incomingSourcesByMatchNumber.set(targetMatchNumber, [
+        ...(incomingSourcesByMatchNumber.get(targetMatchNumber) ?? []),
+        sourceMatchNumber,
+      ])
+    }
+  }
+
+  return incomingSourcesByMatchNumber
+}
+
+function getMatchSourceNumbers(match, incomingSourcesByMatchNumber) {
+  const matchNumber = getMatchNumber(match)
+
+  return uniqueMatchNumbers([
+    getSourceMatchNumber(match?.homeSource),
+    getSourceMatchNumber(match?.awaySource),
+    ...getPlaceholderSourceMatchNumbers(match?.homePlaceholder),
+    ...getPlaceholderSourceMatchNumbers(match?.awayPlaceholder),
+    ...getPlaceholderSourceMatchNumbers(match?.placeholderHome),
+    ...getPlaceholderSourceMatchNumbers(match?.placeholderAway),
+    ...(incomingSourcesByMatchNumber.get(matchNumber) ?? []),
+  ])
+}
+
+function getVisualSortData(match, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber) {
+  const sourcePositions = getMatchSourceNumbers(match, incomingSourcesByMatchNumber)
+    .map((sourceMatchNumber) => sourcePositionsByMatchNumber.get(sourceMatchNumber))
+    .filter((sourcePosition) => Number.isFinite(sourcePosition))
+
+  if (sourcePositions.length > 0) {
+    const orderedSourcePositions = [...sourcePositions].sort((firstPosition, secondPosition) => firstPosition - secondPosition)
+    const averageSourcePosition =
+      orderedSourcePositions.reduce((total, sourcePosition) => total + sourcePosition, 0) / orderedSourcePositions.length
+
+    return {
+      primary: averageSourcePosition,
+      secondary: orderedSourcePositions[0],
+    }
+  }
+
+  const matchNumber = getMatchNumber(match) ?? Number.MAX_SAFE_INTEGER
+
+  return {
+    primary: matchNumber,
+    secondary: matchNumber,
+  }
+}
+
+function sortRoundMatchesByBracketSources(matches, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber) {
+  return [...matches].sort((firstMatch, secondMatch) => {
+    const firstSortData = getVisualSortData(firstMatch, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber)
+    const secondSortData = getVisualSortData(secondMatch, sourcePositionsByMatchNumber, incomingSourcesByMatchNumber)
+
+    return (
+      firstSortData.primary - secondSortData.primary ||
+      firstSortData.secondary - secondSortData.secondary ||
+      (getMatchNumber(firstMatch) ?? Number.MAX_SAFE_INTEGER) - (getMatchNumber(secondMatch) ?? Number.MAX_SAFE_INTEGER)
+    )
+  })
+}
+
 export function buildKnockoutBracketViewRounds(matches = []) {
-  return KNOCKOUT_ROUNDS.map((round) => ({
-    ...round,
-    matches: matches.filter((match) => match.roundKey === round.roundKey),
-  }))
+  const safeMatches = Array.isArray(matches) ? matches : []
+  const incomingSourcesByMatchNumber = buildOutgoingSourceIndex(safeMatches)
+  const visualPositionsByMatchNumber = new Map()
+
+  return KNOCKOUT_ROUNDS.map((round) => {
+    const sortedMatches = sortRoundMatchesByBracketSources(
+      safeMatches.filter((match) => match.roundKey === round.roundKey),
+      visualPositionsByMatchNumber,
+      incomingSourcesByMatchNumber,
+    )
+
+    for (const [matchIndex, match] of sortedMatches.entries()) {
+      const matchNumber = getMatchNumber(match)
+
+      if (matchNumber) {
+        visualPositionsByMatchNumber.set(matchNumber, matchIndex)
+      }
+    }
+
+    return {
+      ...round,
+      matches: sortedMatches,
+    }
+  })
 }
 
 export function getKnockoutSummary(matches = []) {

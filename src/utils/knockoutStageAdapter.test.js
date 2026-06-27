@@ -193,6 +193,45 @@ describe('knockoutStageAdapter', () => {
     expect(rounds.map((round) => round.matches.length)).toEqual([16, 8, 4, 2, 1, 1])
   })
 
+  it('orders visual bracket rounds by upstream sources instead of chronological quarter-final order', () => {
+    const matches = buildKnockoutStageMatches([])
+    const chronologicalQuarterFinals = [97, 98, 99, 100].map((matchNumber) =>
+      matches.find((match) => match.matchNumber === matchNumber),
+    )
+    const matchesWithChronologicalQuarterFinals = [
+      ...matches.filter((match) => match.roundKey !== 'quarter-finals'),
+      ...chronologicalQuarterFinals,
+    ]
+
+    const rounds = buildKnockoutBracketViewRounds(matchesWithChronologicalQuarterFinals)
+    const quarterFinals = rounds.find((round) => round.roundKey === 'quarter-finals')
+
+    expect(chronologicalQuarterFinals.map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
+    expect(quarterFinals.matches.map((match) => match.matchNumber)).toEqual([97, 99, 98, 100])
+    expect(quarterFinals.matches.find((match) => match.matchNumber === 98)).toMatchObject({
+      homePlaceholder: 'Ganador Partido 93',
+      awayPlaceholder: 'Ganador Partido 94',
+    })
+    expect(quarterFinals.matches.find((match) => match.matchNumber === 99)).toMatchObject({
+      homePlaceholder: 'Ganador Partido 91',
+      awayPlaceholder: 'Ganador Partido 92',
+    })
+
+    const shuffledQuarterFinals = [98, 100, 97, 99].map((matchNumber) =>
+      matches.find((match) => match.matchNumber === matchNumber),
+    )
+    const roundsFromShuffledQuarterFinals = buildKnockoutBracketViewRounds([
+      ...matches.filter((match) => match.roundKey !== 'quarter-finals'),
+      ...shuffledQuarterFinals,
+    ])
+
+    expect(
+      roundsFromShuffledQuarterFinals
+        .find((round) => round.roundKey === 'quarter-finals')
+        .matches.map((match) => match.matchNumber),
+    ).toEqual([97, 99, 98, 100])
+  })
+
   it('labels visual bracket slot states in Spanish', () => {
     const matches = buildKnockoutStageMatches([])
     const pendingPlaceholderMatch = matches.find((match) => match.matchNumber === 73)
