@@ -116,3 +116,9 @@
   font-size: var(--font-size-xs);
   font-weight: 800;
 }
+
+.eliminatedBadge {
+  border-color: color-mix(in srgb, var(--color-red, #dc2626) 32%, transparent);
+  background: color-mix(in srgb, var(--color-red, #dc2626) 10%, var(--color-surface));
+  color: var(--color-red, #dc2626);
+}

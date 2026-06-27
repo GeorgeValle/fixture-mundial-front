@@ -7,8 +7,10 @@ const qualificationLabels = {
   ROUND_OF_16: 'Clasificado a octavos',
   QUARTER_FINALS: 'Clasificado a cuartos',
   SEMI_FINALS: 'Clasificado a semifinales',
+  THIRD_PLACE_MATCH: 'Tercer puesto',
   FINAL: 'Clasificado a la final',
   KNOCKOUT: 'Clasificado a eliminatorias',
+  ELIMINATED: 'Eliminado',
 }
 
 function getVisualPosition(row, index) {
@@ -21,10 +23,18 @@ function getTeamName(row) {
 
 function getQualificationLabel(row) {
   if (row?.team?.position != null && row?.team?.qualifiedTo) {
-    return qualificationLabels[row.team.qualifiedTo] ?? 'Clasificado'
+    return qualificationLabels[row.team.qualifiedTo] ?? null
   }
 
   return null
+}
+
+function getQualificationBadgeClassName(row) {
+  if (row?.team?.qualifiedTo === 'ELIMINATED') {
+    return `${styles.qualificationBadge} ${styles.eliminatedBadge}`
+  }
+
+  return styles.qualificationBadge
 }
 
 function StandingsTable({ teams = [] }) {
@@ -64,7 +74,9 @@ function StandingsTable({ teams = [] }) {
                     <span className={styles.teamText}>
                       <span className={styles.teamName}>{teamName}</span>
                       {qualificationLabel && (
-                        <span className={styles.qualificationBadge}>{qualificationLabel}</span>
+                        <span className={getQualificationBadgeClassName(row)}>
+                          {qualificationLabel}
+                        </span>
                       )}
                     </span>
                   </span>
