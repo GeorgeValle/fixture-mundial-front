@@ -5,7 +5,8 @@
 
 .hero,
 .stateCard,
-.controls {
+.controls,
+.viewControls {
   position: relative;
   overflow: hidden;
   padding: var(--space-6);
@@ -138,6 +139,13 @@
   gap: var(--space-4) var(--space-5);
 }
 
+.viewControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4) var(--space-5);
+}
+
 .controlsIntro {
   min-width: 0;
 }
@@ -149,7 +157,19 @@
   grid-column: 1 / -1;
 }
 
-.roundChip {
+.viewToggle {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  justify-content: end;
+  padding: var(--space-1);
+  background: color-mix(in srgb, var(--color-primary) 5%, white);
+  border: 1px solid color-mix(in srgb, var(--color-cyan) 18%, var(--color-border));
+  border-radius: var(--radius-pill);
+}
+
+.roundChip,
+.viewToggleButton {
   min-height: 2.35rem;
   padding: 0 var(--space-4);
   color: var(--color-primary-soft);
@@ -168,19 +188,23 @@
 }
 
 .roundChip:hover,
-.roundChip:focus-visible {
+.roundChip:focus-visible,
+.viewToggleButton:hover,
+.viewToggleButton:focus-visible {
   border-color: color-mix(in srgb, var(--color-cyan) 46%, var(--color-border));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-cyan) 10%, transparent);
   transform: translateY(-1px);
 }
 
 .roundChip:focus-visible,
-.roundSelect:focus-visible {
+.roundSelect:focus-visible,
+.viewToggleButton:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-cyan) 42%, transparent);
   outline-offset: 3px;
 }
 
-.roundChipActive {
+.roundChipActive,
+.viewToggleButtonActive {
   color: var(--color-surface);
   background: linear-gradient(135deg, var(--color-primary), var(--color-primary-soft));
   border-color: color-mix(in srgb, var(--color-primary) 72%, var(--color-cyan));
@@ -211,6 +235,7 @@
 @media (max-width: 760px) {
   .hero,
   .controls,
+  .viewControls,
   .pendingPanel {
     grid-template-columns: 1fr;
   }
@@ -221,8 +246,18 @@
 
   .hero,
   .stateCard,
-  .controls {
+  .controls,
+  .viewControls {
     padding: var(--space-5);
+  }
+
+  .viewToggle {
+    justify-content: stretch;
+    border-radius: var(--radius-md);
+  }
+
+  .viewToggleButton {
+    flex: 1 1 10rem;
   }
 
   .roundSelect {

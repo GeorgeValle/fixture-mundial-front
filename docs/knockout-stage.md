@@ -12,8 +12,9 @@ La sección Knockout Stage muestra la fase eliminatoria del Mundial 2026 desde d
 
 ## Componentes principales
 
-- `KnockoutStage`: página responsable de cargar partidos, combinar datos y manejar filtro de ronda.
-- `KnockoutBracket`: renderiza el conjunto de rondas.
+- `KnockoutStage`: página responsable de cargar partidos, combinar datos, manejar filtro de ronda y alternar vista de partidos/llaves.
+- `KnockoutBracket`: renderiza la vista actual de partidos agrupados por ronda.
+- `KnockoutBracketView`: renderiza la vista compacta horizontal de llaves con el cuadro completo.
 - `KnockoutRound`: renderiza una ronda y sus partidos.
 - `KnockoutMatchCard`: muestra partido, fecha, estadio, equipos/placeholders, marcador, penales y estado.
 - `SkeletonList`: loading visual.
@@ -110,7 +111,10 @@ Cuando hay datos reales:
 
 ## Decisiones visuales y UX
 
-- La página incluye filtro por ronda:
+- La página incluye un selector de vista:
+  - Vista de partidos: conserva los filtros por ronda y las cards existentes.
+  - Vista de llaves: muestra el cuadro completo como bracket compacto horizontal, con nodos de dos filas, final centrada como convergencia entre semifinales y scroll horizontal en mobile si hace falta.
+- La página incluye filtro por ronda solo en la vista de partidos:
   - Todas las rondas.
   - Dieciseisavos de final.
   - Octavos de final.
@@ -120,6 +124,8 @@ Cuando hay datos reales:
   - Final.
 - Los labels visibles deben estar en español.
 - Los placeholders deben verse como datos pendientes, no como equipos confirmados.
+- La vista de llaves marca slots como ganador, eliminado, pendiente o por definir sin mostrar badges, fechas, estadios ni números de partido dentro del nodo compacto.
+- Ganador/perdedor se derivan solo dentro del partido finalizado con resultado completo; en empates se contemplan penales.
 - La UI distingue datos de la base de datos de estructura base.
 
 ## Reglas de negocio
@@ -127,7 +133,7 @@ Cuando hay datos reales:
 - No inventar equipos clasificados.
 - No inventar resultados.
 - No inventar penales.
-- No simular progresión de bracket en frontend.
+- No simular progresión de bracket en frontend: los futuros cruces muestran equipos reales solo si el backend ya los devolvió persistidos en ese partido.
 - No mover ganadores/perdedores a futuros partidos si el backend no lo confirma.
 - No mostrar keys técnicas como `round-of-32`, `templateCode` o `roundKey` en UI.
 
@@ -146,7 +152,7 @@ Cuando hay datos reales:
 
 ## Limitaciones actuales
 
-- El frontend no simula llaves.
+- El frontend renderiza una vista visual de llaves, pero no simula avance de equipos.
 - Las predicciones de eliminatorias siguen cerradas en `/predicciones`.
 - La estructura base depende del documento `docs/knockout-stage-skeleton.md`.
 - Si el backend no provee identidad explícita de partidos, el merge depende de una clave compuesta conservadora.
@@ -166,10 +172,13 @@ Cuando hay datos reales:
 - `src/components/KnockoutBracket/KnockoutBracket.jsx`
 - `src/components/KnockoutRound/KnockoutRound.jsx`
 - `src/components/KnockoutMatchCard/KnockoutMatchCard.jsx`
+- `src/components/KnockoutBracketView/KnockoutBracketView.jsx`
 - `src/pages/KnockoutStage/KnockoutStage.jsx`
 
 ## Resumen de implementación por bloques
 
 - **Bloque 6**: skeleton local, adapter de merge, página `/eliminatorias`, filtro de rondas, bracket, cards, estados de UI y tests.
+- **Bloque 18**: toggle de vista partidos/llaves, vista compacta horizontal de llaves, final centrada, estados visuales ganador/eliminado/pendiente/por definir y tests.
 - **Validación**: build, lint y test pasaron durante el cierre del Bloque 6.
+- **Validación Bloque 18**: `pnpm run lint`, `pnpm run test` (39 archivos, 381 tests) y `pnpm run build` pasaron; build informó la advertencia conocida de chunk mayor a 500 kB.
 - **Validación manual**: bloque aprobado por el usuario.

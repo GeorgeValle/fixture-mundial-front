@@ -2,14 +2,14 @@
 
 ## Estado actual
 
-- Bloque actual: ninguno — Bloque 17 fue implementado y validado automáticamente.
+- Bloque actual: ninguno — Bloque 18 fue implementado y validado automáticamente.
 - Último bloque de planificación completado: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
 - Último bloque de implementación admin completado: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
-- Último bloque de implementación completado: Bloque 17 — Admin Knockouts Controls & Public Knockout Polish.
+- Último bloque de implementación completado: Bloque 18 — Vista de llaves pública en Eliminatorias.
 - Estado actual: Bloque 14 fue activado con recálculo manual confirmado (`POST /api/standings/:group`) y validado como seguimiento operativo de admin.
-- Siguiente bloque sugerido tras aprobación/finalización: pendiente de definir tras validación manual del Bloque 17.
+- Siguiente bloque sugerido tras aprobación/finalización: pendiente de definir tras validación manual del Bloque 18.
 - Objetivo: operar una consola admin específica para eliminatorias que carga resultados con `PUT /api/matches/:id`, confía en el Bracket Engine backend y verifica que `/eliminatorias` no exponga controles admin.
-- Estado de validación manual: Bloque 17 pasó validación automática (`pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 36 archivos de test, 361 tests, y `pnpm run build`). Queda pendiente validación manual de usuario contra backend real si corresponde.
+- Estado de validación manual: Bloque 18 pasó validación automática (`TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 39 archivos de test, 381 tests, y `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run build`). Queda pendiente validación manual de usuario.
 
 ## Reglas críticas de ejecución
 
@@ -310,6 +310,26 @@ Nota: los campos visibles de penales para predicciones knockout quedan diferidos
 - [x] Registrar resultado final de `pnpm run lint` — aprobado.
 - [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 36 archivos de test, 361 tests aprobados.
 - [x] Registrar resultado final de `pnpm run build` — aprobado con advertencia Vite de chunk mayor a 500 kB.
+
+
+### Bloque 18 — Vista de llaves pública en Eliminatorias
+
+- [x] Mantener intacta la vista actual de partidos, filtros por ronda y cards existentes.
+- [x] Agregar toggle accesible “Vista de partidos” / “Vista de llaves”.
+- [x] Mostrar filtros de ronda solo en la vista de partidos.
+- [x] Mostrar el cuadro completo en la vista de llaves.
+- [x] Refinar la vista de llaves como bracket compacto con nodos pequeños de dos filas, sin badges, fechas, estadios ni número de partido visible.
+- [x] Ajustar la final como nodo central de convergencia entre semifinales, sin columna final normal.
+- [x] Renderizar la vista de llaves sin marcas externas, logos propietarios ni tabla central de terceros.
+- [x] No simular avance de equipos si el backend no devuelve el equipo persistido en el partido futuro.
+- [x] Marcar slots como ganador, eliminado, pendiente o por definir.
+- [x] Contemplar penales para determinar ganador/perdedor en empates de eliminatorias.
+- [x] Mostrar el partido por el tercer puesto como ronda clara y separada de la final.
+- [x] Resolver mobile con scroll horizontal legible, sin apilar el bracket completo en una columna.
+- [x] Agregar tests de toggle, rondas, placeholders, ganador/perdedor, penales y ausencia de branding/keys técnicas.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run lint` — aprobado.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test` — 39 archivos de test y 381 tests aprobados.
+- [x] Registrar resultado final de `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run build` — aprobado con advertencia informativa de Vite por chunk mayor a 500 kB.
 
 ## Watchlist de normalización de Admin Zone
 

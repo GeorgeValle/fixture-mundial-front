@@ -367,6 +367,13 @@ export function groupKnockoutMatchesByRound(matches = []) {
   })).filter((round) => round.matches.length > 0)
 }
 
+export function buildKnockoutBracketViewRounds(matches = []) {
+  return KNOCKOUT_ROUNDS.map((round) => ({
+    ...round,
+    matches: matches.filter((match) => match.roundKey === round.roundKey),
+  }))
+}
+
 export function getKnockoutSummary(matches = []) {
   const backendCount = matches.filter((match) => match.source === 'backend').length
 
@@ -394,6 +401,35 @@ export function getDisplayTeamShield(match, side) {
 export function isPlaceholderTeam(match, side) {
   const team = side === 'home' ? match?.homeTeam : match?.awayTeam
   return !team?.name
+}
+
+export function getKnockoutSlotState(match, side) {
+  const isPlaceholder = isPlaceholderTeam(match, side)
+
+  if (match?.winnerSide === side) {
+    return 'winner'
+  }
+
+  if (match?.winnerSide && !isPlaceholder) {
+    return 'loser'
+  }
+
+  if (isPlaceholder) {
+    return 'placeholder'
+  }
+
+  return 'pending'
+}
+
+export function getKnockoutSlotStateLabel(slotState) {
+  const labels = {
+    winner: 'Ganador',
+    loser: 'Eliminado',
+    pending: 'Pendiente',
+    placeholder: 'Por definir',
+  }
+
+  return labels[slotState] ?? labels.pending
 }
 
 export function getScoreLabel(match) {

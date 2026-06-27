@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import KnockoutBracket from '../../components/KnockoutBracket/KnockoutBracket'
+import KnockoutBracketView from '../../components/KnockoutBracketView/KnockoutBracketView'
 import SkeletonList from '../../components/SkeletonList/SkeletonList'
 import { ROUND_FILTER_ALL, ROUND_FILTER_OPTIONS } from '../../data/knockoutStageSkeleton'
 import {
@@ -10,6 +11,7 @@ import {
 } from '../../features/ui/uiSlice'
 import { getMatches } from '../../services/matches/matchesService'
 import {
+  buildKnockoutBracketViewRounds,
   buildKnockoutStageMatches,
   getKnockoutSummary,
   groupKnockoutMatchesByRound,
@@ -19,6 +21,12 @@ import styles from './KnockoutStage.module.css'
 
 const FRIENDLY_ERROR_MESSAGE =
   'No pudimos cargar la información de eliminatorias. Te mostramos el cuadro base documentado mientras tanto.'
+const VIEW_MODE_MATCHES = 'matches'
+const VIEW_MODE_BRACKET = 'bracket'
+const VIEW_MODE_OPTIONS = [
+  { value: VIEW_MODE_MATCHES, label: 'Vista de partidos' },
+  { value: VIEW_MODE_BRACKET, label: 'Vista de llaves' },
+]
 
 function KnockoutStage() {
   const dispatch = useDispatch()
@@ -26,6 +34,7 @@ function KnockoutStage() {
   const [isLoading, setIsLoading] = useState(true)
   const [hasError, setHasError] = useState(false)
   const [selectedRound, setSelectedRound] = useState(ROUND_FILTER_ALL)
+  const [viewMode, setViewMode] = useState(VIEW_MODE_MATCHES)
   const [retryCount, setRetryCount] = useState(0)
 
   useEffect(() => {
@@ -96,6 +105,7 @@ function KnockoutStage() {
       ? matches
       : matches.filter((match) => match.roundKey === selectedRound)
   const visibleRounds = groupKnockoutMatchesByRound(visibleMatches)
+  const bracketViewRounds = buildKnockoutBracketViewRounds(matches)
   const selectedRoundLabel =
     ROUND_FILTER_OPTIONS.find((option) => option.roundKey === selectedRound)?.roundLabel ??
     'Ronda seleccionada'
@@ -175,61 +185,96 @@ function KnockoutStage() {
 
       {!isLoading && (
         <>
-          <section className={styles.controls} aria-label="Rondas eliminatorias">
+          <section className={styles.viewControls} aria-label="Vista de eliminatorias">
             <div className={styles.controlsIntro}>
-              <p className={styles.kicker}>Rondas eliminatorias</p>
-              <h3 className={styles.controlTitle}>Elegí una ronda para revisar sus partidos.</h3>
+              <p className={styles.kicker}>Modo de visualización</p>
+              <h3 className={styles.controlTitle}>Alterná entre partidos y cuadro de llaves.</h3>
               <p className={styles.controlText}>
-                {selectedRound === ROUND_FILTER_ALL
-                  ? `${visibleMatches.length} partidos en el cuadro completo.`
-                  : `${selectedRoundLabel}: ${visibleMatches.length} partidos.`}{' '}
-                {pendingVisibleMatchesCount > 0 && `${pendingVisibleMatchesCount} con información pendiente.`}
+                La vista de partidos mantiene los filtros actuales. La vista de llaves muestra
+                el cuadro completo sin simular avances pendientes.
               </p>
             </div>
 
-            <div className={styles.roundChips} role="group" aria-label="Seleccionar ronda">
-              {ROUND_FILTER_OPTIONS.map((option) => (
+            <div className={styles.viewToggle} role="group" aria-label="Cambiar vista de eliminatorias">
+              {VIEW_MODE_OPTIONS.map((option) => (
                 <button
-                  aria-pressed={selectedRound === option.roundKey}
-                  className={`${styles.roundChip} ${
-                    selectedRound === option.roundKey ? styles.roundChipActive : ''
+                  aria-pressed={viewMode === option.value}
+                  className={`${styles.viewToggleButton} ${
+                    viewMode === option.value ? styles.viewToggleButtonActive : ''
                   }`}
-                  key={option.roundKey}
-                  onClick={() => setSelectedRound(option.roundKey)}
+                  key={option.value}
+                  onClick={() => setViewMode(option.value)}
                   type="button"
                 >
-                  {option.roundLabel}
+                  {option.label}
                 </button>
               ))}
             </div>
-
-            <label className={styles.selectLabel} htmlFor="knockout-round-selector">
-              Filtrar por ronda
-            </label>
-            <select
-              className={styles.roundSelect}
-              id="knockout-round-selector"
-              onChange={(event) => setSelectedRound(event.target.value)}
-              value={selectedRound}
-            >
-              {ROUND_FILTER_OPTIONS.map((option) => (
-                <option key={option.roundKey} value={option.roundKey}>
-                  {option.roundLabel}
-                </option>
-              ))}
-            </select>
           </section>
 
-          {visibleRounds.length > 0 ? (
-            <KnockoutBracket rounds={visibleRounds} />
-          ) : (
-            <section className={styles.stateCard}>
-              <p className={styles.kicker}>Sin partidos</p>
-              <h3 className={styles.stateTitle}>No hay partidos para esta ronda</h3>
-              <p className={styles.stateText}>
-                Elegí otra ronda o volvé a todas las rondas para ver el cuadro completo.
-              </p>
-            </section>
+          {viewMode === VIEW_MODE_MATCHES && (
+            <>
+              <section className={styles.controls} aria-label="Rondas eliminatorias">
+                <div className={styles.controlsIntro}>
+                  <p className={styles.kicker}>Rondas eliminatorias</p>
+                  <h3 className={styles.controlTitle}>Elegí una ronda para revisar sus partidos.</h3>
+                  <p className={styles.controlText}>
+                    {selectedRound === ROUND_FILTER_ALL
+                      ? `${visibleMatches.length} partidos en el cuadro completo.`
+                      : `${selectedRoundLabel}: ${visibleMatches.length} partidos.`}{' '}
+                    {pendingVisibleMatchesCount > 0 && `${pendingVisibleMatchesCount} con información pendiente.`}
+                  </p>
+                </div>
+
+                <div className={styles.roundChips} role="group" aria-label="Seleccionar ronda">
+                  {ROUND_FILTER_OPTIONS.map((option) => (
+                    <button
+                      aria-pressed={selectedRound === option.roundKey}
+                      className={`${styles.roundChip} ${
+                        selectedRound === option.roundKey ? styles.roundChipActive : ''
+                      }`}
+                      key={option.roundKey}
+                      onClick={() => setSelectedRound(option.roundKey)}
+                      type="button"
+                    >
+                      {option.roundLabel}
+                    </button>
+                  ))}
+                </div>
+
+                <label className={styles.selectLabel} htmlFor="knockout-round-selector">
+                  Filtrar por ronda
+                </label>
+                <select
+                  className={styles.roundSelect}
+                  id="knockout-round-selector"
+                  onChange={(event) => setSelectedRound(event.target.value)}
+                  value={selectedRound}
+                >
+                  {ROUND_FILTER_OPTIONS.map((option) => (
+                    <option key={option.roundKey} value={option.roundKey}>
+                      {option.roundLabel}
+                    </option>
+                  ))}
+                </select>
+              </section>
+
+              {visibleRounds.length > 0 ? (
+                <KnockoutBracket rounds={visibleRounds} />
+              ) : (
+                <section className={styles.stateCard}>
+                  <p className={styles.kicker}>Sin partidos</p>
+                  <h3 className={styles.stateTitle}>No hay partidos para esta ronda</h3>
+                  <p className={styles.stateText}>
+                    Elegí otra ronda o volvé a todas las rondas para ver el cuadro completo.
+                  </p>
+                </section>
+              )}
+            </>
+          )}
+
+          {viewMode === VIEW_MODE_BRACKET && (
+            <KnockoutBracketView rounds={bracketViewRounds} />
           )}
         </>
       )}

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { knockoutStageSkeleton } from '../data/knockoutStageSkeleton'
 import {
+  buildKnockoutBracketViewRounds,
   buildKnockoutStageMatches,
+  getKnockoutSlotState,
+  getKnockoutSlotStateLabel,
   getKnockoutSummary,
   getPenaltyLabel,
   getScoreLabel,
@@ -139,6 +142,8 @@ describe('knockoutStageAdapter', () => {
     expect(getScoreLabel(match101)).toBe('1 - 1')
     expect(getPenaltyLabel(match101)).toBe('Penales: 4 - 3')
     expect(match101.winnerLabel).toBe('Ganador registrado: México')
+    expect(getKnockoutSlotState(match101, 'home')).toBe('winner')
+    expect(getKnockoutSlotState(match101, 'away')).toBe('loser')
   })
 
   it('does not derive a winner when real data is incomplete', () => {
@@ -171,5 +176,35 @@ describe('knockoutStageAdapter', () => {
     expect(skeletonMatch.status).toBe('pending-qualified-teams')
     expect(skeletonMatch.roundLabel).toBe('Dieciseisavos de final')
     expect(skeletonMatch.statusLabel).toBe('Pendiente de clasificación')
+  })
+
+  it('builds all rounds for the visual bracket view without filtering the full cuadro', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds(matches)
+
+    expect(rounds.map((round) => round.roundLabel)).toEqual([
+      'Dieciseisavos de final',
+      'Octavos de final',
+      'Cuartos de final',
+      'Semifinales',
+      'Partido por el tercer puesto',
+      'Final',
+    ])
+    expect(rounds.map((round) => round.matches.length)).toEqual([16, 8, 4, 2, 1, 1])
+  })
+
+  it('labels visual bracket slot states in Spanish', () => {
+    const matches = buildKnockoutStageMatches([])
+    const pendingPlaceholderMatch = matches.find((match) => match.matchNumber === 73)
+    const pendingRealMatch = buildKnockoutStageMatches([createBackendMatch()]).find(
+      (match) => match.matchNumber === 73,
+    )
+
+    expect(getKnockoutSlotState(pendingPlaceholderMatch, 'home')).toBe('placeholder')
+    expect(getKnockoutSlotStateLabel('placeholder')).toBe('Por definir')
+    expect(getKnockoutSlotState(pendingRealMatch, 'home')).toBe('pending')
+    expect(getKnockoutSlotStateLabel('pending')).toBe('Pendiente')
+    expect(getKnockoutSlotStateLabel('winner')).toBe('Ganador')
+    expect(getKnockoutSlotStateLabel('loser')).toBe('Eliminado')
   })
 })
