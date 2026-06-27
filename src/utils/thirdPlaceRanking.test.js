@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   areAllGroupsClosed,
   buildThirdPlaceRanking,
+  getRoundOf32TeamIds,
   THIRD_PLACE_RANKING_STATUS,
 } from './thirdPlaceRanking'
 
@@ -37,6 +38,27 @@ function createStanding(group, thirdStats = {}, thirdTeamOverrides = {}) {
       createStandingRow(`${group} cuarto`, group, { pts: 0 }, { position: 4 }),
     ],
   }
+}
+
+function createRoundOf32Match(homeTeam, awayTeam = null, overrides = {}) {
+  return {
+    _id: `match-${homeTeam?._id ?? 'pending'}`,
+    matchNumber: 73,
+    roundKey: 'round-of-32',
+    stage: 'ROUND_OF_32',
+    homeTeam,
+    awayTeam,
+    status: 'PENDING',
+    ...overrides,
+  }
+}
+
+function createCutoffTieStandings() {
+  const thirdPlacePoints = [12, 11, 10, 9, 8, 7, 6, 4, 4, 3, 2, 1]
+
+  return thirdPlacePoints.map((points, index) =>
+    createStanding(String.fromCharCode(65 + index), { pts: points, dif: 0, gf: 4 }),
+  )
 }
 
 describe('thirdPlaceRanking', () => {
@@ -167,6 +189,29 @@ describe('thirdPlaceRanking', () => {
     ])
   })
 
+  it('extracts team ids from round-of-32 matches using round keys, stages or match numbers', () => {
+    const ids = getRoundOf32TeamIds([
+      createRoundOf32Match({ _id: 'team-home' }, { _id: 'team-away' }),
+      createRoundOf32Match(
+        { _id: 'team-stage' },
+        null,
+        { matchNumber: 200, roundKey: '', stage: 'ROUND_OF_32' },
+      ),
+      createRoundOf32Match(
+        null,
+        { _id: 'team-number' },
+        { matchNumber: 88, roundKey: '', stage: '' },
+      ),
+      createRoundOf32Match(
+        { _id: 'team-octavos' },
+        null,
+        { matchNumber: 89, roundKey: 'round-of-16', stage: 'ROUND_OF_16' },
+      ),
+    ])
+
+    expect([...ids].sort()).toEqual(['team-away', 'team-home', 'team-number', 'team-stage'])
+  })
+
   it('marks top 8 as provisional and ranks 9 to 12 as outside zone while groups are open', () => {
     const standings = Array.from({ length: 12 }, (_, index) =>
       createStanding(String.fromCharCode(65 + index), { pj: 2, pts: 12 - index }),
@@ -264,6 +309,55 @@ describe('thirdPlaceRanking', () => {
       group: 'I',
       qualificationStatus: THIRD_PLACE_RANKING_STATUS.outsideZone,
       isQualifiedThirdPlace: false,
+    })
+  })
+
+  it('marks the cutoff tie as pending when round-of-32 data is unavailable', () => {
+    const standings = createCutoffTieStandings()
+
+    const ranking = buildThirdPlaceRanking(standings)
+    const groupH = ranking.find((row) => row.group === 'H')
+    const groupI = ranking.find((row) => row.group === 'I')
+
+    expect(groupH).toMatchObject({
+      rank: 8,
+      isInCutoffTie: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.pendingTiebreak,
+      cutoffTiebreakStatus: 'pending',
+      isQualifiedThirdPlace: false,
+    })
+    expect(groupI).toMatchObject({
+      rank: 9,
+      isInCutoffTie: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.pendingTiebreak,
+      cutoffTiebreakStatus: 'pending',
+      isQualifiedThirdPlace: false,
+    })
+  })
+
+  it('uses round-of-32 placement to resolve a complete cutoff tie without alphabetical badges', () => {
+    const standings = createCutoffTieStandings()
+    const groupITeam = standings[8].teams[2].team
+
+    const ranking = buildThirdPlaceRanking(standings, [createRoundOf32Match(groupITeam)])
+    const groupH = ranking.find((row) => row.group === 'H')
+    const groupI = ranking.find((row) => row.group === 'I')
+
+    expect(groupH).toMatchObject({
+      rank: 8,
+      isInTopEight: true,
+      isInCutoffTie: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.notQualified,
+      cutoffTiebreakStatus: 'resolved-by-bracket',
+      isQualifiedThirdPlace: false,
+    })
+    expect(groupI).toMatchObject({
+      rank: 9,
+      isInTopEight: false,
+      isInCutoffTie: true,
+      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
+      cutoffTiebreakStatus: 'resolved-by-bracket',
+      isQualifiedThirdPlace: true,
     })
   })
 })

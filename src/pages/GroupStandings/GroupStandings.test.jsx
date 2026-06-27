@@ -103,6 +103,41 @@ function createThirdPlaceStandingsGroups({ isClosed = false } = {}) {
   }))
 }
 
+function createCutoffTieStandingsGroups({ isClosed = true } = {}) {
+  const pointsByGroup = [12, 11, 10, 9, 8, 7, 6, 4, 4, 3, 2, 1]
+
+  return createThirdPlaceStandingsGroups({ isClosed }).map((standing, index) => ({
+    ...standing,
+    teams: standing.teams.map((row, rowIndex) =>
+      rowIndex === 2
+        ? {
+            ...row,
+            pts: pointsByGroup[index],
+            dif: 0,
+            gf: 4,
+          }
+        : row,
+    ),
+  }))
+}
+
+function createRoundOf32Match(homeTeam, awayTeam = null, overrides = {}) {
+  return {
+    _id: `match-${homeTeam?._id ?? 'pending'}`,
+    matchNumber: 73,
+    roundKey: 'round-of-32',
+    stage: 'ROUND_OF_32',
+    status: 'PENDING',
+    homeTeam,
+    awayTeam,
+    homeScore: null,
+    awayScore: null,
+    homePenaltyScore: null,
+    awayPenaltyScore: null,
+    ...overrides,
+  }
+}
+
 function renderGroupStandings({ includeModal = false } = {}) {
   const store = configureStore({ reducer: { ui: uiReducer } })
 
@@ -122,8 +157,15 @@ function mockStandingsResponse(data) {
   )
 }
 
+function mockMatchesResponse(data = []) {
+  server.use(
+    http.get('*/api/matches', () => HttpResponse.json({ status: 'success', data })),
+  )
+}
+
 beforeEach(() => {
   window.localStorage.clear()
+  mockMatchesResponse()
 })
 
 afterEach(() => {
@@ -322,6 +364,48 @@ describe('GroupStandings', () => {
     expect(within(getTeamRow('Tercero A')).getByText('Clasifica a 16avos')).toBeInTheDocument()
     expect(within(getTeamRow('Tercero B')).getByText('Clasifica a 16avos')).toBeInTheDocument()
     expect(within(getTeamRow('Tercero I')).getByText('No clasifica')).toBeInTheDocument()
+  })
+
+  it('shows pending tiebreak badges when the cutoff is tied without round-of-32 data', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createCutoffTieStandingsGroups({ isClosed: true }))
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(
+      screen.getByText(/hay selecciones empatadas en el corte; la resolución queda pendiente/i),
+    ).toBeInTheDocument()
+    expect(screen.getAllByText('Desempate pendiente')).toHaveLength(2)
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(7)
+    expect(screen.getAllByText('No clasifica')).toHaveLength(3)
+  })
+
+  it('uses round-of-32 teams to resolve the cutoff tie without alphabetical badges', async () => {
+    const user = userEvent.setup()
+    const standings = createCutoffTieStandingsGroups({ isClosed: true })
+    const groupITeam = standings[8].teams[2].team
+
+    mockStandingsResponse(standings)
+    mockMatchesResponse([createRoundOf32Match(groupITeam)])
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(
+      await screen.findByText(/el desempate del corte se refleja según los equipos ya ubicados en 16avos/i),
+    ).toBeInTheDocument()
+
+    const table = screen.getByRole('table', { name: /ranking de mejores terceros/i })
+    const rows = within(table).getAllByRole('row')
+    const getTeamRow = (teamName) => rows.find((row) => within(row).queryByText(teamName))
+
+    expect(within(getTeamRow('Tercero H')).getByText('No clasifica')).toBeInTheDocument()
+    expect(within(getTeamRow('Tercero I')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(screen.queryByText('Desempate pendiente')).not.toBeInTheDocument()
   })
 
   it('shows a friendly empty state when there are not enough teams to rank third places', async () => {
