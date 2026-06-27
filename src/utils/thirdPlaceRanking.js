@@ -1,5 +1,17 @@
 const THIRD_PLACE_POSITION = 3
 const QUALIFIED_THIRD_PLACES = 8
+const CONFIRMED_KNOCKOUT_QUALIFIED_TO = new Set([
+  'ROUND_OF_32',
+  'ROUND_OF_16',
+  'QUARTER_FINALS',
+  'SEMI_FINALS',
+  'THIRD_PLACE_MATCH',
+  'FINAL',
+])
+
+export function isConfirmedKnockoutQualification(qualifiedTo) {
+  return CONFIRMED_KNOCKOUT_QUALIFIED_TO.has(qualifiedTo)
+}
 
 function getTeamName(row) {
   return row?.team?.name ?? ''
@@ -77,6 +89,6 @@ export function buildThirdPlaceRanking(standings = []) {
       ...row,
       rank: index + 1,
       isInTopEight: index < QUALIFIED_THIRD_PLACES,
-      isQualifiedThirdPlace: row?.team?.qualifiedTo === 'ROUND_OF_32',
+      isQualifiedThirdPlace: isConfirmedKnockoutQualification(row?.team?.qualifiedTo),
     }))
 }

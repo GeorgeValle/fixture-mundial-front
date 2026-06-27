@@ -283,10 +283,13 @@ describe('GroupStandings', () => {
     expect(screen.getAllByText('No clasifica')).toHaveLength(4)
   })
 
-  it('marks third-place teams as officially qualified only when backend confirms ROUND_OF_32', async () => {
+  it('marks third-place teams as officially qualified for confirmed knockout backend states', async () => {
     const user = userEvent.setup()
     const standings = createThirdPlaceStandingsGroups()
     standings[0].teams[2].team.qualifiedTo = 'ROUND_OF_32'
+    standings[1].teams[2].team.qualifiedTo = 'ROUND_OF_16'
+    standings[2].teams[2].team.qualifiedTo = 'QUARTER_FINALS'
+    standings[3].teams[2].team.qualifiedTo = 'ELIMINATED'
 
     mockStandingsResponse(standings)
 
@@ -294,9 +297,17 @@ describe('GroupStandings', () => {
 
     await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
 
-    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(1)
-    expect(screen.getAllByText('Zona provisional')).toHaveLength(7)
-    expect(screen.getAllByText('No clasifica')).toHaveLength(4)
+    const table = screen.getByRole('table', { name: /ranking de mejores terceros/i })
+    const rows = within(table).getAllByRole('row')
+    const getTeamRow = (teamName) => rows.find((row) => within(row).queryByText(teamName))
+
+    expect(within(getTeamRow('Tercero A')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow('Tercero B')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow('Tercero C')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow('Tercero D')).getByText('No clasifica')).toBeInTheDocument()
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(3)
+    expect(screen.getAllByText('Zona provisional')).toHaveLength(4)
+    expect(screen.getAllByText('No clasifica')).toHaveLength(5)
   })
 
   it('shows a friendly empty state when there are not enough teams to rank third places', async () => {

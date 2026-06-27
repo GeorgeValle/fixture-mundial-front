@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildThirdPlaceRanking } from './thirdPlaceRanking'
+import { buildThirdPlaceRanking, isConfirmedKnockoutQualification } from './thirdPlaceRanking'
 
 function createStandingRow(name, group, stats = {}, teamOverrides = {}) {
   return {
@@ -36,6 +36,22 @@ function createStanding(group, thirdStats = {}, thirdTeamOverrides = {}) {
 }
 
 describe('thirdPlaceRanking', () => {
+  it('detects confirmed knockout qualification states without treating eliminated as qualified', () => {
+    for (const qualifiedTo of [
+      'ROUND_OF_32',
+      'ROUND_OF_16',
+      'QUARTER_FINALS',
+      'SEMI_FINALS',
+      'THIRD_PLACE_MATCH',
+      'FINAL',
+    ]) {
+      expect(isConfirmedKnockoutQualification(qualifiedTo)).toBe(true)
+    }
+
+    expect(isConfirmedKnockoutQualification(null)).toBe(false)
+    expect(isConfirmedKnockoutQualification('ELIMINATED')).toBe(false)
+  })
+
   it('extracts third-place teams from each group', () => {
     const ranking = buildThirdPlaceRanking([createStanding('A'), createStanding('B')])
 
@@ -164,10 +180,13 @@ describe('thirdPlaceRanking', () => {
     expect(ranking[8]).toMatchObject({ rank: 9, isInTopEight: false, isQualifiedThirdPlace: false })
   })
 
-  it('marks third-place teams as officially qualified only when backend confirms ROUND_OF_32', () => {
+  it('marks third-place teams as officially qualified for any confirmed knockout backend state', () => {
     const ranking = buildThirdPlaceRanking([
       createStanding('A', { pts: 6 }, { qualifiedTo: 'ROUND_OF_32' }),
-      createStanding('B', { pts: 5 }, { qualifiedTo: null }),
+      createStanding('B', { pts: 5 }, { qualifiedTo: 'ROUND_OF_16' }),
+      createStanding('C', { pts: 4 }, { qualifiedTo: 'QUARTER_FINALS' }),
+      createStanding('D', { pts: 3 }, { qualifiedTo: 'ELIMINATED' }),
+      createStanding('E', { pts: 2 }, { qualifiedTo: null }),
     ])
 
     expect(ranking[0]).toMatchObject({
@@ -177,6 +196,21 @@ describe('thirdPlaceRanking', () => {
     })
     expect(ranking[1]).toMatchObject({
       group: 'B',
+      isInTopEight: true,
+      isQualifiedThirdPlace: true,
+    })
+    expect(ranking[2]).toMatchObject({
+      group: 'C',
+      isInTopEight: true,
+      isQualifiedThirdPlace: true,
+    })
+    expect(ranking[3]).toMatchObject({
+      group: 'D',
+      isInTopEight: true,
+      isQualifiedThirdPlace: false,
+    })
+    expect(ranking[4]).toMatchObject({
+      group: 'E',
       isInTopEight: true,
       isQualifiedThirdPlace: false,
     })

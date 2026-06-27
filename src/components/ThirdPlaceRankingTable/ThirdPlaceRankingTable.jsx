@@ -6,12 +6,16 @@ function getTeamName(row) {
   return row?.team?.name || 'Equipo por confirmar'
 }
 
+function isEliminated(row) {
+  return row?.team?.qualifiedTo === 'ELIMINATED'
+}
+
 function getQualificationLabel(row) {
   if (row?.isQualifiedThirdPlace) {
     return 'Clasifica a 16avos'
   }
 
-  if (row?.isInTopEight) {
+  if (row?.isInTopEight && !isEliminated(row)) {
     return 'Zona provisional'
   }
 
@@ -23,7 +27,7 @@ function getBadgeClassName(row) {
     return styles.qualifiedBadge
   }
 
-  if (row?.isInTopEight) {
+  if (row?.isInTopEight && !isEliminated(row)) {
     return styles.provisionalBadge
   }
 
