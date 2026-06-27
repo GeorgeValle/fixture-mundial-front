@@ -367,6 +367,76 @@ export function groupKnockoutMatchesByRound(matches = []) {
   })).filter((round) => round.matches.length > 0)
 }
 
+const BRACKET_VISUAL_ORDER_BY_ROUND = {
+  'round-of-32': [74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87],
+  'round-of-16': [89, 90, 93, 94, 91, 92, 95, 96],
+  'quarter-finals': [97, 98, 99, 100],
+  'semi-finals': [101, 102],
+  'third-place': [103],
+  final: [104],
+}
+
+function getBracketMatchNumber(match) {
+  const directMatchNumber = getBackendMatchNumber(match)
+
+  if (directMatchNumber) {
+    return directMatchNumber
+  }
+
+  const templateCodeMatch = toStringValue(match?.templateCode ?? match?.code).match(/KO[-_ ]?(\d+)/i)
+  return templateCodeMatch ? Number(templateCodeMatch[1]) : null
+}
+
+function getVisualOrderPosition(roundKey, match) {
+  const visualOrder = BRACKET_VISUAL_ORDER_BY_ROUND[roundKey] ?? []
+  const matchNumber = getBracketMatchNumber(match)
+
+  if (!matchNumber) {
+    return Number.MAX_SAFE_INTEGER
+  }
+
+  const visualIndex = visualOrder.indexOf(matchNumber)
+  return visualIndex === -1 ? Number.MAX_SAFE_INTEGER : visualIndex
+}
+
+function getFallbackSortKey(match) {
+  const templateCode = toStringValue(match?.templateCode ?? match?.code).trim()
+  const date = toDateKey(match?.date ?? match?.matchDate)
+  const matchNumber = getBracketMatchNumber(match)
+
+  return [templateCode, date, matchNumber ?? ''].join('|')
+}
+
+function sortRoundMatchesByExplicitBracketOrder(matches, roundKey) {
+  return matches
+    .map((match, originalIndex) => ({ match, originalIndex }))
+    .sort((firstMatch, secondMatch) => {
+      const positionDifference =
+        getVisualOrderPosition(roundKey, firstMatch.match) - getVisualOrderPosition(roundKey, secondMatch.match)
+
+      if (positionDifference !== 0) {
+        return positionDifference
+      }
+
+      const fallbackDifference = getFallbackSortKey(firstMatch.match).localeCompare(getFallbackSortKey(secondMatch.match))
+
+      return fallbackDifference || firstMatch.originalIndex - secondMatch.originalIndex
+    })
+    .map(({ match }) => match)
+}
+
+export function buildKnockoutBracketViewRounds(matches = []) {
+  const safeMatches = Array.isArray(matches) ? matches : []
+
+  return KNOCKOUT_ROUNDS.map((round) => ({
+    ...round,
+    matches: sortRoundMatchesByExplicitBracketOrder(
+      safeMatches.filter((match) => match.roundKey === round.roundKey),
+      round.roundKey,
+    ),
+  }))
+}
+
 export function getKnockoutSummary(matches = []) {
   const backendCount = matches.filter((match) => match.source === 'backend').length
 
@@ -394,6 +464,35 @@ export function getDisplayTeamShield(match, side) {
 export function isPlaceholderTeam(match, side) {
   const team = side === 'home' ? match?.homeTeam : match?.awayTeam
   return !team?.name
+}
+
+export function getKnockoutSlotState(match, side) {
+  const isPlaceholder = isPlaceholderTeam(match, side)
+
+  if (match?.winnerSide === side) {
+    return 'winner'
+  }
+
+  if (match?.winnerSide && !isPlaceholder) {
+    return 'loser'
+  }
+
+  if (isPlaceholder) {
+    return 'placeholder'
+  }
+
+  return 'pending'
+}
+
+export function getKnockoutSlotStateLabel(slotState) {
+  const labels = {
+    winner: 'Ganador',
+    loser: 'Eliminado',
+    pending: 'Pendiente',
+    placeholder: 'Por definir',
+  }
+
+  return labels[slotState] ?? labels.pending
 }
 
 export function getScoreLabel(match) {

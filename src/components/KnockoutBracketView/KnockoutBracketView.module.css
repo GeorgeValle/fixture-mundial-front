@@ -1,0 +1,344 @@
+.bracketPanel {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-5);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.97), rgba(238, 245, 255, 0.72)),
+    var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.panelHeader {
+  position: relative;
+  display: grid;
+  min-height: 2rem;
+  align-items: center;
+  justify-items: center;
+}
+
+.kicker {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  margin: 0;
+  color: var(--color-magenta);
+  font-size: var(--font-size-xs);
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  transform: translateY(-50%);
+  text-transform: uppercase;
+}
+
+.panelTitle,
+.roundTitle,
+.thirdPlaceTitle {
+  margin: 0;
+  color: var(--color-primary);
+  line-height: 1.1;
+}
+
+.panelTitle {
+  font-size: clamp(1.25rem, 2.6vw, 1.8rem);
+  text-align: center;
+}
+
+.scrollArea {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: var(--space-2) var(--space-1) var(--space-4);
+}
+
+.scrollArea:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-cyan) 42%, transparent);
+  outline-offset: 3px;
+}
+
+.bracketCanvas {
+  display: grid;
+  width: max-content;
+  min-width: 65rem;
+  gap: var(--space-4);
+}
+
+.bracketGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 12.25rem) 13rem;
+  align-items: start;
+  width: max-content;
+  min-width: 65rem;
+  gap: var(--space-4);
+}
+
+.roundColumn {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-3);
+}
+
+.roundTitle {
+  min-height: 1.65rem;
+  font-size: var(--font-size-sm);
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.roundMatches {
+  display: grid;
+  grid-template-rows: repeat(16, minmax(3rem, auto));
+  gap: var(--space-1);
+  min-height: 56rem;
+}
+
+.matchNode {
+  position: relative;
+  display: grid;
+  align-self: center;
+  overflow: visible;
+  width: 12.25rem;
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 86%, transparent);
+  border-radius: var(--radius-md);
+  box-shadow: 0 7px 15px rgba(6, 21, 47, 0.075);
+}
+
+.roundColumn:not(:last-child) .matchNode::after {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  width: var(--space-4);
+  height: 1px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-primary) 22%, transparent);
+  content: '';
+}
+
+.teamRow {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 1.72rem;
+  padding: var(--space-1) var(--space-2);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-cyan) 3%, white);
+}
+
+.teamRow:first-child {
+  border-radius: calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0 0;
+}
+
+.teamRow:last-child {
+  border-top: 1px solid color-mix(in srgb, var(--color-border) 72%, transparent);
+  border-radius: 0 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px);
+}
+
+.teamBadge,
+.placeholderIcon {
+  display: grid;
+  width: 1.12rem;
+  height: 1.12rem;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0.35rem;
+}
+
+.teamBadge {
+  background: var(--color-surface);
+  border: 1px solid color-mix(in srgb, var(--color-border) 80%, transparent);
+}
+
+.placeholderIcon {
+  color: var(--color-muted);
+  background: color-mix(in srgb, var(--color-border) 28%, white);
+  font-size: var(--font-size-xs);
+  font-weight: 900;
+}
+
+.shield {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.teamName {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: 0.82rem;
+  font-weight: 750;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.score {
+  min-width: 1.35rem;
+  color: var(--color-primary-soft);
+  font-size: 0.82rem;
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+}
+
+.winner {
+  background: color-mix(in srgb, var(--color-green) 9%, white);
+}
+
+.winner .teamName,
+.winner .score {
+  color: var(--color-primary);
+  font-weight: 950;
+}
+
+.loser {
+  color: var(--color-muted);
+  filter: grayscale(0.75);
+  opacity: 0.62;
+}
+
+.loser .score {
+  color: var(--color-muted);
+}
+
+.pending {
+  background: var(--color-surface);
+}
+
+.placeholder {
+  color: var(--color-muted);
+  background: color-mix(in srgb, var(--color-border) 18%, white);
+}
+
+.finalStage {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  min-width: 13rem;
+}
+
+.finalConvergence {
+  position: relative;
+  display: grid;
+  align-content: center;
+  min-height: 56rem;
+}
+
+.finalConvergence::before,
+.finalConvergence::after {
+  position: absolute;
+  left: calc(-1 * var(--space-4));
+  pointer-events: none;
+  content: '';
+}
+
+.finalConvergence::before {
+  top: 50%;
+  width: var(--space-4);
+  height: 1px;
+  background: color-mix(in srgb, var(--color-primary) 24%, transparent);
+}
+
+.finalConvergence::after {
+  top: 31%;
+  width: var(--space-4);
+  height: 38%;
+  border-top: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+}
+
+.finalMatchNode {
+  z-index: 1;
+  width: 12.7rem;
+  border-color: color-mix(in srgb, var(--color-green) 34%, var(--color-border));
+  box-shadow: 0 12px 26px rgba(6, 21, 47, 0.11);
+}
+
+.finalMatchNode .teamRow {
+  min-height: 1.95rem;
+}
+
+.thirdPlacePanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--color-gold) 8%, white);
+  border: 1px dashed color-mix(in srgb, var(--color-gold) 38%, var(--color-border));
+  border-radius: var(--radius-md);
+}
+
+.thirdPlaceTitle {
+  font-size: var(--font-size-sm);
+  font-weight: 950;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.thirdPlaceMatch {
+  display: grid;
+  justify-self: end;
+}
+
+.thirdPlaceMatch .matchNode {
+  grid-row: auto;
+}
+
+.thirdPlaceMatch .matchNode::after {
+  content: none;
+}
+
+@media (max-width: 760px) {
+  .bracketPanel {
+    padding: var(--space-4);
+  }
+
+  .panelHeader {
+    justify-items: stretch;
+  }
+
+  .kicker {
+    position: static;
+    transform: none;
+  }
+
+  .panelTitle {
+    justify-self: center;
+  }
+
+  .bracketCanvas,
+  .bracketGrid {
+    min-width: 61.5rem;
+  }
+
+  .bracketGrid {
+    grid-template-columns: repeat(4, 11.5rem) 12.25rem;
+    gap: var(--space-3);
+  }
+
+  .matchNode {
+    width: 11.5rem;
+  }
+
+  .finalStage {
+    min-width: 12.25rem;
+  }
+
+  .finalMatchNode {
+    width: 12rem;
+  }
+
+  .thirdPlacePanel {
+    grid-template-columns: minmax(8rem, 1fr) auto;
+  }
+}

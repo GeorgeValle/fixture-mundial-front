@@ -258,6 +258,165 @@ describe('KnockoutStage', () => {
     expect(screen.queryByLabelText(/Partido 103:/i)).not.toBeInTheDocument()
   })
 
+  it('switches from the current matches view to the llaves view', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    const bracketViewButton = await screen.findByRole('button', { name: 'Vista de llaves' })
+    const matchesViewButton = screen.getByRole('button', { name: 'Vista de partidos' })
+
+    expect(matchesViewButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByLabelText('Filtrar por ronda')).toBeInTheDocument()
+
+    await user.click(bracketViewButton)
+
+    expect(bracketViewButton).toHaveAttribute('aria-pressed', 'true')
+    expect(matchesViewButton).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('heading', { name: 'Cuadro compacto' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Filtrar por ronda')).not.toBeInTheDocument()
+  })
+
+  it('renders compact bracket columns with short round labels', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    const bracketPanel = screen.getByRole('region', { name: 'Cuadro compacto' })
+
+    for (const roundLabel of ['16avos', 'Octavos', 'Cuartos', 'Semifinal']) {
+      expect(within(bracketPanel).getByRole('heading', { name: roundLabel })).toBeInTheDocument()
+    }
+  })
+
+  it('renders the final as a central node and keeps third place separated', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    const bracketPanel = screen.getByRole('region', { name: 'Cuadro compacto' })
+
+    expect(within(bracketPanel).getByRole('heading', { name: 'Final' })).toBeInTheDocument()
+    expect(within(bracketPanel).getByLabelText('Llave: Ganador P101 contra Ganador P102')).toBeInTheDocument()
+    expect(within(bracketPanel).getByRole('complementary', { name: 'Tercer puesto' })).toBeInTheDocument()
+  })
+
+  it('renders short placeholders in the compact llaves view', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    const bracketPanel = screen.getByRole('region', { name: 'Cuadro compacto' })
+
+    expect(within(bracketPanel).getAllByText('Por definir').length).toBeGreaterThan(0)
+    expect(within(bracketPanel).getByText('Ganador P74')).toBeInTheDocument()
+    expect(within(bracketPanel).getByText('Perdedor P101')).toBeInTheDocument()
+    expect(within(bracketPanel).queryByText('Ganador Partido 74')).not.toBeInTheDocument()
+    expect(within(bracketPanel).queryByText('2º Grupo A')).not.toBeInTheDocument()
+  })
+
+  it('marks winner and loser in the llaves view for finished regular-time results', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([
+      createBackendMatch({
+        status: 'FINISHED',
+        homeScore: 2,
+        awayScore: 0,
+      }),
+    ])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    const winnerRow = await screen.findByLabelText('México: Ganador')
+    const loserRow = screen.getByLabelText('Canadá: Eliminado')
+
+    expect(winnerRow).toBeInTheDocument()
+    expect(loserRow).toBeInTheDocument()
+    expect(within(winnerRow).getByText('2')).toBeInTheDocument()
+    expect(within(loserRow).getByText('0')).toBeInTheDocument()
+    expect(winnerRow.className).not.toBe(loserRow.className)
+  })
+
+  it('marks penalty winners and losers in the llaves view', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([
+      createBackendMatch({
+        matchNumber: 101,
+        templateCode: 'KO-101',
+        roundKey: 'semi-finals',
+        stage: 'Semifinales',
+        status: 'FINISHED',
+        homeScore: 1,
+        awayScore: 1,
+        homePenaltyScore: 4,
+        awayPenaltyScore: 5,
+      }),
+    ])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    const loserRow = await screen.findByLabelText('México: Eliminado')
+    const winnerRow = screen.getByLabelText('Canadá: Ganador')
+
+    expect(loserRow).toBeInTheDocument()
+    expect(winnerRow).toBeInTheDocument()
+    expect(within(loserRow).getByText('1 (4)')).toBeInTheDocument()
+    expect(within(winnerRow).getByText('1 (5)')).toBeInTheDocument()
+  })
+
+  it('keeps compact llaves nodes free of secondary match details', async () => {
+    const user = userEvent.setup()
+    mockMatchesResponse([])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    expect(screen.getByRole('heading', { name: 'Cuadro compacto' })).toBeInTheDocument()
+    expect(document.body).not.toHaveTextContent('Resultado pendiente')
+    expect(document.body).not.toHaveTextContent(/partido 73/i)
+    expect(document.body).not.toHaveTextContent('2026-06-28')
+    expect(document.body).not.toHaveTextContent('Estadio Los Ángeles')
+    expect(document.body).not.toHaveTextContent(/canchallena/i)
+    expect(document.body).not.toHaveTextContent('round-of-32')
+    expect(document.body).not.toHaveTextContent('templateCode')
+    expect(document.body).not.toHaveTextContent('roundKey')
+  })
+
+  it('renders long team names in a truncation-ready compact row', async () => {
+    const user = userEvent.setup()
+    const longTeamName = 'República Federal Deportiva de Nombre Extra Largo'
+    mockMatchesResponse([
+      createBackendMatch({
+        homeTeam: createTeam(longTeamName),
+        awayTeam: createTeam('Canadá'),
+      }),
+    ])
+
+    renderKnockoutStage()
+
+    await user.click(await screen.findByRole('button', { name: 'Vista de llaves' }))
+
+    const teamName = await screen.findByText(longTeamName)
+
+    expect(teamName).toHaveAttribute('title', longTeamName)
+    expect(teamName.className).toMatch(/teamName/)
+  })
+
   it('shows a loading state while backend matches are loading', () => {
     server.use(
       http.get('*/api/matches', async () => {

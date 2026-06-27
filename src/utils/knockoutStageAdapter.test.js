@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { knockoutStageSkeleton } from '../data/knockoutStageSkeleton'
 import {
+  buildKnockoutBracketViewRounds,
   buildKnockoutStageMatches,
+  getKnockoutSlotState,
+  getKnockoutSlotStateLabel,
   getKnockoutSummary,
   getPenaltyLabel,
   getScoreLabel,
@@ -139,6 +142,8 @@ describe('knockoutStageAdapter', () => {
     expect(getScoreLabel(match101)).toBe('1 - 1')
     expect(getPenaltyLabel(match101)).toBe('Penales: 4 - 3')
     expect(match101.winnerLabel).toBe('Ganador registrado: México')
+    expect(getKnockoutSlotState(match101, 'home')).toBe('winner')
+    expect(getKnockoutSlotState(match101, 'away')).toBe('loser')
   })
 
   it('does not derive a winner when real data is incomplete', () => {
@@ -171,5 +176,119 @@ describe('knockoutStageAdapter', () => {
     expect(skeletonMatch.status).toBe('pending-qualified-teams')
     expect(skeletonMatch.roundLabel).toBe('Dieciseisavos de final')
     expect(skeletonMatch.statusLabel).toBe('Pendiente de clasificación')
+  })
+
+  it('builds all rounds for the visual bracket view without filtering the full cuadro', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds(matches)
+
+    expect(rounds.map((round) => round.roundLabel)).toEqual([
+      'Dieciseisavos de final',
+      'Octavos de final',
+      'Cuartos de final',
+      'Semifinales',
+      'Partido por el tercer puesto',
+      'Final',
+    ])
+    expect(rounds.map((round) => round.matches.length)).toEqual([16, 8, 4, 2, 1, 1])
+  })
+
+  it('uses the documented explicit visual order for every knockout round', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds(matches)
+    const getRoundMatchNumbers = (roundKey) =>
+      rounds.find((round) => round.roundKey === roundKey).matches.map((match) => match.matchNumber)
+
+    expect(getRoundMatchNumbers('round-of-32')).toEqual([74, 77, 73, 75, 83, 84, 81, 82, 76, 78, 79, 80, 86, 88, 85, 87])
+    expect(getRoundMatchNumbers('round-of-16')).toEqual([89, 90, 93, 94, 91, 92, 95, 96])
+    expect(getRoundMatchNumbers('quarter-finals')).toEqual([97, 98, 99, 100])
+    expect(getRoundMatchNumbers('semi-finals')).toEqual([101, 102])
+    expect(getRoundMatchNumbers('third-place')).toEqual([103])
+    expect(getRoundMatchNumbers('final')).toEqual([104])
+  })
+
+  it('uses the explicit visual quarter-final order regardless of chronological or shuffled input', () => {
+    const matches = buildKnockoutStageMatches([])
+    const chronologicalQuarterFinals = [97, 98, 99, 100].map((matchNumber) =>
+      matches.find((match) => match.matchNumber === matchNumber),
+    )
+    const matchesWithChronologicalQuarterFinals = [
+      ...matches.filter((match) => match.roundKey !== 'quarter-finals'),
+      ...chronologicalQuarterFinals,
+    ]
+
+    const rounds = buildKnockoutBracketViewRounds(matchesWithChronologicalQuarterFinals)
+    const quarterFinals = rounds.find((round) => round.roundKey === 'quarter-finals')
+
+    expect(chronologicalQuarterFinals.map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
+    expect(quarterFinals.matches.map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
+    expect(quarterFinals.matches.map((match) => match.matchNumber)).not.toEqual([97, 99, 98, 100])
+
+    const shuffledQuarterFinals = [98, 100, 97, 99].map((matchNumber) =>
+      matches.find((match) => match.matchNumber === matchNumber),
+    )
+    const roundsFromShuffledQuarterFinals = buildKnockoutBracketViewRounds([
+      ...matches.filter((match) => match.roundKey !== 'quarter-finals'),
+      ...shuffledQuarterFinals,
+    ])
+
+    expect(
+      roundsFromShuffledQuarterFinals
+        .find((round) => round.roundKey === 'quarter-finals')
+        .matches.map((match) => match.matchNumber),
+    ).toEqual([97, 98, 99, 100])
+  })
+
+  it('keeps quarter-finals adjacent to the semifinals they feed', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds(matches)
+    const quarterFinalMatchNumbers = rounds
+      .find((round) => round.roundKey === 'quarter-finals')
+      .matches.map((match) => match.matchNumber)
+    const semifinal101 = rounds
+      .find((round) => round.roundKey === 'semi-finals')
+      .matches.find((match) => match.matchNumber === 101)
+    const semifinal102 = rounds
+      .find((round) => round.roundKey === 'semi-finals')
+      .matches.find((match) => match.matchNumber === 102)
+
+    expect(quarterFinalMatchNumbers.slice(0, 2)).toEqual([97, 98])
+    expect(quarterFinalMatchNumbers.slice(2, 4)).toEqual([99, 100])
+    expect(semifinal101).toMatchObject({
+      homePlaceholder: 'Ganador Partido 97',
+      awayPlaceholder: 'Ganador Partido 98',
+    })
+    expect(semifinal102).toMatchObject({
+      homePlaceholder: 'Ganador Partido 99',
+      awayPlaceholder: 'Ganador Partido 100',
+    })
+  })
+
+  it('places matches outside the explicit visual map at the end of their round with a stable fallback order', () => {
+    const matches = buildKnockoutStageMatches([])
+    const rounds = buildKnockoutBracketViewRounds([
+      ...matches,
+      { roundKey: 'quarter-finals', templateCode: 'AUX-B', date: '2026-07-12' },
+      { roundKey: 'quarter-finals', templateCode: 'AUX-A', date: '2026-07-11' },
+    ])
+    const quarterFinals = rounds.find((round) => round.roundKey === 'quarter-finals').matches
+
+    expect(quarterFinals.slice(0, 4).map((match) => match.matchNumber)).toEqual([97, 98, 99, 100])
+    expect(quarterFinals.slice(4).map((match) => match.templateCode)).toEqual(['AUX-A', 'AUX-B'])
+  })
+
+  it('labels visual bracket slot states in Spanish', () => {
+    const matches = buildKnockoutStageMatches([])
+    const pendingPlaceholderMatch = matches.find((match) => match.matchNumber === 73)
+    const pendingRealMatch = buildKnockoutStageMatches([createBackendMatch()]).find(
+      (match) => match.matchNumber === 73,
+    )
+
+    expect(getKnockoutSlotState(pendingPlaceholderMatch, 'home')).toBe('placeholder')
+    expect(getKnockoutSlotStateLabel('placeholder')).toBe('Por definir')
+    expect(getKnockoutSlotState(pendingRealMatch, 'home')).toBe('pending')
+    expect(getKnockoutSlotStateLabel('pending')).toBe('Pendiente')
+    expect(getKnockoutSlotStateLabel('winner')).toBe('Ganador')
+    expect(getKnockoutSlotStateLabel('loser')).toBe('Eliminado')
   })
 })
