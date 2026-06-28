@@ -214,12 +214,6 @@
   border-color: color-mix(in srgb, var(--color-gold) 42%, transparent);
 }
 
-.pendingTiebreakBadge {
-  color: color-mix(in srgb, var(--color-magenta) 78%, var(--color-primary));
-  background: color-mix(in srgb, var(--color-magenta) 12%, var(--color-surface));
-  border-color: color-mix(in srgb, var(--color-magenta) 34%, transparent);
-}
-
 .notQualifiedBadge {
   color: var(--color-muted);
   background: color-mix(in srgb, var(--color-muted) 10%, var(--color-surface));

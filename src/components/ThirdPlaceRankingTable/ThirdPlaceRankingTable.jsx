@@ -6,7 +6,6 @@ const STATUS_LABELS = {
   provisional: 'Zona provisional',
   'not-qualified': 'No clasifica',
   'outside-zone': 'Fuera de zona',
-  'pending-tiebreak': 'Desempate pendiente',
 }
 
 function getTeamName(row) {
@@ -26,24 +25,12 @@ function getBadgeClassName(row) {
     return styles.provisionalBadge
   }
 
-  if (row?.qualificationStatus === 'pending-tiebreak') {
-    return styles.pendingTiebreakBadge
-  }
-
   return styles.notQualifiedBadge
 }
 
 function getHelperText(ranking) {
-  if (ranking.some((row) => row.qualificationStatus === 'pending-tiebreak')) {
-    return 'Hay selecciones empatadas en el corte; la resolución queda pendiente.'
-  }
-
-  if (ranking.some((row) => row.cutoffTiebreakStatus === 'resolved-by-bracket')) {
-    return 'El desempate del corte se refleja según los equipos ya ubicados en 16avos.'
-  }
-
   if (ranking.some((row) => row.isFinalThirdPlaceRanking)) {
-    return 'Ranking final de terceros según puntos, diferencia de gol y goles a favor.'
+    return 'Ranking final según puntos, diferencia de gol, goles a favor, conducta deportiva y ranking FIFA.'
   }
 
   return 'El ranking es provisional hasta que finalicen todos los grupos.'

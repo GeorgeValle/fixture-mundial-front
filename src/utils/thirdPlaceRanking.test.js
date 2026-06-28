@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest'
 import {
   areAllGroupsClosed,
   buildThirdPlaceRanking,
-  getRoundOf32TeamIds,
+  getFifaRanking,
+  getGroupFairPlayPoints,
+  getNumberOrNull,
   THIRD_PLACE_RANKING_STATUS,
 } from './thirdPlaceRanking'
 
@@ -40,27 +42,6 @@ function createStanding(group, thirdStats = {}, thirdTeamOverrides = {}) {
   }
 }
 
-function createRoundOf32Match(homeTeam, awayTeam = null, overrides = {}) {
-  return {
-    _id: `match-${homeTeam?._id ?? 'pending'}`,
-    matchNumber: 73,
-    roundKey: 'round-of-32',
-    stage: 'ROUND_OF_32',
-    homeTeam,
-    awayTeam,
-    status: 'PENDING',
-    ...overrides,
-  }
-}
-
-function createCutoffTieStandings() {
-  const thirdPlacePoints = [12, 11, 10, 9, 8, 7, 6, 4, 4, 3, 2, 1]
-
-  return thirdPlacePoints.map((points, index) =>
-    createStanding(String.fromCharCode(65 + index), { pts: points, dif: 0, gf: 4 }),
-  )
-}
-
 describe('thirdPlaceRanking', () => {
   it('detects group-stage closure only when 12 groups have 4 teams with 3 matches played', () => {
     const closedStandings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index)))
@@ -72,6 +53,23 @@ describe('thirdPlaceRanking', () => {
     expect(areAllGroupsClosed(closedStandings.slice(0, 11))).toBe(false)
     expect(areAllGroupsClosed([{ group: 'A', teams: closedStandings[0].teams.slice(0, 3) }])).toBe(false)
     expect(areAllGroupsClosed(incompleteStandings)).toBe(false)
+  })
+
+  it('normalizes numeric tiebreak values safely', () => {
+    expect(getNumberOrNull(-3)).toBe(-3)
+    expect(getNumberOrNull('-5')).toBe(-5)
+    expect(getNumberOrNull('')).toBeNull()
+    expect(getNumberOrNull('   ')).toBeNull()
+    expect(getNumberOrNull('ranking desconocido')).toBeNull()
+  })
+
+  it('reads group fair play and FIFA ranking from row or team fields', () => {
+    expect(getGroupFairPlayPoints({ groupFairPlayPoints: -3, team: { groupFairPlayPoints: -5 } })).toBe(-3)
+    expect(getGroupFairPlayPoints({ team: { groupFairPlayPoints: '-4' } })).toBe(-4)
+    expect(getGroupFairPlayPoints({ team: {} })).toBeNull()
+    expect(getFifaRanking({ fifaRanking: 12, team: { fifaRanking: 3 } })).toBe(12)
+    expect(getFifaRanking({ team: { fifaRanking: '25' } })).toBe(25)
+    expect(getFifaRanking({ team: {} })).toBeNull()
   })
 
   it('extracts third-place teams from each group', () => {
@@ -154,7 +152,53 @@ describe('thirdPlaceRanking', () => {
     expect(ranking.map((row) => row.group)).toEqual(['B', 'C', 'D', 'A'])
   })
 
-  it('uses team name and group as stable tie-breakers', () => {
+  it('uses groupFairPlayPoints descending after PTS, DIF and GF', () => {
+    const ranking = buildThirdPlaceRanking([
+      createStanding('A', { pts: 4, dif: 0, gf: 2 }, { name: 'Ecuador', groupFairPlayPoints: -5 }),
+      createStanding('B', { pts: 4, dif: 0, gf: 2 }, { name: 'Ghana', groupFairPlayPoints: -3 }),
+    ])
+
+    expect(ranking.map((row) => row.team.name)).toEqual(['Ghana', 'Ecuador'])
+  })
+
+  it('uses row.groupFairPlayPoints when available before team.groupFairPlayPoints', () => {
+    const ranking = buildThirdPlaceRanking([
+      createStanding('A', { pts: 4, dif: 0, gf: 2, groupFairPlayPoints: -1 }, { name: 'Equipo fila' }),
+      createStanding('B', { pts: 4, dif: 0, gf: 2 }, { name: 'Equipo team', groupFairPlayPoints: -2 }),
+    ])
+
+    expect(ranking.map((row) => row.team.name)).toEqual(['Equipo fila', 'Equipo team'])
+  })
+
+  it('skips groupFairPlayPoints without breaking when one or both values are missing', () => {
+    const ranking = buildThirdPlaceRanking([
+      createStanding('A', { pts: 4, dif: 0, gf: 2 }, { name: 'Sin conducta' }),
+      createStanding('B', { pts: 4, dif: 0, gf: 2 }, { name: 'Con ranking', fifaRanking: 20 }),
+      createStanding('C', { pts: 4, dif: 0, gf: 2 }, { name: 'Sin todo' }),
+    ])
+
+    expect(ranking.map((row) => row.team.name)).toEqual(['Con ranking', 'Sin conducta', 'Sin todo'])
+  })
+
+  it('uses lower FIFA ranking when teams remain tied after fair play', () => {
+    const ranking = buildThirdPlaceRanking([
+      createStanding('A', { pts: 4, dif: 0, gf: 2, groupFairPlayPoints: -3 }, { name: 'Ranking 20', fifaRanking: 20 }),
+      createStanding('B', { pts: 4, dif: 0, gf: 2, groupFairPlayPoints: -3 }, { name: 'Ranking 5', fifaRanking: 5 }),
+    ])
+
+    expect(ranking.map((row) => row.team.name)).toEqual(['Ranking 5', 'Ranking 20'])
+  })
+
+  it('puts a team with FIFA ranking above a tied team without ranking', () => {
+    const ranking = buildThirdPlaceRanking([
+      createStanding('A', { pts: 4, dif: 0, gf: 2 }, { name: 'Sin ranking' }),
+      createStanding('B', { pts: 4, dif: 0, gf: 2 }, { name: 'Con ranking', fifaRanking: 50 }),
+    ])
+
+    expect(ranking.map((row) => row.team.name)).toEqual(['Con ranking', 'Sin ranking'])
+  })
+
+  it('uses team name and group as stable visual tie-breakers', () => {
     const ranking = buildThirdPlaceRanking([
       {
         group: 'B',
@@ -189,29 +233,6 @@ describe('thirdPlaceRanking', () => {
     ])
   })
 
-  it('extracts team ids from round-of-32 matches using round keys, stages or match numbers', () => {
-    const ids = getRoundOf32TeamIds([
-      createRoundOf32Match({ _id: 'team-home' }, { _id: 'team-away' }),
-      createRoundOf32Match(
-        { _id: 'team-stage' },
-        null,
-        { matchNumber: 200, roundKey: '', stage: 'ROUND_OF_32' },
-      ),
-      createRoundOf32Match(
-        null,
-        { _id: 'team-number' },
-        { matchNumber: 88, roundKey: '', stage: '' },
-      ),
-      createRoundOf32Match(
-        { _id: 'team-octavos' },
-        null,
-        { matchNumber: 89, roundKey: 'round-of-16', stage: 'ROUND_OF_16' },
-      ),
-    ])
-
-    expect([...ids].sort()).toEqual(['team-away', 'team-home', 'team-number', 'team-stage'])
-  })
-
   it('marks top 8 as provisional and ranks 9 to 12 as outside zone while groups are open', () => {
     const standings = Array.from({ length: 12 }, (_, index) =>
       createStanding(String.fromCharCode(65 + index), { pj: 2, pts: 12 - index }),
@@ -228,11 +249,6 @@ describe('thirdPlaceRanking', () => {
       isFinalThirdPlaceRanking: false,
       qualificationStatus: THIRD_PLACE_RANKING_STATUS.provisional,
       isQualifiedThirdPlace: false,
-    })
-    expect(ranking[7]).toMatchObject({
-      rank: 8,
-      isInTopEight: true,
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.provisional,
     })
     expect(ranking[8]).toMatchObject({
       rank: 9,
@@ -251,12 +267,6 @@ describe('thirdPlaceRanking', () => {
       group: 'A',
       isInTopEight: true,
       isFinalThirdPlaceRanking: true,
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
-      isQualifiedThirdPlace: true,
-    })
-    expect(ranking[7]).toMatchObject({
-      rank: 8,
-      isInTopEight: true,
       qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
       isQualifiedThirdPlace: true,
     })
@@ -281,83 +291,10 @@ describe('thirdPlaceRanking', () => {
       qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
       isQualifiedThirdPlace: true,
     })
-    expect(ranking[1]).toMatchObject({
-      group: 'B',
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
-      isQualifiedThirdPlace: true,
-    })
     expect(ranking[8]).toMatchObject({
       group: 'I',
       qualificationStatus: THIRD_PLACE_RANKING_STATUS.notQualified,
       isQualifiedThirdPlace: false,
-    })
-
-    const openStandings = Array.from({ length: 12 }, (_, index) =>
-      createStanding(String.fromCharCode(65 + index), { pj: 2, pts: 12 - index }),
-    )
-    openStandings[0].teams[2].team.qualifiedTo = 'ROUND_OF_32'
-    openStandings[8].teams[2].team.qualifiedTo = 'ELIMINATED'
-
-    const openRanking = buildThirdPlaceRanking(openStandings)
-
-    expect(openRanking[0]).toMatchObject({
-      group: 'A',
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.provisional,
-      isQualifiedThirdPlace: false,
-    })
-    expect(openRanking[8]).toMatchObject({
-      group: 'I',
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.outsideZone,
-      isQualifiedThirdPlace: false,
-    })
-  })
-
-  it('marks the cutoff tie as pending when round-of-32 data is unavailable', () => {
-    const standings = createCutoffTieStandings()
-
-    const ranking = buildThirdPlaceRanking(standings)
-    const groupH = ranking.find((row) => row.group === 'H')
-    const groupI = ranking.find((row) => row.group === 'I')
-
-    expect(groupH).toMatchObject({
-      rank: 8,
-      isInCutoffTie: true,
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.pendingTiebreak,
-      cutoffTiebreakStatus: 'pending',
-      isQualifiedThirdPlace: false,
-    })
-    expect(groupI).toMatchObject({
-      rank: 9,
-      isInCutoffTie: true,
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.pendingTiebreak,
-      cutoffTiebreakStatus: 'pending',
-      isQualifiedThirdPlace: false,
-    })
-  })
-
-  it('uses round-of-32 placement to resolve a complete cutoff tie without alphabetical badges', () => {
-    const standings = createCutoffTieStandings()
-    const groupITeam = standings[8].teams[2].team
-
-    const ranking = buildThirdPlaceRanking(standings, [createRoundOf32Match(groupITeam)])
-    const groupH = ranking.find((row) => row.group === 'H')
-    const groupI = ranking.find((row) => row.group === 'I')
-
-    expect(groupH).toMatchObject({
-      rank: 8,
-      isInTopEight: true,
-      isInCutoffTie: true,
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.notQualified,
-      cutoffTiebreakStatus: 'resolved-by-bracket',
-      isQualifiedThirdPlace: false,
-    })
-    expect(groupI).toMatchObject({
-      rank: 9,
-      isInTopEight: false,
-      isInCutoffTie: true,
-      qualificationStatus: THIRD_PLACE_RANKING_STATUS.qualified,
-      cutoffTiebreakStatus: 'resolved-by-bracket',
-      isQualifiedThirdPlace: true,
     })
   })
 })

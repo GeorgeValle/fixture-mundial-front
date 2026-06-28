@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import StandingsGroupCard from '../../components/StandingsGroupCard/StandingsGroupCard'
 import ThirdPlaceRankingTable from '../../components/ThirdPlaceRankingTable/ThirdPlaceRankingTable'
@@ -9,7 +9,6 @@ import {
   setGlobalLoading,
 } from '../../features/ui/uiSlice'
 import { getStandings } from '../../services/standings/standingsService'
-import { getMatches } from '../../services/matches/matchesService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
 import { buildThirdPlaceRanking } from '../../utils/thirdPlaceRanking'
@@ -37,11 +36,8 @@ function getInitialViewMode(initialFavoriteGroup) {
 
 function GroupStandings() {
   const dispatch = useDispatch()
-  const hasRequestedKnockoutMatchesRef = useRef(false)
-  const isRequestingKnockoutMatchesRef = useRef(false)
   const [initialFavoriteGroup] = useState(getInitialFavoriteGroup)
   const [standings, setStandings] = useState([])
-  const [knockoutMatches, setKnockoutMatches] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorKind, setErrorKind] = useState(null)
   const [viewMode, setViewMode] = useState(() => getInitialViewMode(initialFavoriteGroup))
@@ -109,51 +105,6 @@ function GroupStandings() {
     }
   }, [dispatch, retryCount])
 
-  useEffect(() => {
-    if (
-      viewMode !== VIEW_MODE_THIRD_PLACES ||
-      hasRequestedKnockoutMatchesRef.current ||
-      isRequestingKnockoutMatchesRef.current ||
-      isLoading ||
-      errorKind
-    ) {
-      return undefined
-    }
-
-    let isActive = true
-    isRequestingKnockoutMatchesRef.current = true
-
-    getMatches()
-      .then((nextMatches) => {
-        if (!isActive) {
-          return
-        }
-
-        setKnockoutMatches(nextMatches)
-        hasRequestedKnockoutMatchesRef.current = true
-      })
-      .catch(() => {
-        if (!isActive) {
-          return
-        }
-
-        setKnockoutMatches([])
-        hasRequestedKnockoutMatchesRef.current = false
-      })
-      .finally(() => {
-        if (!isActive) {
-          return
-        }
-
-        isRequestingKnockoutMatchesRef.current = false
-      })
-
-    return () => {
-      isActive = false
-      isRequestingKnockoutMatchesRef.current = false
-    }
-  }, [errorKind, isLoading, viewMode])
-
   const hasStandings = hasRenderableStandings(standings)
   const errorMessage =
     errorKind === 'invalid' ? FRIENDLY_INVALID_PAYLOAD_MESSAGE : FRIENDLY_API_ERROR_MESSAGE
@@ -163,7 +114,7 @@ function GroupStandings() {
     standings.find((standing) => standing?.group === selectedGroup) ?? standings[0]
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
-  const thirdPlaceRanking = buildThirdPlaceRanking(standings, knockoutMatches)
+  const thirdPlaceRanking = buildThirdPlaceRanking(standings)
   const totalGroups = standings.length
   const totalTeams = standings.reduce(
     (count, standing) => count + (standing?.teams?.length ?? 0),
@@ -171,11 +122,8 @@ function GroupStandings() {
   )
 
   function handleRetryStandings() {
-    hasRequestedKnockoutMatchesRef.current = false
-    isRequestingKnockoutMatchesRef.current = false
     setIsLoading(true)
     setErrorKind(null)
-    setKnockoutMatches([])
     setRetryCount((currentCount) => currentCount + 1)
   }
 

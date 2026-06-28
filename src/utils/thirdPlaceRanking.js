@@ -3,23 +3,34 @@ const QUALIFIED_THIRD_PLACES = 8
 const GROUP_STAGE_GROUPS = 12
 const GROUP_STAGE_TEAMS_PER_GROUP = 4
 const GROUP_STAGE_MATCHES_PER_TEAM = 3
-const ROUND_OF_32_MATCH_NUMBER_START = 73
-const ROUND_OF_32_MATCH_NUMBER_END = 88
-const ROUND_OF_32_ALIASES = new Set([
-  'round of 32',
-  'round of thirty two',
-  'dieciseisavos de final',
-  'dieciseisavos',
-  '16avos',
-  '16 avos',
-])
 
 export const THIRD_PLACE_RANKING_STATUS = {
   qualified: 'qualified',
   provisional: 'provisional',
   notQualified: 'not-qualified',
   outsideZone: 'outside-zone',
-  pendingTiebreak: 'pending-tiebreak',
+}
+
+export function getNumberOrNull(value) {
+  if (value === null || value === undefined || value === '') {
+    return null
+  }
+
+  if (typeof value === 'string' && value.trim() === '') {
+    return null
+  }
+
+  const numericValue = Number(value)
+
+  return Number.isFinite(numericValue) ? numericValue : null
+}
+
+export function getGroupFairPlayPoints(row) {
+  return getNumberOrNull(row?.groupFairPlayPoints ?? row?.team?.groupFairPlayPoints)
+}
+
+export function getFifaRanking(row) {
+  return getNumberOrNull(row?.fifaRanking ?? row?.team?.fifaRanking)
 }
 
 export function areAllGroupsClosed(standings = []) {
@@ -44,84 +55,6 @@ function getThirdPlaceRankingStatus({ isInTopEight, isFinalThirdPlaceRanking }) 
   }
 
   return isInTopEight ? THIRD_PLACE_RANKING_STATUS.provisional : THIRD_PLACE_RANKING_STATUS.outsideZone
-}
-
-function toStringValue(value) {
-  if (value === null || value === undefined) {
-    return ''
-  }
-
-  return String(value)
-}
-
-function normalizeRoundText(value) {
-  return toStringValue(value)
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/[-_/]+/g, ' ')
-    .replace(/[^a-z0-9 ]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function getMatchNumber(match) {
-  const candidates = [match?.matchNumber, match?.number, match?.matchNo]
-
-  for (const candidate of candidates) {
-    const numericValue = Number(candidate)
-
-    if (Number.isInteger(numericValue)) {
-      return numericValue
-    }
-  }
-
-  const templateCodeMatch = toStringValue(match?.templateCode ?? match?.code).match(/KO[-_ ]?(\d+)/i)
-
-  return templateCodeMatch ? Number(templateCodeMatch[1]) : null
-}
-
-function isRoundOf32Match(match) {
-  const roundCandidates = [match?.roundKey, match?.round, match?.stage].map(normalizeRoundText)
-  const matchNumber = getMatchNumber(match)
-
-  return (
-    roundCandidates.some((candidate) => ROUND_OF_32_ALIASES.has(candidate)) ||
-    (Number.isInteger(matchNumber) &&
-      matchNumber >= ROUND_OF_32_MATCH_NUMBER_START &&
-      matchNumber <= ROUND_OF_32_MATCH_NUMBER_END)
-  )
-}
-
-function getTeamId(team) {
-  const teamId = toStringValue(team?._id ?? team?.id).trim()
-
-  return teamId || ''
-}
-
-function getRowTeamId(row) {
-  return getTeamId(row?.team)
-}
-
-export function getRoundOf32TeamIds(matches = []) {
-  const safeMatches = Array.isArray(matches) ? matches : []
-  const teamIds = new Set()
-
-  for (const match of safeMatches) {
-    if (!isRoundOf32Match(match)) {
-      continue
-    }
-
-    for (const team of [match?.homeTeam, match?.awayTeam]) {
-      const teamId = getTeamId(team)
-
-      if (teamId) {
-        teamIds.add(teamId)
-      }
-    }
-  }
-
-  return teamIds
 }
 
 function getTeamName(row) {
@@ -159,91 +92,50 @@ function getThirdPlaceRow(standing) {
   )
 }
 
-function getRankingStat(row, key) {
-  return Number(row?.[key] ?? 0)
+function compareOptionalFairPlay(firstRow, secondRow) {
+  const firstFairPlay = getGroupFairPlayPoints(firstRow)
+  const secondFairPlay = getGroupFairPlayPoints(secondRow)
+
+  if (firstFairPlay === null || secondFairPlay === null) {
+    return 0
+  }
+
+  return secondFairPlay - firstFairPlay
 }
 
-function haveSameRankingStats(firstRow, secondRow) {
+function compareOptionalFifaRanking(firstRow, secondRow) {
+  const firstRanking = getFifaRanking(firstRow)
+  const secondRanking = getFifaRanking(secondRow)
+
+  if (firstRanking !== null && secondRanking !== null) {
+    return firstRanking - secondRanking
+  }
+
+  if (firstRanking !== null) {
+    return -1
+  }
+
+  if (secondRanking !== null) {
+    return 1
+  }
+
+  return 0
+}
+
+function compareThirdPlaceRows(firstRow, secondRow) {
   return (
-    getRankingStat(firstRow, 'pts') === getRankingStat(secondRow, 'pts') &&
-    getRankingStat(firstRow, 'dif') === getRankingStat(secondRow, 'dif') &&
-    getRankingStat(firstRow, 'gf') === getRankingStat(secondRow, 'gf')
+    (secondRow.pts ?? 0) - (firstRow.pts ?? 0) ||
+    (secondRow.dif ?? 0) - (firstRow.dif ?? 0) ||
+    (secondRow.gf ?? 0) - (firstRow.gf ?? 0) ||
+    compareOptionalFairPlay(firstRow, secondRow) ||
+    compareOptionalFifaRanking(firstRow, secondRow) ||
+    compareText(getTeamName(firstRow), getTeamName(secondRow)) ||
+    compareText(firstRow.group, secondRow.group) ||
+    firstRow.originalGroupIndex - secondRow.originalGroupIndex
   )
 }
 
-function getCutoffTieRange(sortedRows) {
-  if (sortedRows.length <= QUALIFIED_THIRD_PLACES) {
-    return null
-  }
-
-  const cutoffInsideRow = sortedRows[QUALIFIED_THIRD_PLACES - 1]
-  const cutoffOutsideRow = sortedRows[QUALIFIED_THIRD_PLACES]
-
-  if (!haveSameRankingStats(cutoffInsideRow, cutoffOutsideRow)) {
-    return null
-  }
-
-  let startIndex = QUALIFIED_THIRD_PLACES - 1
-  let endIndex = QUALIFIED_THIRD_PLACES
-
-  while (startIndex > 0 && haveSameRankingStats(sortedRows[startIndex - 1], cutoffInsideRow)) {
-    startIndex -= 1
-  }
-
-  while (
-    endIndex < sortedRows.length - 1 &&
-    haveSameRankingStats(sortedRows[endIndex + 1], cutoffInsideRow)
-  ) {
-    endIndex += 1
-  }
-
-  return {
-    endIndex,
-    qualifiedSlots: QUALIFIED_THIRD_PLACES - startIndex,
-    startIndex,
-  }
-}
-
-function buildCutoffTieContext(sortedRows, matches) {
-  const cutoffTieRange = getCutoffTieRange(sortedRows)
-  const roundOf32TeamIds = getRoundOf32TeamIds(matches)
-
-  if (!cutoffTieRange) {
-    return {
-      cutoffTieRange,
-      hasSufficientBracketTiebreakData: false,
-      roundOf32TeamIds,
-    }
-  }
-
-  const tiedRows = sortedRows.slice(cutoffTieRange.startIndex, cutoffTieRange.endIndex + 1)
-  const placedTiedRowsCount = tiedRows.filter((row) => roundOf32TeamIds.has(getRowTeamId(row))).length
-
-  return {
-    cutoffTieRange,
-    hasSufficientBracketTiebreakData:
-      roundOf32TeamIds.size > 0 && placedTiedRowsCount >= cutoffTieRange.qualifiedSlots,
-    roundOf32TeamIds,
-  }
-}
-
-function getCutoffTieStatus({ cutoffTieContext, index, row }) {
-  const { cutoffTieRange, hasSufficientBracketTiebreakData, roundOf32TeamIds } = cutoffTieContext
-
-  if (!cutoffTieRange || index < cutoffTieRange.startIndex || index > cutoffTieRange.endIndex) {
-    return null
-  }
-
-  if (roundOf32TeamIds.has(getRowTeamId(row))) {
-    return THIRD_PLACE_RANKING_STATUS.qualified
-  }
-
-  return hasSufficientBracketTiebreakData
-    ? THIRD_PLACE_RANKING_STATUS.notQualified
-    : THIRD_PLACE_RANKING_STATUS.pendingTiebreak
-}
-
-export function buildThirdPlaceRanking(standings = [], matches = []) {
+export function buildThirdPlaceRanking(standings = []) {
   const safeStandings = Array.isArray(standings) ? standings : []
   const isFinalThirdPlaceRanking = areAllGroupsClosed(safeStandings)
   const seenTeamKeys = new Set()
@@ -271,43 +163,20 @@ export function buildThirdPlaceRanking(standings = [], matches = []) {
     })
   }
 
-  const sortedRows = thirdPlaceRows.sort(
-    (firstRow, secondRow) =>
-      (secondRow.pts ?? 0) - (firstRow.pts ?? 0) ||
-      (secondRow.dif ?? 0) - (firstRow.dif ?? 0) ||
-      (secondRow.gf ?? 0) - (firstRow.gf ?? 0) ||
-      compareText(getTeamName(firstRow), getTeamName(secondRow)) ||
-      compareText(firstRow.group, secondRow.group) ||
-      firstRow.originalGroupIndex - secondRow.originalGroupIndex,
-  )
-  const cutoffTieContext = buildCutoffTieContext(sortedRows, matches)
-
-  return sortedRows
-    .map((row, index) => {
-      const isInTopEight = index < QUALIFIED_THIRD_PLACES
-      const cutoffTieStatus = getCutoffTieStatus({ cutoffTieContext, index, row })
-      const qualificationStatus =
-        cutoffTieStatus ??
-        getThirdPlaceRankingStatus({
-          isInTopEight,
-          isFinalThirdPlaceRanking,
-        })
-      const isInCutoffTie = Boolean(cutoffTieStatus)
-      const cutoffTiebreakStatus = isInCutoffTie
-        ? qualificationStatus === THIRD_PLACE_RANKING_STATUS.pendingTiebreak
-          ? 'pending'
-          : 'resolved-by-bracket'
-        : 'none'
-
-      return {
-        ...row,
-        rank: index + 1,
-        isInTopEight,
-        isInCutoffTie,
-        isFinalThirdPlaceRanking,
-        qualificationStatus,
-        cutoffTiebreakStatus,
-        isQualifiedThirdPlace: qualificationStatus === THIRD_PLACE_RANKING_STATUS.qualified,
-      }
+  return thirdPlaceRows.sort(compareThirdPlaceRows).map((row, index) => {
+    const isInTopEight = index < QUALIFIED_THIRD_PLACES
+    const qualificationStatus = getThirdPlaceRankingStatus({
+      isInTopEight,
+      isFinalThirdPlaceRanking,
     })
+
+    return {
+      ...row,
+      rank: index + 1,
+      isInTopEight,
+      isFinalThirdPlaceRanking,
+      qualificationStatus,
+      isQualifiedThirdPlace: qualificationStatus === THIRD_PLACE_RANKING_STATUS.qualified,
+    }
+  })
 }
