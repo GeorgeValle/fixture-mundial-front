@@ -38,6 +38,7 @@ function getInitialViewMode(initialFavoriteGroup) {
 function GroupStandings() {
   const dispatch = useDispatch()
   const hasRequestedKnockoutMatchesRef = useRef(false)
+  const isRequestingKnockoutMatchesRef = useRef(false)
   const [initialFavoriteGroup] = useState(getInitialFavoriteGroup)
   const [standings, setStandings] = useState([])
   const [knockoutMatches, setKnockoutMatches] = useState([])
@@ -112,6 +113,7 @@ function GroupStandings() {
     if (
       viewMode !== VIEW_MODE_THIRD_PLACES ||
       hasRequestedKnockoutMatchesRef.current ||
+      isRequestingKnockoutMatchesRef.current ||
       isLoading ||
       errorKind
     ) {
@@ -119,7 +121,7 @@ function GroupStandings() {
     }
 
     let isActive = true
-    hasRequestedKnockoutMatchesRef.current = true
+    isRequestingKnockoutMatchesRef.current = true
 
     getMatches()
       .then((nextMatches) => {
@@ -128,6 +130,7 @@ function GroupStandings() {
         }
 
         setKnockoutMatches(nextMatches)
+        hasRequestedKnockoutMatchesRef.current = true
       })
       .catch(() => {
         if (!isActive) {
@@ -135,10 +138,19 @@ function GroupStandings() {
         }
 
         setKnockoutMatches([])
+        hasRequestedKnockoutMatchesRef.current = false
+      })
+      .finally(() => {
+        if (!isActive) {
+          return
+        }
+
+        isRequestingKnockoutMatchesRef.current = false
       })
 
     return () => {
       isActive = false
+      isRequestingKnockoutMatchesRef.current = false
     }
   }, [errorKind, isLoading, viewMode])
 
@@ -160,6 +172,7 @@ function GroupStandings() {
 
   function handleRetryStandings() {
     hasRequestedKnockoutMatchesRef.current = false
+    isRequestingKnockoutMatchesRef.current = false
     setIsLoading(true)
     setErrorKind(null)
     setKnockoutMatches([])

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { configureStore } from '@reduxjs/toolkit'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
@@ -405,6 +405,88 @@ describe('GroupStandings', () => {
 
     expect(within(getTeamRow('Tercero H')).getByText('No clasifica')).toBeInTheDocument()
     expect(within(getTeamRow('Tercero I')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(screen.queryByText('Desempate pendiente')).not.toBeInTheDocument()
+  })
+
+  it('retries loading knockout matches when the first request is discarded after changing views', async () => {
+    const user = userEvent.setup()
+    const standings = createCutoffTieStandingsGroups({ isClosed: true })
+    const groupITeam = standings[8].teams[2].team
+    let matchesCallCount = 0
+    let resolveFirstMatchesRequest
+    const firstMatchesRequest = new Promise((resolve) => {
+      resolveFirstMatchesRequest = resolve
+    })
+
+    mockStandingsResponse(standings)
+    server.use(
+      http.get('*/api/matches', async () => {
+        matchesCallCount += 1
+
+        if (matchesCallCount === 1) {
+          await firstMatchesRequest
+        }
+
+        return HttpResponse.json({
+          status: 'success',
+          data: [createRoundOf32Match(groupITeam)],
+        })
+      }),
+    )
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+    await waitFor(() => expect(matchesCallCount).toBe(1))
+
+    await user.click(screen.getByRole('button', { name: /vista general/i }))
+    resolveFirstMatchesRequest()
+    await user.click(screen.getByRole('button', { name: /mejores terceros/i }))
+
+    await waitFor(() => expect(matchesCallCount).toBe(2))
+    expect(
+      await screen.findByText(/el desempate del corte se refleja según los equipos ya ubicados en 16avos/i),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Desempate pendiente')).not.toBeInTheDocument()
+  })
+
+  it('retries loading knockout matches on a later visit after the first request fails', async () => {
+    const user = userEvent.setup()
+    const standings = createCutoffTieStandingsGroups({ isClosed: true })
+    const groupITeam = standings[8].teams[2].team
+    let matchesCallCount = 0
+
+    mockStandingsResponse(standings)
+    server.use(
+      http.get('*/api/matches', () => {
+        matchesCallCount += 1
+
+        if (matchesCallCount === 1) {
+          return HttpResponse.json({ message: 'Matches unavailable' }, { status: 500 })
+        }
+
+        return HttpResponse.json({
+          status: 'success',
+          data: [createRoundOf32Match(groupITeam)],
+        })
+      }),
+    )
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+    await waitFor(() => expect(matchesCallCount).toBe(1))
+    expect(
+      await screen.findByText(/hay selecciones empatadas en el corte; la resolución queda pendiente/i),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /vista general/i }))
+    await user.click(screen.getByRole('button', { name: /mejores terceros/i }))
+
+    await waitFor(() => expect(matchesCallCount).toBe(2))
+    expect(
+      await screen.findByText(/el desempate del corte se refleja según los equipos ya ubicados en 16avos/i),
+    ).toBeInTheDocument()
     expect(screen.queryByText('Desempate pendiente')).not.toBeInTheDocument()
   })
 
