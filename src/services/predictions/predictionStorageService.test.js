@@ -14,6 +14,7 @@ const basePrediction = {
   predictedAwayScore: 1,
   predictedHomePenaltyScore: null,
   predictedAwayPenaltyScore: null,
+  predictedAdvancingTeamId: null,
   updatedAt: '2026-06-11T12:00:00.000Z',
 }
 
@@ -73,6 +74,26 @@ describe('predictionStorageService', () => {
     expect(savedPrediction).not.toHaveProperty('officialAwayScore')
     expect(savedPrediction).not.toHaveProperty('points')
     expect(savedPrediction).not.toHaveProperty('indicators')
+  })
+
+  it('saves and recovers a visual knockout advancing team selection', () => {
+    savePrediction('knockout-1', {
+      ...basePrediction,
+      predictedHomeScore: 1,
+      predictedAwayScore: 1,
+      predictedAdvancingTeamId: 'team-away',
+    })
+
+    const result = loadPredictionsStorage()
+
+    expect(result.data.predictions['knockout-1']).toMatchObject({
+      matchId: 'knockout-1',
+      predictedHomeScore: 1,
+      predictedAwayScore: 1,
+      predictedHomePenaltyScore: null,
+      predictedAwayPenaltyScore: null,
+      predictedAdvancingTeamId: 'team-away',
+    })
   })
 
   it('handles corrupt localStorage without crashing', () => {

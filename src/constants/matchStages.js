@@ -27,6 +27,7 @@ export const MATCH_STAGE_DISPLAY_LABELS = {
   ROUND_OF_16: 'Octavos',
   QUARTER_FINALS: 'Cuartos',
   SEMI_FINALS: 'Semifinales',
+  THIRD_PLACE: 'Tercer puesto',
   THIRD_PLACE_MATCH: 'Tercer puesto',
   FINAL: 'Final',
 }

@@ -13,6 +13,8 @@ import { savePredictionsStorage } from '../../services/predictions/predictionSto
 import { server } from '../../test/msw/server'
 import PredictionFixture from './PredictionFixture'
 
+let originalScrollIntoView
+
 function createTeam(name, group = 'A') {
   return {
     _id: `${group}-${name}`,
@@ -47,7 +49,7 @@ function createMatch(overrides = {}) {
 }
 
 function createKnockoutMatch(overrides = {}) {
-  return createMatch({
+  const match = createMatch({
     id: overrides.id ?? 'knockout-final-1',
     stage: overrides.stage ?? 'Final',
     home: overrides.home ?? 'Francia',
@@ -57,6 +59,12 @@ function createKnockoutMatch(overrides = {}) {
     awayScore: overrides.awayScore ?? null,
     date: overrides.date ?? '2026-07-19T19:00:00.000Z',
   })
+
+  return {
+    ...match,
+    homePenaltyScore: overrides.homePenaltyScore ?? match.homePenaltyScore,
+    awayPenaltyScore: overrides.awayPenaltyScore ?? match.awayPenaltyScore,
+  }
 }
 
 const pendingMatch = createMatch()
@@ -99,14 +107,16 @@ const finishedKnockoutMatch = createKnockoutMatch({
   awayScore: 1,
 })
 
-function createSavedPrediction(matchId, homeScore = 1, awayScore = 0) {
+function createSavedPrediction(matchId, homeScore = 1, awayScore = 0, overrides = {}) {
   return {
     matchId,
     predictedHomeScore: homeScore,
     predictedAwayScore: awayScore,
     predictedHomePenaltyScore: null,
     predictedAwayPenaltyScore: null,
+    predictedAdvancingTeamId: null,
     updatedAt: '2026-06-11T12:00:00.000Z',
+    ...overrides,
   }
 }
 
@@ -138,11 +148,18 @@ function renderPredictionsRoute() {
 }
 
 beforeEach(() => {
+  originalScrollIntoView = window.HTMLElement.prototype.scrollIntoView
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-06-10T12:00:00.000Z'))
 })
 
 afterEach(() => {
+  if (originalScrollIntoView) {
+    window.HTMLElement.prototype.scrollIntoView = originalScrollIntoView
+  } else {
+    delete window.HTMLElement.prototype.scrollIntoView
+  }
+
   vi.useRealTimers()
   vi.restoreAllMocks()
   window.localStorage.clear()
@@ -364,6 +381,52 @@ describe('PredictionFixture', () => {
     expect(savedStorage.predictions).toHaveProperty('playing-1')
     expect(savedStorage.predictions).toHaveProperty('finished-1')
     expect(savedStorage.predictions).toHaveProperty('closed-date-1')
+  })
+
+  it('clears only editable knockout predictions without affecting groups or locked knockout matches', async () => {
+    const user = userEvent.setup()
+    const editableKnockoutMatch = createKnockoutMatch({
+      id: 'knockout-editable-reset-1',
+      stage: 'ROUND_OF_32',
+      home: 'Argentina',
+      away: 'Francia',
+    })
+    const lockedKnockoutMatch = createKnockoutMatch({
+      id: 'knockout-locked-reset-1',
+      stage: 'FINAL',
+      home: 'España',
+      away: 'Italia',
+      status: 'FINISHED',
+      homeScore: 2,
+      awayScore: 1,
+    })
+    savePredictionsStorage({
+      version: 1,
+      userName: 'Yorch',
+      predictions: {
+        'match-1': createSavedPrediction('match-1', 2, 1),
+        'knockout-editable-reset-1': createSavedPrediction('knockout-editable-reset-1', 1, 0),
+        'knockout-locked-reset-1': createSavedPrediction('knockout-locked-reset-1', 2, 1),
+      },
+    })
+    mockMatchesResponse([pendingMatch, editableKnockoutMatch, lockedKnockoutMatch])
+
+    renderPredictionFixture()
+
+    await screen.findByLabelText('Goles de Argentina')
+    await user.click(screen.getByRole('button', { name: 'Borrar predicciones de eliminatorias' }))
+    await user.click(screen.getByRole('button', { name: 'Borrar predicciones' }))
+
+    expect(
+      screen.getByText(
+        'Se borraron las predicciones editables de eliminatorias. Las predicciones bloqueadas se conservaron.',
+      ),
+    ).toBeInTheDocument()
+
+    const savedStorage = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.predictions))
+    expect(savedStorage.predictions).toHaveProperty('match-1')
+    expect(savedStorage.predictions).not.toHaveProperty('knockout-editable-reset-1')
+    expect(savedStorage.predictions).toHaveProperty('knockout-locked-reset-1')
   })
 
   it('prints visible predictions without mutating saved data or the selected group filter', async () => {
@@ -660,7 +723,7 @@ describe('PredictionFixture', () => {
     expect(within(summary).getByText('1 /72')).toBeInTheDocument()
     expect(within(summary).getByText('Puntos de grupo obtenidos')).toBeInTheDocument()
     expect(within(summary).getByText('Progreso de eliminatorias')).toBeInTheDocument()
-    expect(within(summary).getByText('1 /32')).toBeInTheDocument()
+    expect(within(summary).getByText('1 /1')).toBeInTheDocument()
     expect(within(summary).getByText('Puntos de eliminatorias obtenidos')).toBeInTheDocument()
     expect(within(summary).getByText('Puntos totales')).toBeInTheDocument()
     expect(within(summary).getAllByText('4')).toHaveLength(2)
@@ -692,7 +755,7 @@ describe('PredictionFixture', () => {
       'Cómo se calculan los puntos de eliminatorias',
     )
     expect(screen.getByRole('dialog')).toHaveTextContent(
-      '2 puntos por acertar ganador o clasificado.',
+      '2 puntos por acertar ganador.',
     )
     await user.click(screen.getByRole('button', { name: 'Cerrar' }))
 
@@ -709,7 +772,7 @@ describe('PredictionFixture', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('keeps knockout predictions closed and does not render placeholder prediction cards', async () => {
+  it('does not render placeholder knockout prediction cards', async () => {
     const placeholderKnockoutMatch = createMatch({
       id: 'ko-placeholder',
       stage: 'Final',
@@ -722,30 +785,29 @@ describe('PredictionFixture', () => {
 
     expect(
       await screen.findByText(
-        'Las predicciones de eliminatorias se habilitarán cuando estén definidos los cruces.',
+        'Las eliminatorias estarán disponibles cuando los cruces estén definidos',
       ),
     ).toBeInTheDocument()
     expect(screen.queryByLabelText('Goles de Ganador Partido 101')).not.toBeInTheDocument()
-    expect(screen.getByText('Eliminatorias aún no disponibles')).toBeInTheDocument()
     expect(
       screen.getByText(
-        'No se permiten predicciones sobre cruces base, TBD ni equipos por definir.',
+        /No se muestran cruces base, TBD ni equipos por definir/i,
       ),
     ).toBeInTheDocument()
     expect(screen.getByText('No hay partidos de fase de grupos para predecir')).toBeInTheDocument()
   })
 
-  it('filters real knockout matches by selected phase without enabling placeholder predictions', async () => {
+  it('renders and filters real knockout prediction cards by canonical stage', async () => {
     const user = userEvent.setup()
     const roundOf16Match = createKnockoutMatch({
       id: 'knockout-round-16-1',
-      stage: 'Octavos de final',
+      stage: 'ROUND_OF_16',
       home: 'Argentina',
       away: 'Alemania',
     })
     const finalMatch = createKnockoutMatch({
       id: 'knockout-final-2',
-      stage: 'Final',
+      stage: 'FINAL',
       home: 'Francia',
       away: 'Inglaterra',
     })
@@ -755,21 +817,212 @@ describe('PredictionFixture', () => {
 
     const knockoutSelector = await screen.findByLabelText('Fase eliminatoria')
     expect(knockoutSelector).toBeEnabled()
-    expect(screen.getByText('Argentina vs Alemania')).toBeInTheDocument()
-    expect(screen.getByText('Francia vs Inglaterra')).toBeInTheDocument()
-    expect(screen.queryByLabelText('Goles de Argentina')).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Partidos de eliminatorias' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Goles de Argentina')).toBeInTheDocument()
+    expect(screen.getByLabelText('Goles de Francia')).toBeInTheDocument()
+    expect(screen.getByText('Octavos')).toBeInTheDocument()
+    expect(screen.getAllByText('Final').length).toBeGreaterThan(0)
+    expect(screen.queryByText('ROUND_OF_16')).not.toBeInTheDocument()
+    expect(screen.queryByText('FINAL')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Penales de Argentina')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /guardar eliminatoria/i })).not.toBeInTheDocument()
 
     await user.selectOptions(knockoutSelector, 'final')
 
-    expect(screen.queryByText('Argentina vs Alemania')).not.toBeInTheDocument()
-    expect(screen.getByText('Francia vs Inglaterra')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Goles de Argentina')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Goles de Francia')).toBeInTheDocument()
 
     await user.selectOptions(knockoutSelector, 'round-of-16')
 
-    expect(screen.getByText('Argentina vs Alemania')).toBeInTheDocument()
-    expect(screen.queryByText('Francia vs Inglaterra')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Goles de Argentina')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Goles de Francia')).not.toBeInTheDocument()
+  })
+
+  it('scrolls to the knockout section only after the user changes the knockout phase filter', async () => {
+    const user = userEvent.setup()
+    const scrollIntoView = vi.fn()
+    const requestAnimationFrameSpy = vi
+      .spyOn(window, 'requestAnimationFrame')
+      .mockImplementation((callback) => {
+        callback()
+        return 1
+      })
+    window.HTMLElement.prototype.scrollIntoView = scrollIntoView
+    const roundOf16Match = createKnockoutMatch({
+      id: 'knockout-round-16-scroll-1',
+      stage: 'ROUND_OF_16',
+      home: 'Argentina',
+      away: 'Alemania',
+    })
+    const finalMatch = createKnockoutMatch({
+      id: 'knockout-final-scroll-1',
+      stage: 'FINAL',
+      home: 'Francia',
+      away: 'Inglaterra',
+    })
+    mockMatchesResponse([roundOf16Match, finalMatch])
+
+    renderPredictionFixture()
+
+    const knockoutSelector = await screen.findByLabelText('Fase eliminatoria')
+    expect(screen.getByRole('heading', { name: 'Partidos de eliminatorias' })).toBeInTheDocument()
+    expect(scrollIntoView).not.toHaveBeenCalled()
+
+    await user.selectOptions(knockoutSelector, 'final')
+
+    expect(requestAnimationFrameSpy).toHaveBeenCalled()
+    expect(scrollIntoView).toHaveBeenCalledWith({
+      behavior: 'smooth',
+      block: 'start',
+    })
+    expect(screen.getByLabelText('Goles de Francia')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Goles de Argentina')).not.toBeInTheDocument()
+  })
+
+  it('saves a knockout prediction with a regular home winner without penalty inputs', async () => {
+    const user = userEvent.setup()
+    const knockoutMatch = createKnockoutMatch({
+      id: 'knockout-round-32-1',
+      stage: 'ROUND_OF_32',
+      home: 'Argentina',
+      away: 'Francia',
+    })
+    mockMatchesResponse([knockoutMatch])
+
+    renderPredictionFixture()
+
+    expect(await screen.findByLabelText('Goles de Argentina')).toBeInTheDocument()
+    expect(screen.getByText('16avos')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Penales de Argentina')).not.toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Goles de Argentina'), '2')
+    await user.type(screen.getByLabelText('Goles de Francia'), '1')
+    await user.click(screen.getByRole('button', { name: 'Guardar predicción' }))
+
+    expect(screen.getByText('Predicción guardada')).toBeInTheDocument()
+
+    const savedStorage = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.predictions))
+    expect(savedStorage.predictions['knockout-round-32-1']).toMatchObject({
+      matchId: 'knockout-round-32-1',
+      predictedHomeScore: 2,
+      predictedAwayScore: 1,
+      predictedHomePenaltyScore: null,
+      predictedAwayPenaltyScore: null,
+      predictedAdvancingTeamId: null,
+    })
+    expect(screen.getByLabelText('Resumen de predicciones')).toHaveTextContent('1 /1')
+  })
+
+  it('requires and saves an exclusive advancing team selection for knockout draws', async () => {
+    const user = userEvent.setup()
+    const knockoutMatch = createKnockoutMatch({
+      id: 'knockout-draw-1',
+      stage: 'FINAL',
+      home: 'Argentina',
+      away: 'Francia',
+    })
+    mockMatchesResponse([knockoutMatch])
+
+    renderPredictionFixture()
+
+    await user.type(await screen.findByLabelText('Goles de Argentina'), '1')
+    await user.type(screen.getByLabelText('Goles de Francia'), '1')
+
+    expect(screen.getByText('Si empatan, ¿quién clasifica?')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Penales de Argentina')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Guardar predicción' }))
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      'Si pronosticás empate en eliminatorias, elegí qué equipo clasifica.',
+    )
+
+    const argentinaButton = screen.getByRole('button', { name: 'Argentina' })
+    const franceButton = screen.getByRole('button', { name: 'Francia' })
+
+    await user.click(argentinaButton)
+    expect(argentinaButton).toHaveAttribute('aria-pressed', 'true')
+    expect(franceButton).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(franceButton)
+    expect(screen.getByRole('button', { name: 'Argentina' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    expect(screen.getByRole('button', { name: '✓ Francia' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Guardar predicción' }))
+
+    const savedStorage = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.predictions))
+    expect(savedStorage.predictions['knockout-draw-1']).toMatchObject({
+      predictedHomeScore: 1,
+      predictedAwayScore: 1,
+      predictedAdvancingTeamId: knockoutMatch.awayTeam._id,
+    })
+  })
+
+  it('clears the advancing team selection when a knockout prediction stops being a draw', async () => {
+    const user = userEvent.setup()
+    const knockoutMatch = createKnockoutMatch({
+      id: 'knockout-clear-advancing-1',
+      stage: 'FINAL',
+      home: 'Argentina',
+      away: 'Francia',
+    })
+    mockMatchesResponse([knockoutMatch])
+
+    renderPredictionFixture()
+
+    await user.type(await screen.findByLabelText('Goles de Argentina'), '1')
+    await user.type(screen.getByLabelText('Goles de Francia'), '1')
+    await user.click(screen.getByRole('button', { name: 'Argentina' }))
+    await user.clear(screen.getByLabelText('Goles de Francia'))
+    await user.type(screen.getByLabelText('Goles de Francia'), '0')
+
+    expect(screen.queryByText('Si empatan, ¿quién clasifica?')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Guardar predicción' }))
+
+    const savedStorage = JSON.parse(window.localStorage.getItem(STORAGE_KEYS.predictions))
+    expect(savedStorage.predictions['knockout-clear-advancing-1']).toMatchObject({
+      predictedHomeScore: 1,
+      predictedAwayScore: 0,
+      predictedAdvancingTeamId: null,
+    })
+  })
+
+  it('shows visual advancing comparison without adding points for the selected qualifier', async () => {
+    const finishedTieKnockoutMatch = createKnockoutMatch({
+      id: 'knockout-finished-tie-1',
+      stage: 'FINAL',
+      home: 'Argentina',
+      away: 'Francia',
+      status: 'FINISHED',
+      homeScore: 1,
+      awayScore: 1,
+      homePenaltyScore: 3,
+      awayPenaltyScore: 4,
+    })
+    savePredictionsStorage({
+      version: 1,
+      userName: 'Yorch',
+      predictions: {
+        'knockout-finished-tie-1': createSavedPrediction('knockout-finished-tie-1', 1, 1, {
+          predictedAdvancingTeamId: finishedTieKnockoutMatch.homeTeam._id,
+        }),
+      },
+    })
+    mockMatchesResponse([finishedTieKnockoutMatch])
+
+    renderPredictionFixture()
+
+    expect(await screen.findByText('Puntos obtenidos: 2')).toBeInTheDocument()
+    expect(screen.getByText('1 - 1 · Clasifica Argentina')).toBeInTheDocument()
+    expect(screen.getByText('1 - 1 · Clasificó Francia')).toBeInTheDocument()
+    expect(screen.queryByText('Clasificado acertado')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Penales/)).not.toBeInTheDocument()
   })
 
   it('shows a corrupt localStorage notice and allows guided reset', async () => {

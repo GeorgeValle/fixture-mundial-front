@@ -1,15 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import KnockoutPredictionsClosedPanel from '../../components/KnockoutPredictionsClosedPanel/KnockoutPredictionsClosedPanel'
 import PredictionDialog from '../../components/PredictionDialog/PredictionDialog'
 import PredictionGroupFilter, {
   ALL_GROUPS_VALUE,
 } from '../../components/PredictionGroupFilter/PredictionGroupFilter'
 import PredictionKnockoutPhaseFilter from '../../components/PredictionKnockoutPhaseFilter/PredictionKnockoutPhaseFilter'
-import {
-  ALL_KNOCKOUT_PHASES_VALUE,
-  KNOCKOUT_PHASE_OPTIONS,
-} from '../../constants/knockoutPhases'
+import { ALL_KNOCKOUT_PHASES_VALUE } from '../../constants/knockoutPhases'
 import PredictionMatchList from '../../components/PredictionMatchList/PredictionMatchList'
 import PredictionStorageResetNotice from '../../components/PredictionStorageResetNotice/PredictionStorageResetNotice'
 import PredictionSummary from '../../components/PredictionSummary/PredictionSummary'
@@ -32,6 +28,14 @@ import { sortMatchesByDate } from '../../utils/dateAdapter'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
 import { getPredictionLockState } from '../../utils/predictionLocking'
 import {
+  filterKnockoutMatchesByPhase,
+  getGroupLetterFromStage,
+  getKnockoutPhaseLabel,
+  getPredictionStageBadgeLabel,
+  isEligibleGroupMatch,
+  isEligibleKnockoutMatch,
+} from '../../utils/predictionMatchEligibility'
+import {
   getPredictionStageType,
   scoreGroupPrediction,
   scoreKnockoutPrediction,
@@ -45,13 +49,6 @@ import styles from './PredictionFixture.module.css'
 
 const FRIENDLY_ERROR_MESSAGE =
   'No pudimos cargar los partidos para predicciones. Si el servidor estaba dormido, esperá unos segundos y probá de nuevo.'
-
-const PLACEHOLDER_TEAM_NAMES = new Set([
-  'tbd',
-  'equipo por definir',
-  'equipo por confirmar',
-  'pending official data',
-])
 
 const HELP_MODAL_CONTENT = {
   group: {
@@ -70,20 +67,15 @@ const HELP_MODAL_CONTENT = {
     title: 'Cómo se calculan los puntos de eliminatorias',
     body: (
       <>
-        <p>Partido definido en marcador regular:</p>
+        <p>La predicción de eliminatorias usa solo los goles del partido.</p>
         <ul>
-          <li>2 puntos por acertar ganador o clasificado.</li>
+          <li>2 puntos por acertar ganador.</li>
           <li>1 punto por acertar goles del ganador.</li>
           <li>1 punto por acertar goles del perdedor.</li>
-        </ul>
-        <p>Partido empatado en goles y definido por penales:</p>
-        <ul>
-          <li>2 puntos por acertar ganador o clasificado.</li>
           <li>1 punto por acertar que el partido terminó empatado en goles.</li>
           <li>1 punto por acertar la cantidad exacta de goles del empate.</li>
-          <li>1 punto por acertar goles de penales del ganador.</li>
-          <li>1 punto por acertar goles de penales del perdedor.</li>
         </ul>
+        <p>Si pronosticás empate, elegís quién clasifica solo como dato visual: no suma puntos.</p>
       </>
     ),
   },
@@ -98,8 +90,8 @@ const HELP_MODAL_CONTENT = {
         <ul>
           <li>En grupos se premian ganador, empate y goles exactos según corresponda.</li>
           <li>
-            En eliminatorias se premian el clasificado, los goles regulares y, si hay
-            penales, los aciertos del desempate.
+            En eliminatorias se premian los goles normales y el resultado base. La
+            elección de clasificado en empates no modifica el puntaje.
           </li>
           <li>Solo se calculan puntos cuando hay resultado registrado suficiente.</li>
         </ul>
@@ -126,107 +118,13 @@ const RESET_DIALOG_CONTENT = {
   },
 }
 
-function normalizeText(value) {
-  return String(value ?? '')
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-function isRealTeam(team) {
-  const teamName = normalizeText(team?.name)
-
-  return (
-    Boolean(teamName) &&
-    !PLACEHOLDER_TEAM_NAMES.has(teamName) &&
-    !teamName.includes('ganador partido')
-  )
-}
-
-function isGroupStageMatch(match) {
-  return /^grupo\s+[a-l]$/i.test(normalizeText(match?.stage))
-}
-
-function getKnockoutStageText(match) {
-  return normalizeText(match?.stage ?? match?.round ?? match?.roundKey)
-}
-
-function getKnockoutPhaseValue(match) {
-  const stage = getKnockoutStageText(match)
-
-  if (
-    stage.includes('round of 32') ||
-    stage.includes('dieciseisavos') ||
-    stage.includes('ronda de 32')
-  ) {
-    return 'round-of-32'
-  }
-
-  if (
-    stage.includes('round of 16') ||
-    stage.includes('octavos') ||
-    stage.includes('ronda de 16')
-  ) {
-    return 'round-of-16'
-  }
-
-  if (stage.includes('quarter') || stage.includes('cuartos')) {
-    return 'quarter-finals'
-  }
-
-  if (stage.includes('semi') || stage.includes('semifinal')) {
-    return 'semi-finals'
-  }
-
-  if (stage.includes('third place') || stage.includes('tercer puesto')) {
-    return 'third-place'
-  }
-
-  if (stage === 'final') {
-    return 'final'
-  }
-
-  return ''
-}
-
-function getKnockoutPhaseLabel(value) {
-  return (
-    KNOCKOUT_PHASE_OPTIONS.find((option) => option.value === value)?.label ??
-    'Todas las fases'
-  )
-}
-
-function getGroupLetterFromStage(stage) {
-  const match = normalizeText(stage).match(/^grupo\s+([a-l])$/i)
-  return match ? match[1].toUpperCase() : ''
-}
-
-function isEligibleGroupMatch(match) {
-  return (
-    Boolean(match?._id) &&
-    isGroupStageMatch(match) &&
-    isRealTeam(match.homeTeam) &&
-    isRealTeam(match.awayTeam)
-  )
-}
-
-function hasRealKnockoutTeams(match) {
-  return (
-    getPredictionStageType(match) === 'knockout' &&
-    Boolean(match?._id) &&
-    isRealTeam(match.homeTeam) &&
-    isRealTeam(match.awayTeam)
-  )
-}
-
 function toDraftPrediction(prediction) {
   return {
     predictedHomeScore:
       prediction?.predictedHomeScore === undefined ? '' : String(prediction.predictedHomeScore),
     predictedAwayScore:
       prediction?.predictedAwayScore === undefined ? '' : String(prediction.predictedAwayScore),
+    predictedAdvancingTeamId: prediction?.predictedAdvancingTeamId ?? null,
   }
 }
 
@@ -246,7 +144,23 @@ function createPredictionCandidate(matchId, draft) {
     predictedAwayScore: draft?.predictedAwayScore ?? '',
     predictedHomePenaltyScore: null,
     predictedAwayPenaltyScore: null,
+    predictedAdvancingTeamId: draft?.predictedAdvancingTeamId ?? null,
   }
+}
+
+function hasCompletedDrawDraft(draft) {
+  const homeScore = draft?.predictedHomeScore
+  const awayScore = draft?.predictedAwayScore
+
+  return (
+    homeScore !== undefined &&
+    homeScore !== null &&
+    homeScore !== '' &&
+    awayScore !== undefined &&
+    awayScore !== null &&
+    awayScore !== '' &&
+    homeScore === awayScore
+  )
 }
 
 function getSavedPredictionsCount(matches, predictions) {
@@ -293,6 +207,7 @@ function getGroupFilterOptions(matches) {
 
 function PredictionFixture() {
   const dispatch = useDispatch()
+  const knockoutSectionRef = useRef(null)
   const [initialStorageResult] = useState(() => loadPredictionsStorage())
   const [storageData, setStorageData] = useState(initialStorageResult.data)
   const [hasCorruptStorage, setHasCorruptStorage] = useState(initialStorageResult.isCorrupt)
@@ -378,15 +293,15 @@ function PredictionFixture() {
   }, [dispatch, retryCount])
 
   const groupMatches = sortMatchesByDate(matches.filter(isEligibleGroupMatch))
-  const knockoutMatches = sortMatchesByDate(matches.filter(hasRealKnockoutTeams))
+  const knockoutMatches = sortMatchesByDate(matches.filter(isEligibleKnockoutMatch))
   const filteredGroupMatches =
     selectedGroup === ALL_GROUPS_VALUE
       ? groupMatches
       : groupMatches.filter((match) => getGroupLetterFromStage(match.stage) === selectedGroup)
-  const filteredKnockoutMatches =
-    selectedKnockoutPhase === ALL_KNOCKOUT_PHASES_VALUE
-      ? knockoutMatches
-      : knockoutMatches.filter((match) => getKnockoutPhaseValue(match) === selectedKnockoutPhase)
+  const filteredKnockoutMatches = filterKnockoutMatchesByPhase(
+    knockoutMatches,
+    selectedKnockoutPhase,
+  )
   const groupFilterOptions = getGroupFilterOptions(groupMatches)
   const groupScoreResults = getScoreResults(
     groupMatches,
@@ -399,7 +314,10 @@ function PredictionFixture() {
     scoreKnockoutPrediction,
   )
   const lockStates = Object.fromEntries(
-    groupMatches.map((match) => [match._id, getPredictionLockState(match)]),
+    [...groupMatches, ...knockoutMatches].map((match) => [
+      match._id,
+      getPredictionLockState(match),
+    ]),
   )
   const resetLockStates = Object.fromEntries(
     [...groupMatches, ...knockoutMatches].map((match) => [
@@ -424,6 +342,31 @@ function PredictionFixture() {
     setRetryCount((currentCount) => currentCount + 1)
   }
 
+  function scrollToKnockoutSection() {
+    const scroll = () => {
+      if (typeof knockoutSectionRef.current?.scrollIntoView !== 'function') {
+        return
+      }
+
+      knockoutSectionRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+    }
+
+    if (typeof window.requestAnimationFrame === 'function') {
+      window.requestAnimationFrame(scroll)
+      return
+    }
+
+    window.setTimeout(scroll, 0)
+  }
+
+  function handleKnockoutPhaseChange(nextPhase) {
+    setSelectedKnockoutPhase(nextPhase)
+    scrollToKnockoutSection()
+  }
+
   function handleUserNameSubmit(event) {
     event.preventDefault()
     const userNameValidation = validateParticipantName(userNameInput)
@@ -443,12 +386,33 @@ function PredictionFixture() {
     setUserNameStatus('Nombre guardado')
   }
 
-  function handleScoreChange(matchId, field, value) {
+  function handleScoreChange(matchId, field, value, match = null) {
+    setDrafts((currentDrafts) => {
+      const nextDraft = {
+        ...currentDrafts[matchId],
+        [field]: value,
+      }
+
+      if (match && getPredictionStageType(match) === 'knockout' && !hasCompletedDrawDraft(nextDraft)) {
+        nextDraft.predictedAdvancingTeamId = null
+      }
+
+      return {
+        ...currentDrafts,
+        [matchId]: nextDraft,
+      }
+    })
+    setValidationErrors((currentErrors) => ({ ...currentErrors, [matchId]: '' }))
+    setSaveMessages((currentMessages) => ({ ...currentMessages, [matchId]: '' }))
+    setResetMessage('')
+  }
+
+  function handleAdvancingTeamChange(matchId, teamId) {
     setDrafts((currentDrafts) => ({
       ...currentDrafts,
       [matchId]: {
         ...currentDrafts[matchId],
-        [field]: value,
+        predictedAdvancingTeamId: teamId,
       },
     }))
     setValidationErrors((currentErrors) => ({ ...currentErrors, [matchId]: '' }))
@@ -468,8 +432,18 @@ function PredictionFixture() {
       return
     }
 
+    const isKnockoutMatch = getPredictionStageType(match) === 'knockout'
     const candidate = createPredictionCandidate(match._id, drafts[match._id])
-    const validation = validatePrediction(candidate)
+    const normalizedCandidateForValidation = {
+      ...candidate,
+      predictedAdvancingTeamId: isKnockoutMatch && hasCompletedDrawDraft(candidate)
+        ? candidate.predictedAdvancingTeamId
+        : null,
+    }
+    const validation = validatePrediction(normalizedCandidateForValidation, {
+      isKnockout: isKnockoutMatch,
+      match,
+    })
 
     if (!validation.isValid) {
       setValidationErrors((currentErrors) => ({
@@ -479,7 +453,7 @@ function PredictionFixture() {
       return
     }
 
-    const normalizedCandidate = normalizePredictionScores(candidate)
+    const normalizedCandidate = normalizePredictionScores(normalizedCandidateForValidation)
     const result = savePrediction(match._id, normalizedCandidate)
 
     if (result.status === 'error') {
@@ -654,7 +628,9 @@ function PredictionFixture() {
         </div>
         <div className={styles.heroStats} aria-label="Resumen rápido de predicciones">
           <span>Progreso de grupos · {groupPredictionsCount} /72</span>
-          <span>Progreso de eliminatorias · {knockoutPredictionsCount} /32</span>
+          <span>
+            Progreso de eliminatorias · {knockoutPredictionsCount} /{knockoutMatches.length}
+          </span>
           <strong>Puntos acumulados · {totalPoints}</strong>
         </div>
       </header>
@@ -674,6 +650,7 @@ function PredictionFixture() {
         groupPredictionsCount={groupPredictionsCount}
         knockoutPoints={knockoutPoints}
         knockoutPredictionsCount={knockoutPredictionsCount}
+        knockoutPredictionsTotal={knockoutMatches.length}
         totalPoints={totalPoints}
         userName={storageData.userName}
         onOpenGroupPointsHelp={() => setActiveHelpModal('group')}
@@ -716,7 +693,7 @@ function PredictionFixture() {
         </section>
       )}
 
-      {!isLoading && !hasError && groupMatches.length === 0 && (
+      {!isLoading && !hasError && groupMatches.length === 0 && !hasRealKnockoutMatches && (
         <section className={styles.stateCard}>
           <p className={styles.kicker}>Sin partidos</p>
           <h3 className={styles.stateTitle}>No hay partidos de fase de grupos para predecir</h3>
@@ -737,7 +714,7 @@ function PredictionFixture() {
             <PredictionKnockoutPhaseFilter
               disabled={!hasRealKnockoutMatches}
               value={selectedKnockoutPhase}
-              onChange={setSelectedKnockoutPhase}
+              onChange={handleKnockoutPhaseChange}
             />
           </div>
 
@@ -812,11 +789,49 @@ function PredictionFixture() {
       )}
 
       {!isLoading && !hasError && (
-        <KnockoutPredictionsClosedPanel
-          filteredKnockoutMatches={filteredKnockoutMatches}
-          hasRealKnockoutMatches={hasRealKnockoutMatches}
-          selectedPhaseLabel={selectedKnockoutPhaseLabel}
-        />
+        <div className={styles.knockoutSectionAnchor} ref={knockoutSectionRef}>
+          {!hasRealKnockoutMatches ? (
+            <section className={styles.stateCard}>
+              <p className={styles.kicker}>Eliminatorias</p>
+              <h3 className={styles.stateTitle}>
+                Las eliminatorias estarán disponibles cuando los cruces estén definidos
+              </h3>
+              <p className={styles.stateText}>
+                Solo se habilitan predicciones para partidos reales con ambos equipos
+                confirmados. No se muestran cruces base, TBD ni equipos por definir.
+              </p>
+            </section>
+          ) : filteredKnockoutMatches.length === 0 ? (
+            <section className={styles.stateCard}>
+              <p className={styles.kicker}>Eliminatorias</p>
+              <h3 className={styles.stateTitle}>
+                No hay cruces reales para {selectedKnockoutPhaseLabel}
+              </h3>
+              <p className={styles.stateText}>
+                Elegí Todas las fases para ver todos los partidos de eliminatorias
+                disponibles para predecir.
+              </p>
+            </section>
+          ) : (
+            <PredictionMatchList
+              description="Completá los goles del partido. Si pronosticás empate, elegí quién clasifica como dato visual; esa elección no suma puntos."
+              drafts={drafts}
+              getStageLabel={getPredictionStageBadgeLabel}
+              isKnockout
+              kicker="Eliminatorias"
+              lockStates={lockStates}
+              matches={filteredKnockoutMatches}
+              predictions={storageData.predictions}
+              saveMessages={saveMessages}
+              scoreResults={knockoutScoreResults}
+              title="Partidos de eliminatorias"
+              validationErrors={validationErrors}
+              onAdvancingTeamChange={handleAdvancingTeamChange}
+              onSavePrediction={handleSavePrediction}
+              onScoreChange={handleScoreChange}
+            />
+          )}
+        </div>
       )}
 
       {activeHelpModal && (

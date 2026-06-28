@@ -31,6 +31,7 @@ describe('match stage labels', () => {
     ['ROUND_OF_16', 'Octavos'],
     ['QUARTER_FINALS', 'Cuartos'],
     ['SEMI_FINALS', 'Semifinales'],
+    ['THIRD_PLACE', 'Tercer puesto'],
     ['THIRD_PLACE_MATCH', 'Tercer puesto'],
     ['FINAL', 'Final'],
   ]

@@ -6,6 +6,9 @@ export const PARTICIPANT_NAME_MAX_LENGTH = 40
 export const PREDICTION_VALIDATION_MESSAGES = {
   invalidScores: 'Ingresá un número entero entre 0 y 20.',
   missingRegularScores: 'Completá ambos goles antes de guardar la predicción.',
+  missingAdvancingTeam:
+    'Si pronosticás empate en eliminatorias, elegí qué equipo clasifica.',
+  invalidAdvancingTeam: 'El equipo clasificado debe ser local o visitante.',
   missingPenaltyScores: 'Si pronosticás empate en eliminatorias, completá los penales.',
   tiedPenaltyScores: 'Los penales no pueden terminar empatados.',
 }
@@ -100,6 +103,17 @@ function hasInvalidScore(...values) {
   return values.some((value) => getScoreStatus(value) === 'invalid')
 }
 
+function getTeamIdentifier(team) {
+  return String(team?._id ?? team?.id ?? team?.teamId ?? '').trim()
+}
+
+function getValidAdvancingTeamIds(match) {
+  return [
+    getTeamIdentifier(match?.homeTeam),
+    getTeamIdentifier(match?.awayTeam),
+  ].filter(Boolean)
+}
+
 export function normalizePredictionScores(prediction) {
   return {
     ...prediction,
@@ -113,6 +127,7 @@ export function normalizePredictionScores(prediction) {
       parsePredictionScoreInput(prediction?.predictedAwayPenaltyScore).status === 'valid'
         ? parsePredictionScoreInput(prediction?.predictedAwayPenaltyScore).value
         : null,
+    predictedAdvancingTeamId: prediction?.predictedAdvancingTeamId ?? null,
   }
 }
 
@@ -143,15 +158,16 @@ export function validatePrediction(prediction, options = {}) {
   }
 
   if (isKnockout && isRegularPredictionDraw(prediction)) {
-    if (hasMissingScore(prediction?.predictedHomePenaltyScore, prediction?.predictedAwayPenaltyScore)) {
-      errors.push(PREDICTION_VALIDATION_MESSAGES.missingPenaltyScores)
-    } else if (hasInvalidScore(prediction?.predictedHomePenaltyScore, prediction?.predictedAwayPenaltyScore)) {
-      errors.push(PREDICTION_VALIDATION_MESSAGES.invalidScores)
+    const validAdvancingTeamIds = getValidAdvancingTeamIds(options.match)
+    const predictedAdvancingTeamId = String(prediction?.predictedAdvancingTeamId ?? '').trim()
+
+    if (!predictedAdvancingTeamId) {
+      errors.push(PREDICTION_VALIDATION_MESSAGES.missingAdvancingTeam)
     } else if (
-      parsePredictionScoreInput(prediction.predictedHomePenaltyScore).value ===
-      parsePredictionScoreInput(prediction.predictedAwayPenaltyScore).value
+      validAdvancingTeamIds.length > 0 &&
+      !validAdvancingTeamIds.includes(predictedAdvancingTeamId)
     ) {
-      errors.push(PREDICTION_VALIDATION_MESSAGES.tiedPenaltyScores)
+      errors.push(PREDICTION_VALIDATION_MESSAGES.invalidAdvancingTeam)
     }
   }
 
