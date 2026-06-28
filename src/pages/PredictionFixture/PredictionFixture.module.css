@@ -139,6 +139,10 @@
   box-shadow: var(--shadow-card);
 }
 
+.knockoutSectionAnchor {
+  scroll-margin-top: calc(var(--space-8) + 4rem);
+}
+
 .printTitle,
 .printText,
 .resetTitle,

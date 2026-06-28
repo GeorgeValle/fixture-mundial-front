@@ -88,13 +88,13 @@
 - [x] Implementar UI base de `/predicciones`.
 - [x] Implementar captura del nombre de usuario.
 - [x] Implementar cards de predicción para partidos de fase de grupos.
-- [x] Mantener predicciones knockout cerradas hasta que se apruebe un flujo real de predicciones knockout.
+- [x] Habilitar predicciones knockout para cruces reales con ambos equipos definidos.
 - [x] Evitar predicciones sobre placeholders o partidos knockout solo de skeleton.
 - [x] Implementar bloqueo de predicciones por `status` y `date`.
 - [x] Implementar scoring de fase de grupos.
-- [x] Implementar utilidades de scoring knockout.
-- [x] Implementar utilidades de validación de predicciones por penales.
-- [ ] Implementar campos visibles de predicción por penales para empates knockout.
+- [x] Implementar scoring knockout sobre goles normales sin puntos por penales ni clasificado visual.
+- [x] Implementar validación de clasificado visual obligatorio en empates knockout.
+- [x] Implementar selector visual de clasificado para empates knockout sin inputs de penales.
 - [x] Comparar predicción del usuario contra resultado final registrado cuando el partido esté finalizado.
 - [x] Mostrar predicción del usuario, resultado final registrado, puntos e indicadores.
 - [x] Manejar localStorage corrupto con reset guiado.
@@ -102,13 +102,13 @@
 - [x] Agregar controles de reset para el grupo seleccionado y todas las predicciones editables.
 - [x] Agregar soporte de impresión con `window.print()`.
 - [x] Agregar modales de resumen/ayuda y pulido final de UI.
-- [x] Agregar tests para scoring, locking, localStorage, validación, estados de UI e impresión.
+- [x] Agregar tests para scoring, locking, localStorage, validación, eliminatorias, estados de UI e impresión.
 - [x] Ejecutar `pnpm run build`.
 - [x] Ejecutar `pnpm run lint`.
 - [x] Ejecutar `pnpm run test`.
 - [x] Validación manual del usuario.
 
-Nota: los campos visibles de penales para predicciones knockout quedan diferidos hasta que se apruebe una UI real de predicciones knockout.
+Nota: la UI pública de predicciones knockout no pide penales. En empates, el usuario elige quién clasifica como dato visual/informativo; esa selección no suma puntos.
 
 ### Bloque 8 — Documentación y revisión final
 

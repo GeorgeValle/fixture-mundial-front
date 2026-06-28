@@ -9,3 +9,12 @@ export const KNOCKOUT_PHASE_OPTIONS = [
   { value: 'third-place', label: 'Partido por el tercer puesto' },
   { value: 'final', label: 'Final' },
 ]
+
+export const KNOCKOUT_PHASE_SHORT_LABELS = {
+  'round-of-32': '16avos',
+  'round-of-16': 'Octavos',
+  'quarter-finals': 'Cuartos',
+  'semi-finals': 'Semifinales',
+  'third-place': 'Tercer puesto',
+  final: 'Final',
+}

@@ -11,12 +11,18 @@ function createPrediction(overrides = {}) {
     predictedAwayScore: 0,
     predictedHomePenaltyScore: null,
     predictedAwayPenaltyScore: null,
+    predictedAdvancingTeamId: null,
     ...overrides,
   }
 }
 
 const invalidScoreMessage = PREDICTION_VALIDATION_MESSAGES.invalidScores
-const missingPenaltyMessage = PREDICTION_VALIDATION_MESSAGES.missingPenaltyScores
+const missingAdvancingTeamMessage = PREDICTION_VALIDATION_MESSAGES.missingAdvancingTeam
+const invalidAdvancingTeamMessage = PREDICTION_VALIDATION_MESSAGES.invalidAdvancingTeam
+const knockoutMatch = {
+  homeTeam: { _id: 'team-home', name: 'Argentina' },
+  awayTeam: { _id: 'team-away', name: 'Francia' },
+}
 
 describe('predictionValidation', () => {
   it.each([0, 1, 2, 20, '0', '1', '2', '20'])(
@@ -57,66 +63,55 @@ describe('predictionValidation', () => {
     expect(result.isValid).toBe(true)
   })
 
-  it('requires penalties when a knockout prediction is a regular draw', () => {
+  it('requires an advancing team when a knockout prediction is a regular draw', () => {
     const result = validatePrediction(
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: null,
-        predictedAwayPenaltyScore: null,
       }),
-      { isKnockout: true },
+      { isKnockout: true, match: knockoutMatch },
     )
 
     expect(result.isValid).toBe(false)
-    expect(result.errors).toContain(missingPenaltyMessage)
+    expect(result.errors).toContain(missingAdvancingTeamMessage)
   })
 
-  it.each([0, 1, 20, '0', '1', '20'])(
-    'accepts valid penalty score %s from 0 to 20',
-    (penaltyScore) => {
-      const result = validatePrediction(
-        createPrediction({
-          predictedHomeScore: 1,
-          predictedAwayScore: 1,
-          predictedHomePenaltyScore: penaltyScore,
-          predictedAwayPenaltyScore: 2,
-        }),
-        { isKnockout: true },
-      )
-
-      expect(result.isValid).toBe(true)
-    },
-  )
-
-  it('rejects penalty scores greater than 20', () => {
+  it('accepts a valid advancing team for a knockout regular draw', () => {
     const result = validatePrediction(
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: 21,
-        predictedAwayPenaltyScore: 2,
+        predictedAdvancingTeamId: 'team-away',
       }),
-      { isKnockout: true },
+      { isKnockout: true, match: knockoutMatch },
     )
 
-    expect(result.isValid).toBe(false)
-    expect(result.errors).toContain(invalidScoreMessage)
+    expect(result.isValid).toBe(true)
   })
 
-  it('rejects tied penalties in knockout predictions', () => {
+  it('rejects an advancing team that is not home or away', () => {
     const result = validatePrediction(
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: 4,
-        predictedAwayPenaltyScore: 4,
+        predictedAdvancingTeamId: 'team-other',
       }),
-      { isKnockout: true },
+      { isKnockout: true, match: knockoutMatch },
     )
 
     expect(result.isValid).toBe(false)
-    expect(result.errors).toContain('Los penales no pueden terminar empatados.')
+    expect(result.errors).toContain(invalidAdvancingTeamMessage)
+  })
+
+  it('does not require an advancing team for group-stage draws', () => {
+    const result = validatePrediction(
+      createPrediction({
+        predictedHomeScore: 1,
+        predictedAwayScore: 1,
+      }),
+    )
+
+    expect(result.isValid).toBe(true)
   })
 
   it.each(['Jorge', 'María José', 'Ana-Luz', 'Juan_Pablo', 'Guillermo Valle', 'José Núñez'])(

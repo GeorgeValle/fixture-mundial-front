@@ -39,6 +39,7 @@ function sanitizePrediction(matchId, prediction) {
     predictedAwayScore: prediction?.predictedAwayScore,
     predictedHomePenaltyScore: prediction?.predictedHomePenaltyScore ?? null,
     predictedAwayPenaltyScore: prediction?.predictedAwayPenaltyScore ?? null,
+    predictedAdvancingTeamId: prediction?.predictedAdvancingTeamId ?? null,
     updatedAt: prediction?.updatedAt ?? getCurrentTimestamp(),
   }
 

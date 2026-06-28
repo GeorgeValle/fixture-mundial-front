@@ -18,6 +18,8 @@ function createMatch(overrides = {}) {
     awayScore: 1,
     homePenaltyScore: null,
     awayPenaltyScore: null,
+    homeTeam: { _id: 'team-home', name: 'Local' },
+    awayTeam: { _id: 'team-away', name: 'Visitante' },
     ...overrides,
   }
 }
@@ -29,6 +31,7 @@ function createPrediction(overrides = {}) {
     predictedAwayScore: 1,
     predictedHomePenaltyScore: null,
     predictedAwayPenaltyScore: null,
+    predictedAdvancingTeamId: null,
     updatedAt: '2026-06-11T12:00:00.000Z',
     ...overrides,
   }
@@ -166,7 +169,7 @@ describe('predictionScoring - group stage', () => {
 })
 
 describe('predictionScoring - knockout stage', () => {
-  it('scores a home qualifier by regular score', () => {
+  it('scores a home winner by regular score', () => {
     const result = scoreKnockoutPrediction(
       createMatch({ stage: 'Final', homeScore: 3, awayScore: 1 }),
       createPrediction({ predictedHomeScore: 3, predictedAwayScore: 0 }),
@@ -174,12 +177,12 @@ describe('predictionScoring - knockout stage', () => {
 
     expect(result.points).toBe(3)
     expect(indicatorLabels(result)).toEqual([
-      'Clasificado acertado',
+      'Ganador acertado',
       'Goles del ganador acertados',
     ])
   })
 
-  it('scores an away qualifier by regular score', () => {
+  it('scores an away winner by regular score', () => {
     const result = scoreKnockoutPrediction(
       createMatch({ stage: 'Final', homeScore: 1, awayScore: 2 }),
       createPrediction({ predictedHomeScore: 0, predictedAwayScore: 2 }),
@@ -187,12 +190,12 @@ describe('predictionScoring - knockout stage', () => {
 
     expect(result.points).toBe(3)
     expect(indicatorLabels(result)).toEqual([
-      'Clasificado acertado',
+      'Ganador acertado',
       'Goles del ganador acertados',
     ])
   })
 
-  it('scores a home qualifier by penalties', () => {
+  it('scores a draw by regular goals without adding points for the selected qualifier', () => {
     const result = scoreKnockoutPrediction(
       createMatch({
         stage: 'Final',
@@ -204,86 +207,45 @@ describe('predictionScoring - knockout stage', () => {
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: 5,
-        predictedAwayPenaltyScore: 3,
+        predictedAdvancingTeamId: 'team-away',
       }),
     )
 
-    expect(result.points).toBe(5)
-    expect(indicatorLabels(result)).toEqual([
-      'Clasificado acertado',
-      'Empate acertado',
-      'Goles del empate acertados',
-      'Penales del ganador acertados',
-    ])
+    expect(result.points).toBe(2)
+    expect(indicatorLabels(result)).toEqual(['Empate acertado', 'Goles del empate acertados'])
   })
 
-  it('scores an away qualifier by penalties', () => {
+  it('does not score the selected qualifier when the regular result was not a draw', () => {
     const result = scoreKnockoutPrediction(
-      createMatch({
-        stage: 'Final',
-        homeScore: 2,
-        awayScore: 2,
-        homePenaltyScore: 3,
-        awayPenaltyScore: 4,
-      }),
-      createPrediction({
-        predictedHomeScore: 2,
-        predictedAwayScore: 2,
-        predictedHomePenaltyScore: 2,
-        predictedAwayPenaltyScore: 4,
-      }),
-    )
-
-    expect(result.points).toBe(5)
-    expect(indicatorLabels(result)).toEqual([
-      'Clasificado acertado',
-      'Empate acertado',
-      'Goles del empate acertados',
-      'Penales del ganador acertados',
-    ])
-  })
-
-  it('can score penalty goals for the official loser', () => {
-    const result = scoreKnockoutPrediction(
-      createMatch({
-        stage: 'Final',
-        homeScore: 1,
-        awayScore: 1,
-        homePenaltyScore: 5,
-        awayPenaltyScore: 4,
-      }),
+      createMatch({ stage: 'Final', homeScore: 2, awayScore: 1 }),
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: 3,
-        predictedAwayPenaltyScore: 4,
+        predictedAdvancingTeamId: 'team-home',
       }),
     )
 
-    expect(result.points).toBe(3)
-    expect(indicatorLabels(result)).toContain('Penales del perdedor acertados')
+    expect(result.points).toBe(1)
+    expect(indicatorLabels(result)).toEqual(['Goles del perdedor acertados'])
   })
 
-  it('does not score knockout ties when official penalties are missing', () => {
+  it('scores knockout ties even when official penalties are missing', () => {
     const result = scoreKnockoutPrediction(
       createMatch({ stage: 'Final', homeScore: 1, awayScore: 1 }),
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: 5,
-        predictedAwayPenaltyScore: 4,
       }),
     )
 
     expect(result).toMatchObject({
-      canScore: false,
-      points: 0,
-      reason: 'Resultado registrado incompleto',
+      canScore: true,
+      points: 2,
+      reason: null,
     })
   })
 
-  it('does not score tied official penalties', () => {
+  it('ignores tied official penalties for base-result scoring', () => {
     const result = scoreKnockoutPrediction(
       createMatch({
         stage: 'Final',
@@ -300,51 +262,24 @@ describe('predictionScoring - knockout stage', () => {
       }),
     )
 
-    expect(result).toMatchObject({
-      canScore: false,
-      points: 0,
-      reason: 'Resultado registrado inconsistente',
-    })
+    expect(result.points).toBe(2)
+    expect(indicatorLabels(result)).toEqual(['Empate acertado', 'Goles del empate acertados'])
   })
 
-  it('rejects a regular draw prediction without penalties', () => {
-    const result = scoreKnockoutPrediction(
-      createMatch({
-        stage: 'Final',
-        homeScore: 1,
-        awayScore: 1,
-        homePenaltyScore: 5,
-        awayPenaltyScore: 4,
-      }),
-      createPrediction({
-        predictedHomeScore: 1,
-        predictedAwayScore: 1,
-        predictedHomePenaltyScore: null,
-        predictedAwayPenaltyScore: null,
-      }),
-    )
-
-    expect(result).toMatchObject({
-      canScore: false,
-      points: 0,
-      reason: 'Predicción inválida',
-    })
-  })
-
-  it('rejects a regular draw prediction with tied penalties', () => {
+  it('returns a predicted advancing selection without using penalty inputs', () => {
     const result = getPredictedKnockoutWinner(
       createMatch({ stage: 'Final' }),
       createPrediction({
         predictedHomeScore: 1,
         predictedAwayScore: 1,
-        predictedHomePenaltyScore: 4,
-        predictedAwayPenaltyScore: 4,
+        predictedAdvancingTeamId: 'team-away',
       }),
     )
 
     expect(result).toMatchObject({
-      canScore: false,
-      reason: 'Predicción inválida',
+      canScore: true,
+      winnerSide: 'away',
+      method: 'advancing-selection',
     })
   })
 
@@ -355,6 +290,6 @@ describe('predictionScoring - knockout stage', () => {
     )
 
     expect(result.points).toBe(4)
-    expect(indicatorLabels(result)[0]).toBe('Clasificado acertado')
+    expect(indicatorLabels(result)[0]).toBe('Ganador acertado')
   })
 })

@@ -28,6 +28,7 @@ function PredictionSummary({
   groupPredictionsCount,
   knockoutPoints,
   knockoutPredictionsCount,
+  knockoutPredictionsTotal = 32,
   onOpenGroupPointsHelp,
   onOpenKnockoutPointsHelp,
   onOpenTotalPointsHelp,
@@ -51,9 +52,9 @@ function PredictionSummary({
       />
       <SummaryCard
         label="Progreso de eliminatorias"
-        maxValue={32}
+        maxValue={knockoutPredictionsTotal}
         progressValue={knockoutPredictionsCount}
-        value={`${knockoutPredictionsCount} /32`}
+        value={`${knockoutPredictionsCount} /${knockoutPredictionsTotal}`}
       />
       <SummaryCard
         helpLabel="Ver explicación de puntos de eliminatorias"

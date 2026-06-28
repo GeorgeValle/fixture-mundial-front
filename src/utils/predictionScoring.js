@@ -1,9 +1,6 @@
 import {
-  hasPenaltyPredictionScores,
   hasRegularPredictionScores,
   isNonNegativeInteger,
-  isRegularPredictionDraw,
-  validatePrediction,
 } from './predictionValidation'
 
 const SCORE_REASONS = {
@@ -20,8 +17,6 @@ const INDICATORS = {
   winnerGoals: { key: 'winnerGoals', label: 'Goles del ganador acertados' },
   loserGoals: { key: 'loserGoals', label: 'Goles del perdedor acertados' },
   drawGoals: { key: 'drawGoals', label: 'Goles del empate acertados' },
-  winnerPenalties: { key: 'winnerPenalties', label: 'Penales del ganador acertados' },
-  loserPenalties: { key: 'loserPenalties', label: 'Penales del perdedor acertados' },
 }
 
 const KNOCKOUT_STAGE_ALIASES = new Set([
@@ -77,18 +72,8 @@ function getSideScore(match, side) {
   return side === 'home' ? match.homeScore : match.awayScore
 }
 
-function getSidePenaltyScore(match, side) {
-  return side === 'home' ? match.homePenaltyScore : match.awayPenaltyScore
-}
-
 function getPredictedSideScore(prediction, side) {
   return side === 'home' ? prediction.predictedHomeScore : prediction.predictedAwayScore
-}
-
-function getPredictedSidePenaltyScore(prediction, side) {
-  return side === 'home'
-    ? prediction.predictedHomePenaltyScore
-    : prediction.predictedAwayPenaltyScore
 }
 
 function getOppositeSide(side) {
@@ -201,13 +186,11 @@ export function getOfficialKnockoutWinner(match) {
 }
 
 export function getPredictedKnockoutWinner(match, prediction) {
-  const validation = validatePrediction(prediction, { isKnockout: true })
-
-  if (!validation.isValid) {
+  if (!hasRegularPredictionScores(prediction)) {
     return {
       canScore: false,
       reason: SCORE_REASONS.invalidPrediction,
-      errors: validation.errors,
+      errors: [SCORE_REASONS.invalidPrediction],
     }
   }
 
@@ -231,15 +214,36 @@ export function getPredictedKnockoutWinner(match, prediction) {
     }
   }
 
-  const winnerSide =
-    prediction.predictedHomePenaltyScore > prediction.predictedAwayPenaltyScore ? 'home' : 'away'
+  const predictedAdvancingTeamId = String(prediction?.predictedAdvancingTeamId ?? '').trim()
+  const homeTeamId = String(match?.homeTeam?._id ?? match?.homeTeam?.id ?? match?.homeTeam?.teamId ?? '').trim()
+  const awayTeamId = String(match?.awayTeam?._id ?? match?.awayTeam?.id ?? match?.awayTeam?.teamId ?? '').trim()
+
+  if (!predictedAdvancingTeamId) {
+    return {
+      canScore: true,
+      reason: null,
+      winnerSide: null,
+      loserSide: null,
+      method: 'draw',
+    }
+  }
+
+  if (predictedAdvancingTeamId !== homeTeamId && predictedAdvancingTeamId !== awayTeamId) {
+    return {
+      canScore: false,
+      reason: SCORE_REASONS.invalidPrediction,
+      errors: [SCORE_REASONS.invalidPrediction],
+    }
+  }
+
+  const winnerSide = predictedAdvancingTeamId === homeTeamId ? 'home' : 'away'
 
   return {
     canScore: true,
     reason: null,
     winnerSide,
     loserSide: getOppositeSide(winnerSide),
-    method: 'penalties',
+    method: 'advancing-selection',
   }
 }
 
@@ -295,71 +299,57 @@ export function scoreGroupPrediction(match, prediction) {
 }
 
 export function scoreKnockoutPrediction(match, prediction) {
-  const officialWinner = getOfficialKnockoutWinner(match)
+  const officialResult = getOfficialResult(match)
 
-  if (!officialWinner.canScore) {
-    return createScoreResult({ canScore: false, reason: officialWinner.reason })
+  if (!officialResult.canScore) {
+    return createScoreResult({ canScore: false, reason: officialResult.reason })
   }
 
-  const predictedWinner = getPredictedKnockoutWinner(match, prediction)
-
-  if (!predictedWinner.canScore) {
-    return createScoreResult({
-      canScore: false,
-      reason: predictedWinner.reason,
-      indicators: [],
-    })
+  if (!hasRegularPredictionScores(prediction)) {
+    return createScoreResult({ canScore: false, reason: SCORE_REASONS.invalidPrediction })
   }
 
   const score = createScoreResult()
+  const predictedWinnerSide = getRegularWinnerSide(
+    prediction.predictedHomeScore,
+    prediction.predictedAwayScore,
+  )
 
-  if (predictedWinner.winnerSide === officialWinner.winnerSide) {
-    addMatchedIndicator(score, INDICATORS.qualifier, 2)
-  }
-
-  if (officialWinner.method === 'regular') {
-    if (
-      getPredictedSideScore(prediction, officialWinner.winnerSide) ===
-      getSideScore(match, officialWinner.winnerSide)
-    ) {
-      addMatchedIndicator(score, INDICATORS.winnerGoals, 1)
+  if (officialResult.isDraw) {
+    if (predictedWinnerSide === null) {
+      addMatchedIndicator(score, INDICATORS.draw, 1)
     }
 
     if (
-      getPredictedSideScore(prediction, officialWinner.loserSide) ===
-      getSideScore(match, officialWinner.loserSide)
+      predictedWinnerSide === null &&
+      prediction.predictedHomeScore === officialResult.homeScore &&
+      prediction.predictedAwayScore === officialResult.awayScore
     ) {
-      addMatchedIndicator(score, INDICATORS.loserGoals, 1)
+      addMatchedIndicator(score, INDICATORS.drawGoals, 1)
     }
 
     return score
   }
 
-  if (isRegularPredictionDraw(prediction)) {
-    addMatchedIndicator(score, INDICATORS.draw, 1)
+  const officialWinnerSide = officialResult.regularWinnerSide
+  const officialLoserSide = getOppositeSide(officialWinnerSide)
 
-    if (
-      prediction.predictedHomeScore === match.homeScore &&
-      prediction.predictedAwayScore === match.awayScore
-    ) {
-      addMatchedIndicator(score, INDICATORS.drawGoals, 1)
-    }
+  if (predictedWinnerSide === officialWinnerSide) {
+    addMatchedIndicator(score, INDICATORS.winner, 2)
   }
 
   if (
-    hasPenaltyPredictionScores(prediction) &&
-    getPredictedSidePenaltyScore(prediction, officialWinner.winnerSide) ===
-      getSidePenaltyScore(match, officialWinner.winnerSide)
+    getPredictedSideScore(prediction, officialWinnerSide) ===
+    getSideScore(match, officialWinnerSide)
   ) {
-    addMatchedIndicator(score, INDICATORS.winnerPenalties, 1)
+    addMatchedIndicator(score, INDICATORS.winnerGoals, 1)
   }
 
   if (
-    hasPenaltyPredictionScores(prediction) &&
-    getPredictedSidePenaltyScore(prediction, officialWinner.loserSide) ===
-      getSidePenaltyScore(match, officialWinner.loserSide)
+    getPredictedSideScore(prediction, officialLoserSide) ===
+    getSideScore(match, officialLoserSide)
   ) {
-    addMatchedIndicator(score, INDICATORS.loserPenalties, 1)
+    addMatchedIndicator(score, INDICATORS.loserGoals, 1)
   }
 
   return score

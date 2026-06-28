@@ -1,4 +1,9 @@
 import { formatDisplayDate, formatDisplayTime } from '../../utils/dateAdapter'
+import {
+  hasRegularPredictionScores,
+  isRegularPredictionDraw,
+} from '../../utils/predictionValidation'
+import { getTeamIdentifier } from '../../utils/predictionMatchEligibility'
 import PredictionResultComparison from '../PredictionResultComparison/PredictionResultComparison'
 import styles from './PredictionMatchCard.module.css'
 
@@ -46,17 +51,23 @@ function TeamBlock({ align = 'left', team }) {
 
 function PredictionMatchCard({
   draft,
+  isKnockout = false,
   lockReason,
   match,
+  onAdvancingTeamChange,
   onScoreChange,
   onSave,
   prediction,
   saveMessage,
   scoreResult,
+  stageLabel,
   validationError,
 }) {
   const isLocked = Boolean(lockReason && lockReason !== 'Fecha inválida')
   const matchId = match._id
+  const showAdvancingSelector =
+    isKnockout && hasRegularPredictionScores(draft) && isRegularPredictionDraw(draft)
+  const selectedAdvancingTeamId = String(draft?.predictedAdvancingTeamId ?? '').trim()
 
   return (
     <article
@@ -64,7 +75,7 @@ function PredictionMatchCard({
       aria-label={`Predicción: ${getTeamName(match.homeTeam)} contra ${getTeamName(match.awayTeam)}`}
     >
       <div className={styles.metaRow}>
-        <span className={styles.stage}>{match.stage ?? 'Grupo'}</span>
+        <span className={styles.stage}>{stageLabel ?? match.stage ?? 'Grupo'}</span>
         <span className={styles.status}>{getStatusLabel(match.status)}</span>
       </div>
 
@@ -105,7 +116,7 @@ function PredictionMatchCard({
               type="text"
               value={draft?.predictedHomeScore ?? ''}
               onChange={(event) =>
-                onScoreChange(matchId, 'predictedHomeScore', event.target.value)
+                onScoreChange(matchId, 'predictedHomeScore', event.target.value, match)
               }
             />
           </label>
@@ -120,11 +131,39 @@ function PredictionMatchCard({
               type="text"
               value={draft?.predictedAwayScore ?? ''}
               onChange={(event) =>
-                onScoreChange(matchId, 'predictedAwayScore', event.target.value)
+                onScoreChange(matchId, 'predictedAwayScore', event.target.value, match)
               }
             />
           </label>
         </div>
+
+        {showAdvancingSelector && (
+          <fieldset className={styles.advancingFieldset}>
+            <legend>Si empatan, ¿quién clasifica?</legend>
+            <div className={styles.advancingOptions}>
+              {[match.homeTeam, match.awayTeam].map((team) => {
+                const teamName = getTeamName(team)
+                const teamId = getTeamIdentifier(team)
+                const isSelected = selectedAdvancingTeamId === teamId
+
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`${styles.advancingOption} ${
+                      isSelected ? styles.advancingOptionSelected : ''
+                    }`}
+                    disabled={isLocked}
+                    key={teamId}
+                    type="button"
+                    onClick={() => onAdvancingTeamChange(matchId, teamId)}
+                  >
+                    {isSelected ? `✓ ${teamName}` : teamName}
+                  </button>
+                )
+              })}
+            </div>
+          </fieldset>
+        )}
 
         {lockReason && (
           <p className={isLocked ? styles.lockReason : styles.helper}>
@@ -150,6 +189,7 @@ function PredictionMatchCard({
       </form>
 
       <PredictionResultComparison
+        isKnockout={isKnockout}
         match={match}
         prediction={prediction}
         scoreResult={scoreResult}

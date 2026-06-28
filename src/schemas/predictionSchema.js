@@ -4,6 +4,7 @@ export const PREDICTION_STORAGE_VERSION = 1
 
 const predictionScore = z.number().int().min(0).max(20)
 const optionalPenaltyScore = predictionScore.nullable().optional()
+const optionalAdvancingTeamId = z.string().min(1).nullable().optional()
 
 export const predictionSchema = z
   .object({
@@ -12,6 +13,7 @@ export const predictionSchema = z
     predictedAwayScore: predictionScore,
     predictedHomePenaltyScore: optionalPenaltyScore,
     predictedAwayPenaltyScore: optionalPenaltyScore,
+    predictedAdvancingTeamId: optionalAdvancingTeamId,
     updatedAt: z.string().min(1),
   })
   .strip()

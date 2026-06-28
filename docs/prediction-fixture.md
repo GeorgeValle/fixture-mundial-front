@@ -17,13 +17,12 @@ El backend provee partidos, estados y resultados registrados. Las predicciones d
 - `PredictionFixture`: página principal, coordina datos del backend, estado local, filtros, scoring, locking, reset e impresión.
 - `PredictionUserForm`: captura y valida el nombre del participante.
 - `PredictionSummary`: muestra participante, cantidad de predicciones y puntos.
-- `PredictionMatchList`: lista de cards de predicción.
-- `PredictionMatchCard`: formulario por partido de fase de grupos.
+- `PredictionMatchList`: lista reutilizable de cards de predicción.
+- `PredictionMatchCard`: formulario por partido de fase de grupos o eliminatorias.
 - `PredictionResultComparison`: muestra predicción, resultado final registrado, puntos e indicadores.
 - `PredictionIndicatorList`: renderiza indicadores de acierto.
 - `PredictionGroupFilter`: filtra partidos por grupo.
 - `PredictionKnockoutPhaseFilter`: muestra filtro de fases eliminatorias cuando aplica.
-- `KnockoutPredictionsClosedPanel`: informa que eliminatorias aún no están habilitadas para predicción.
 - `PredictionDialog`: modales de ayuda y confirmación.
 - `PredictionStorageResetNotice`: aviso para reset guiado si `localStorage` está corrupto.
 - `SkeletonList`: loading visual.
@@ -86,6 +85,7 @@ Modelo actual:
       predictedAwayScore: 0,
       predictedHomePenaltyScore: null,
       predictedAwayPenaltyScore: null,
+      predictedAdvancingTeamId: null,
       updatedAt: '...'
     }
   }
@@ -112,12 +112,17 @@ Implementado:
 
 ### Eliminatorias
 
-Estado actual:
+Implementado:
 
-- la sección muestra que las predicciones de eliminatorias todavía no están disponibles;
-- puede detectar cruces reales si el backend los provee;
-- no permite predicciones sobre equipos por definir, estructura base o cruces no confirmados;
-- los campos de penales quedan como soporte de modelo/scoring, pero la UI de predicción de eliminatorias se habilitará en una etapa futura.
+- listado de partidos reales de eliminatorias con ambos equipos definidos;
+- filtro por fase eliminatoria;
+- cards de predicción con la misma UI base de fase de grupos;
+- badge de fase traducido a español (`16avos`, `Octavos`, `Cuartos`, `Semifinales`, `Tercer puesto`, `Final`);
+- captura de goles normales solamente;
+- si el usuario predice empate, selección visual obligatoria de quién clasifica;
+- no se piden ni muestran penales en la UI pública de predicciones;
+- no se permiten predicciones sobre TBD, equipos por definir, placeholders, cruces base ni cruces incompletos;
+- progreso dinámico según partidos knockout reales disponibles.
 
 ## Estados manejados
 
@@ -135,7 +140,9 @@ Si falla `GET /api/matches`, la página muestra un error amigable.
 
 ### Empty state
 
-Si no hay partidos reales de fase de grupos para predecir, se informa que aparecerán cuando existan partidos con equipos definidos.
+Si no hay partidos reales de fase de grupos ni eliminatorias para predecir, se informa que aparecerán cuando existan partidos con equipos definidos.
+
+Si no hay cruces reales de eliminatorias, la sección informa que se habilitarán cuando los cruces estén definidos. Si un filtro de fase no tiene cruces reales, se muestra un empty state para esa fase.
 
 ### Datos válidos
 
@@ -145,7 +152,7 @@ Cuando hay partidos:
 - se muestra resumen;
 - se habilitan filtros;
 - se renderizan cards de predicción para fase de grupos;
-- se muestra panel informativo de eliminatorias.
+- se renderizan cards de predicción para eliminatorias cuando hay cruces reales definidos.
 
 ### localStorage corrupto
 
@@ -177,6 +184,19 @@ Reglas actuales:
 
 Los inputs usan texto con `inputMode="numeric"` para evitar problemas de campos numéricos nativos del navegador.
 
+## Validación de clasificado en eliminatorias
+
+En eliminatorias no se cargan penales.
+
+Reglas:
+
+- si los goles predichos no empatan, no se exige clasificado;
+- si los goles predichos empatan, se muestra “Si empatan, ¿quién clasifica?”;
+- la selección es exclusiva entre equipo local y visitante;
+- `predictedAdvancingTeamId` debe coincidir con el identificador real del equipo local o visitante;
+- si el usuario cambia el marcador y deja de ser empate, se limpia `predictedAdvancingTeamId`;
+- fase de grupos no muestra ni valida clasificado.
+
 ## Validación del participante
 
 Reglas actuales:
@@ -198,27 +218,23 @@ Reglas actuales:
 
 ### Eliminatorias
 
-La lógica pura contempla:
-
-- ganador/clasificado;
-- goles regulares;
-- empate regular;
-- penales si aplica.
-
-La UI para cargar predicciones de eliminatorias permanece cerrada hasta que el flujo sea aprobado con cruces registrados en la base de datos.
+- 2 puntos por acertar ganador en goles normales.
+- 1 punto por acertar goles del ganador.
+- 1 punto por acertar goles del perdedor.
+- 1 punto por acertar empate en goles normales.
+- 1 punto por acertar cantidad exacta de goles del empate.
+- La selección `predictedAdvancingTeamId` no suma puntos.
+- Los penales del backend pueden ayudar a mostrar quién clasificó, pero no suman puntos en predicciones públicas.
 
 ## Indicadores visibles
 
 Cuando un partido finaliza y hay predicción guardada, la UI puede mostrar:
 
 - `Ganador acertado`
-- `Clasificado acertado`
 - `Empate acertado`
 - `Goles del ganador acertados`
 - `Goles del perdedor acertados`
 - `Goles del empate acertados`
-- `Penales del ganador acertados`
-- `Penales del perdedor acertados`
 
 Los indicadores tienen texto visible y no dependen solo del color.
 
@@ -235,7 +251,17 @@ El filtro no borra predicciones; solo cambia visibilidad.
 
 ### Eliminatorias
 
-`PredictionKnockoutPhaseFilter` permite seleccionar fases cuando existen cruces reales detectados. La predicción de eliminatorias sigue cerrada.
+`PredictionKnockoutPhaseFilter` permite seleccionar:
+
+- todas las fases;
+- 16avos;
+- octavos;
+- cuartos;
+- semifinales;
+- tercer puesto;
+- final.
+
+El filtro no borra predicciones; solo cambia visibilidad. Solo se listan cruces reales disponibles para predecir.
 
 ## Acciones de reset
 
@@ -263,7 +289,8 @@ La impresión muestra pronósticos visibles, resumen, puntos y resultados regist
 - Los puntos tienen modales de ayuda.
 - Las acciones destructivas tienen confirmación.
 - El reset evita borrar predicciones bloqueadas.
-- Las predicciones de eliminatorias se explican como no disponibles para evitar interacción sobre datos incompletos.
+- Las cards de eliminatorias reutilizan la estética clara de fase de grupos.
+- El selector de clasificado en empates knockout usa botones tipo píldora y es visual/informativo para el puntaje.
 
 ## Relación con otras partes de la app
 
@@ -275,14 +302,12 @@ La impresión muestra pronósticos visibles, resumen, puntos y resultados regist
 ## Limitaciones actuales
 
 - No hay persistencia de predicciones en backend.
-- La UI de predicción de eliminatorias no está habilitada.
-- Los campos visibles de penales para eliminatorias quedan pendientes.
+- No se inventan cruces futuros ni progresiones desde el frontend.
+- Los cruces knockout sin ambos equipos reales no se muestran como cards predictivas.
 - No hay exportación PDF nativa; la opción actual es impresión del navegador.
 
 ## Mejoras futuras
 
-- Habilitar predicciones de eliminatorias con cruces reales registrados en la base de datos.
-- Agregar campos visibles de penales para empates en eliminatorias.
 - Exportación PDF.
 - Página o vista histórica de resultados de predicciones.
 - Sincronización opcional si se define backend para usuarios.
@@ -296,8 +321,8 @@ La impresión muestra pronósticos visibles, resumen, puntos y resultados regist
 - `src/components/PredictionResultComparison/PredictionResultComparison.jsx`
 - `src/components/PredictionGroupFilter/PredictionGroupFilter.jsx`
 - `src/components/PredictionKnockoutPhaseFilter/PredictionKnockoutPhaseFilter.jsx`
-- `src/components/KnockoutPredictionsClosedPanel/KnockoutPredictionsClosedPanel.jsx`
 - `src/services/predictions/predictionStorageService.js`
+- `src/utils/predictionMatchEligibility.js`
 - `src/utils/predictionLocking.js`
 - `src/utils/predictionScoring.js`
 - `src/utils/predictionValidation.js`
@@ -311,4 +336,5 @@ La impresión muestra pronósticos visibles, resumen, puntos y resultados regist
 - **Follow-up 7.4**: reset por grupo y reset total preservando predicciones bloqueadas.
 - **Follow-up 7.5**: resumen por fase, modales de ayuda, filtro de eliminatorias, confirmaciones y polish de impresión.
 - **Follow-up 7.5.1**: validación robusta de scores y nombre de participante.
+- **Follow-up 7.6**: predicciones de eliminatorias con cruces reales, selector visual de clasificado en empates, scoring sin penales y progreso knockout dinámico.
 - **Validación manual**: Bloque 7 aprobado por el usuario.
