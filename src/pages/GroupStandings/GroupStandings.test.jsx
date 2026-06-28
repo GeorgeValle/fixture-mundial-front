@@ -69,6 +69,58 @@ function createStandingsGroups() {
   }))
 }
 
+function createThirdPlaceStandingsGroups({ isClosed = false } = {}) {
+  const matchesPlayed = isClosed ? 3 : 2
+
+  return groupLetters.map((group, index) => ({
+    group,
+    teams: [
+      createStandingRow(
+        `Equipo ${group}1`,
+        group,
+        { pj: matchesPlayed, pg: 2, pe: 1, pp: 0, gf: 7, gc: 2, dif: 5, pts: 7 },
+        { position: 1 },
+      ),
+      createStandingRow(
+        `Equipo ${group}2`,
+        group,
+        { pj: matchesPlayed, pg: 1, pe: 2, pp: 0, gf: 5, gc: 3, dif: 2, pts: 5 },
+        { position: 2 },
+      ),
+      createStandingRow(
+        `Tercero ${group}`,
+        group,
+        { pj: matchesPlayed, pg: 1, pe: 0, pp: 2, gf: 4, gc: 4, dif: 0, pts: 12 - index },
+        { position: 3 },
+      ),
+      createStandingRow(
+        `Equipo ${group}4`,
+        group,
+        { pj: matchesPlayed, pg: 0, pe: 1, pp: 2, gf: 2, gc: 6, dif: -4, pts: 1 },
+        { position: 4 },
+      ),
+    ],
+  }))
+}
+
+function createCutoffTieStandingsGroups({ isClosed = true } = {}) {
+  const pointsByGroup = [12, 11, 10, 9, 8, 7, 6, 4, 4, 3, 2, 1]
+
+  return createThirdPlaceStandingsGroups({ isClosed }).map((standing, index) => ({
+    ...standing,
+    teams: standing.teams.map((row, rowIndex) =>
+      rowIndex === 2
+        ? {
+            ...row,
+            pts: pointsByGroup[index],
+            dif: 0,
+            gf: 4,
+          }
+        : row,
+    ),
+  }))
+}
+
 function renderGroupStandings({ includeModal = false } = {}) {
   const store = configureStore({ reducer: { ui: uiReducer } })
 
@@ -161,14 +213,17 @@ describe('GroupStandings', () => {
 
     const overviewButton = await screen.findByRole('button', { name: /vista general/i })
     const focusButton = screen.getByRole('button', { name: /vista foco/i })
+    const thirdPlacesButton = screen.getByRole('button', { name: /mejores terceros/i })
 
     expect(overviewButton).toHaveAttribute('aria-pressed', 'true')
     expect(focusButton).toHaveAttribute('aria-pressed', 'false')
+    expect(thirdPlacesButton).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo A' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Posiciones del grupo B' })).toBeInTheDocument()
     expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
     expect(screen.getByText(/vista general muestra todos los grupos/i)).toBeInTheDocument()
     expect(screen.getByText(/vista foco permite revisar un grupo en detalle/i)).toBeInTheDocument()
+    expect(screen.getByText(/mejores terceros compara/i)).toBeInTheDocument()
   })
 
   it('switches to Vista foco and changes the selected group', async () => {
@@ -203,6 +258,123 @@ describe('GroupStandings', () => {
     expect(
       screen.queryByRole('heading', { name: 'Posiciones del grupo A' }),
     ).not.toBeInTheDocument()
+  })
+
+  it('switches to Mejores terceros and renders a single third-place ranking', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createThirdPlaceStandingsGroups())
+
+    renderGroupStandings()
+
+    const thirdPlacesButton = await screen.findByRole('button', { name: /mejores terceros/i })
+
+    await user.click(thirdPlacesButton)
+
+    expect(thirdPlacesButton).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /vista general/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    expect(screen.getByRole('button', { name: /vista foco/i })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
+    expect(screen.getByRole('heading', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: /ranking de mejores terceros/i })).toBeInTheDocument()
+    expect(screen.getByText(/el ranking es provisional hasta que finalicen todos los grupos/i)).toBeInTheDocument()
+    expect(screen.getByText('Tercero A')).toBeInTheDocument()
+    expect(screen.getByText('Grupo A')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Posiciones del grupo A' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText(/elegir grupo/i)).not.toBeInTheDocument()
+  })
+
+  it('marks top 8 third-place teams as provisional while group stage is still open', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createThirdPlaceStandingsGroups())
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.queryByText('Clasifica a 16avos')).not.toBeInTheDocument()
+    expect(screen.queryByText('No clasifica')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Zona provisional')).toHaveLength(8)
+    expect(screen.getAllByText('Fuera de zona')).toHaveLength(4)
+  })
+
+  it('marks top 8 as qualified and ranks 9 to 12 as not qualified after every group is closed', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createThirdPlaceStandingsGroups({ isClosed: true }))
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.getByText(/ranking final según puntos, diferencia de gol/i)).toBeInTheDocument()
+    expect(screen.queryByText('Zona provisional')).not.toBeInTheDocument()
+    expect(screen.queryByText('Fuera de zona')).not.toBeInTheDocument()
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(8)
+    expect(screen.getAllByText('No clasifica')).toHaveLength(4)
+  })
+
+  it('does not let team.qualifiedTo change badges when group closure and rank stay the same', async () => {
+    const user = userEvent.setup()
+    const standings = createThirdPlaceStandingsGroups({ isClosed: true })
+    standings[0].teams[2].team.qualifiedTo = 'ELIMINATED'
+    standings[1].teams[2].team.qualifiedTo = 'ROUND_OF_16'
+    standings[8].teams[2].team.qualifiedTo = 'ROUND_OF_32'
+
+    mockStandingsResponse(standings)
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    const table = screen.getByRole('table', { name: /ranking de mejores terceros/i })
+    const rows = within(table).getAllByRole('row')
+    const getTeamRow = (teamName) => rows.find((row) => within(row).queryByText(teamName))
+
+    expect(within(getTeamRow('Tercero A')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow('Tercero B')).getByText('Clasifica a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow('Tercero I')).getByText('No clasifica')).toBeInTheDocument()
+  })
+
+  it('does not call matches API from Mejores terceros', async () => {
+    const user = userEvent.setup()
+    let matchesCallCount = 0
+
+    mockStandingsResponse(createCutoffTieStandingsGroups({ isClosed: true }))
+    server.use(
+      http.get('*/api/matches', () => {
+        matchesCallCount += 1
+
+        return HttpResponse.json({ status: 'success', data: [] })
+      }),
+    )
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(matchesCallCount).toBe(0)
+    expect(screen.getByText(/ranking final según puntos, diferencia de gol/i)).toBeInTheDocument()
+    expect(screen.queryByText('Desempate pendiente')).not.toBeInTheDocument()
+  })
+
+  it('shows a friendly empty state when there are not enough teams to rank third places', async () => {
+    const user = userEvent.setup()
+
+    mockStandingsResponse(createStandingsGroups())
+
+    renderGroupStandings()
+
+    await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
+
+    expect(screen.getByText(/todavía no hay terceros suficientes/i)).toBeInTheDocument()
+    expect(screen.getByText(/se va a completar automáticamente/i)).toBeInTheDocument()
   })
 
 

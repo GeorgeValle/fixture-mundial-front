@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
 import StandingsGroupCard from '../../components/StandingsGroupCard/StandingsGroupCard'
+import ThirdPlaceRankingTable from '../../components/ThirdPlaceRankingTable/ThirdPlaceRankingTable'
 import SkeletonList from '../../components/SkeletonList/SkeletonList'
 import {
   openFeedbackModal,
@@ -10,6 +11,7 @@ import {
 import { getStandings } from '../../services/standings/standingsService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
+import { buildThirdPlaceRanking } from '../../utils/thirdPlaceRanking'
 import styles from './GroupStandings.module.css'
 
 const FRIENDLY_API_ERROR_MESSAGE =
@@ -18,6 +20,7 @@ const FRIENDLY_INVALID_PAYLOAD_MESSAGE =
   'No pudimos interpretar las posiciones recibidas. Intentá nuevamente más tarde.'
 const VIEW_MODE_OVERVIEW = 'overview'
 const VIEW_MODE_FOCUS = 'focus'
+const VIEW_MODE_THIRD_PLACES = 'third-places'
 
 function hasRenderableStandings(standings) {
   return standings.some((standing) => (standing?.teams ?? []).length > 0)
@@ -106,10 +109,12 @@ function GroupStandings() {
   const errorMessage =
     errorKind === 'invalid' ? FRIENDLY_INVALID_PAYLOAD_MESSAGE : FRIENDLY_API_ERROR_MESSAGE
   const isFocusMode = viewMode === VIEW_MODE_FOCUS
+  const isThirdPlaceMode = viewMode === VIEW_MODE_THIRD_PLACES
   const selectedStanding =
     standings.find((standing) => standing?.group === selectedGroup) ?? standings[0]
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
+  const thirdPlaceRanking = buildThirdPlaceRanking(standings)
   const totalGroups = standings.length
   const totalTeams = standings.reduce(
     (count, standing) => count + (standing?.teams?.length ?? 0),
@@ -183,11 +188,13 @@ function GroupStandings() {
               <h3 className={styles.controlTitle}>Compará todos los grupos o revisá uno en detalle.</h3>
               <p className={styles.controlHelp}>
                 Vista general muestra todos los grupos. Vista foco permite revisar un grupo en detalle.
+                Mejores terceros compara las selecciones que marchan terceras.
               </p>
               <div className={styles.controlMeta} aria-label="Resumen de posiciones disponibles">
                 <span>{totalGroups} grupos</span>
                 <span>{totalTeams} selecciones</span>
                 {isFocusMode && activeSelectedGroup && <span>Grupo {activeSelectedGroup} seleccionado</span>}
+                {isThirdPlaceMode && <span>{thirdPlaceRanking.length} terceros en ranking</span>}
               </div>
             </div>
 
@@ -212,6 +219,15 @@ function GroupStandings() {
                 >
                   <span className={`${styles.viewIcon} ${styles.focusIcon}`} aria-hidden="true" />
                   Vista foco
+                </button>
+                <button
+                  aria-pressed={isThirdPlaceMode}
+                  className={`${styles.viewButton} ${isThirdPlaceMode ? styles.viewButtonActive : ''}`}
+                  onClick={() => setViewMode(VIEW_MODE_THIRD_PLACES)}
+                  type="button"
+                >
+                  <span className={`${styles.viewIcon} ${styles.thirdPlacesIcon}`} aria-hidden="true" />
+                  Mejores terceros
                 </button>
               </div>
 
@@ -240,25 +256,29 @@ function GroupStandings() {
             </div>
           </section>
 
-          <section
-            className={isFocusMode ? styles.focusGrid : styles.overviewGrid}
-            aria-label={
-              isFocusMode ? 'Tabla de posiciones del grupo seleccionado' : 'Tablas de posiciones por grupo'
-            }
-          >
-            {visibleStandings.map((standing, index) => {
-              const originalIndex = standings.indexOf(standing)
+          {isThirdPlaceMode ? (
+            <ThirdPlaceRankingTable ranking={thirdPlaceRanking} />
+          ) : (
+            <section
+              className={isFocusMode ? styles.focusGrid : styles.overviewGrid}
+              aria-label={
+                isFocusMode ? 'Tabla de posiciones del grupo seleccionado' : 'Tablas de posiciones por grupo'
+              }
+            >
+              {visibleStandings.map((standing, index) => {
+                const originalIndex = standings.indexOf(standing)
 
-              return (
-                <StandingsGroupCard
-                  key={standing?.group ?? `standings-group-${index}`}
-                  standing={standing}
-                  variant={isFocusMode ? 'featured' : 'compact'}
-                  variantIndex={originalIndex >= 0 ? originalIndex % 4 : index % 4}
-                />
-              )
-            })}
-          </section>
+                return (
+                  <StandingsGroupCard
+                    key={standing?.group ?? `standings-group-${index}`}
+                    standing={standing}
+                    variant={isFocusMode ? 'featured' : 'compact'}
+                    variantIndex={originalIndex >= 0 ? originalIndex % 4 : index % 4}
+                  />
+                )
+              })}
+            </section>
+          )}
         </>
       )}
     </section>

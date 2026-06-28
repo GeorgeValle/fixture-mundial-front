@@ -169,6 +169,7 @@
 
 .segmentedControl {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: var(--space-1);
   padding: var(--space-1);
   background: color-mix(in srgb, var(--color-primary) 5%, var(--color-surface));
@@ -255,6 +256,31 @@
   border-radius: 0.22rem;
 }
 
+.thirdPlacesIcon::before,
+.thirdPlacesIcon::after {
+  position: absolute;
+  content: '';
+  background: currentColor;
+  border-radius: var(--radius-pill);
+}
+
+.thirdPlacesIcon::before {
+  top: 0.12rem;
+  left: 0.38rem;
+  width: 0.28rem;
+  height: 0.28rem;
+  box-shadow:
+    -0.32rem 0.34rem 0 currentColor,
+    0.32rem 0.34rem 0 currentColor;
+}
+
+.thirdPlacesIcon::after {
+  right: 0.1rem;
+  bottom: 0.08rem;
+  left: 0.1rem;
+  height: 0.16rem;
+}
+
 .groupSelector {
   display: inline-flex;
   align-items: center;
@@ -329,6 +355,11 @@
   .segmentedControl,
   .groupSelector {
     width: 100%;
+  }
+
+  .segmentedControl {
+    display: grid;
+    border-radius: var(--radius-lg);
   }
 
   .viewButton {
