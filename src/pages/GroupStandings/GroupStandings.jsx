@@ -8,9 +8,11 @@ import {
   setDelayedLoading,
   setGlobalLoading,
 } from '../../features/ui/uiSlice'
+import { getMatches } from '../../services/matches/matchesService'
 import { getStandings } from '../../services/standings/standingsService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
+import { buildKnockoutTeamKeys } from '../../utils/groupStandingBadge'
 import { buildThirdPlaceRanking } from '../../utils/thirdPlaceRanking'
 import styles from './GroupStandings.module.css'
 
@@ -38,6 +40,8 @@ function GroupStandings() {
   const dispatch = useDispatch()
   const [initialFavoriteGroup] = useState(getInitialFavoriteGroup)
   const [standings, setStandings] = useState([])
+  const [knockoutTeamKeys, setKnockoutTeamKeys] = useState(() => new Set())
+  const [hasKnockoutContext, setHasKnockoutContext] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorKind, setErrorKind] = useState(null)
   const [viewMode, setViewMode] = useState(() => getInitialViewMode(initialFavoriteGroup))
@@ -68,20 +72,29 @@ function GroupStandings() {
       )
     }, DELAYED_LOADING_THRESHOLD_MS)
 
-    getStandings()
-      .then((nextStandings) => {
+    Promise.allSettled([getStandings(), getMatches()])
+      .then(([standingsResult, matchesResult]) => {
         if (!isActive) {
           return
         }
 
-        setStandings(nextStandings)
-      })
-      .catch((error) => {
-        if (!isActive) {
+        if (standingsResult.status === 'rejected') {
+          const error = standingsResult.reason
+
+          setErrorKind(error?.source === 'standingsService' ? 'invalid' : 'api')
           return
         }
 
-        setErrorKind(error?.source === 'standingsService' ? 'invalid' : 'api')
+        setStandings(standingsResult.value)
+
+        if (matchesResult.status === 'fulfilled') {
+          setKnockoutTeamKeys(buildKnockoutTeamKeys(matchesResult.value))
+          setHasKnockoutContext(true)
+          return
+        }
+
+        setKnockoutTeamKeys(new Set())
+        setHasKnockoutContext(false)
       })
       .finally(() => {
         if (!isActive) {
@@ -115,6 +128,10 @@ function GroupStandings() {
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
   const thirdPlaceRanking = buildThirdPlaceRanking(standings)
+  const groupStandingBadgeContext = {
+    knockoutTeamKeys,
+    hasKnockoutContext,
+  }
   const totalGroups = standings.length
   const totalTeams = standings.reduce(
     (count, standing) => count + (standing?.teams?.length ?? 0),
@@ -274,6 +291,7 @@ function GroupStandings() {
                     standing={standing}
                     variant={isFocusMode ? 'featured' : 'compact'}
                     variantIndex={originalIndex >= 0 ? originalIndex % 4 : index % 4}
+                    groupStandingBadgeContext={groupStandingBadgeContext}
                   />
                 )
               })}

@@ -140,8 +140,15 @@ function mockStandingsResponse(data) {
   )
 }
 
+function mockMatchesResponse(data) {
+  server.use(
+    http.get('*/api/matches', () => HttpResponse.json({ status: 'success', data })),
+  )
+}
+
 beforeEach(() => {
   window.localStorage.clear()
+  mockMatchesResponse([])
 })
 
 afterEach(() => {
@@ -342,25 +349,26 @@ describe('GroupStandings', () => {
     expect(within(getTeamRow('Tercero I')).getByText('No clasifica')).toBeInTheDocument()
   })
 
-  it('does not call matches API from Mejores terceros', async () => {
+  it('keeps Mejores terceros ranking independent from matches API qualification data', async () => {
     const user = userEvent.setup()
-    let matchesCallCount = 0
 
     mockStandingsResponse(createCutoffTieStandingsGroups({ isClosed: true }))
-    server.use(
-      http.get('*/api/matches', () => {
-        matchesCallCount += 1
-
-        return HttpResponse.json({ status: 'success', data: [] })
-      }),
-    )
+    mockMatchesResponse([
+      {
+        _id: 'match-73',
+        matchNumber: 73,
+        homeTeam: { _id: 'A-Tercero A', name: 'Tercero A', group: 'A' },
+        awayTeam: { _id: 'I-Tercero I', name: 'Tercero I', group: 'I' },
+      },
+    ])
 
     renderGroupStandings()
 
     await user.click(await screen.findByRole('button', { name: /mejores terceros/i }))
 
-    expect(matchesCallCount).toBe(0)
     expect(screen.getByText(/ranking final según puntos, diferencia de gol/i)).toBeInTheDocument()
+    expect(screen.getAllByText('Clasifica a 16avos')).toHaveLength(8)
+    expect(screen.getAllByText('No clasifica')).toHaveLength(4)
     expect(screen.queryByText('Desempate pendiente')).not.toBeInTheDocument()
   })
 
@@ -450,6 +458,146 @@ describe('GroupStandings', () => {
     for (const value of ['2', '1', '0', '4']) {
       expect(tableScope.getAllByText(value).length).toBeGreaterThan(0)
     }
+  })
+
+  it('shows historical group badges for qualified teams even when current tournament status is eliminated', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
+          createStandingRow(
+            'Sudáfrica',
+            'A',
+            { pts: 6 },
+            { position: 2, qualifiedTo: 'ELIMINATED' },
+          ),
+          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const southAfricaRow = rows.find((row) => within(row).queryByText('Sudáfrica'))
+
+    expect(within(southAfricaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
+    expect(within(southAfricaRow).queryByText('Eliminado')).not.toBeInTheDocument()
+  })
+
+  it('marks third-place teams as qualified when they appear in real knockout matches', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+    mockMatchesResponse([
+      {
+        _id: 'match-73',
+        matchNumber: 73,
+        homeTeam: { _id: 'A-Canadá', name: 'Canadá', group: 'A' },
+        awayTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
+      },
+    ])
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+
+    expect(within(canadaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
+  })
+
+  it('marks third-place teams as eliminated in groups when loaded knockout context excludes them', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+    mockMatchesResponse([
+      {
+        _id: 'match-73',
+        matchNumber: 73,
+        homeTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
+        awayTeam: { _id: 'C-Equipo C1', name: 'Equipo C1', group: 'C' },
+      },
+    ])
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+
+    expect(within(canadaRow).getByText('Eliminado en grupos')).toBeInTheDocument()
+  })
+
+  it('does not assume third-place elimination when knockout context fails to load', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+    server.use(
+      http.get('*/api/matches', () =>
+        HttpResponse.json({ message: 'Matches unavailable' }, { status: 500 }),
+      ),
+    )
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+
+    expect(within(canadaRow).getByText('Pendiente')).toBeInTheDocument()
+    expect(within(canadaRow).queryByText('Eliminado en grupos')).not.toBeInTheDocument()
+  })
+
+  it('preserves standings row order received from the backend', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('Primero', 'A', { pts: 3 }, { position: 1 }),
+          createStandingRow('Segundo', 'A', { pts: 9 }, { position: 2 }),
+          createStandingRow('Tercero', 'A', { pts: 6 }, { position: 3 }),
+          createStandingRow('Cuarto', 'A', { pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+
+    expect(within(rows[1]).getByText('Primero')).toBeInTheDocument()
+    expect(within(rows[2]).getByText('Segundo')).toBeInTheDocument()
+    expect(within(rows[3]).getByText('Tercero')).toBeInTheDocument()
+    expect(within(rows[4]).getByText('Cuarto')).toBeInTheDocument()
   })
 
   it('uses visual row position when team.position is null and does not invent qualification badges', async () => {

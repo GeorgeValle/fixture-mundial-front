@@ -24,18 +24,21 @@ Servicio:
 
 ```text
 src/services/standings/standingsService.js
+src/services/matches/matchesService.js
 ```
 
 Endpoint público:
 
 ```text
 GET /api/standings
+GET /api/matches
 ```
 
 Schema:
 
 ```text
 src/schemas/standingsSchema.js
+src/schemas/matchSchema.js
 ```
 
 ## Contrato público de datos
@@ -125,12 +128,16 @@ Cuando hay standings:
 - El selector de grupo de `Vista foco` se construye desde los grupos devueltos por el backend.
 - Los botones de modo usan `aria-pressed`.
 - Los headers de cards tienen acentos visuales y watermarks decorativos.
-- Los badges de clasificación solo deben mostrarse si el backend trae datos útiles.
+- Los badges de clasificación de cada grupo muestran el resultado histórico de la fase de grupos, no el estado actual del torneo.
+- Si no se puede cargar el contexto de eliminatorias, los equipos terceros usan un fallback prudente `Pendiente` en lugar de asumir eliminación.
 
 ## Reglas de negocio
 
 - No inventar posiciones registradas.
-- No inventar etiquetas de clasificación si `team.qualifiedTo` está vacío o `null`.
+- No usar `team.qualifiedTo` como fuente principal para badges históricos de grupo, porque puede representar el estado actual del torneo después de eliminatorias.
+- Los equipos en posición 1 y 2 muestran `Clasificado a 16avos`.
+- Los equipos en posición 3 muestran `Clasificado a 16avos` solo si aparecen en partidos reales de eliminatorias (`matchNumber >= 73`) como `homeTeam` o `awayTeam`; si el contexto de eliminatorias cargó y no aparecen, muestran `Eliminado en grupos`.
+- Los equipos en posición 4 muestran `Eliminado en grupos`.
 - Si `team.position` es `null`, la UI puede mostrar posición visual por orden de fila, pero no tratarla como dato confirmado.
 - Las columnas visibles son: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.
 

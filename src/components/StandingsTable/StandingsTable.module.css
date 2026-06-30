@@ -122,3 +122,9 @@
   background: color-mix(in srgb, var(--color-red, #dc2626) 10%, var(--color-surface));
   color: var(--color-red, #dc2626);
 }
+
+.pendingBadge {
+  border-color: color-mix(in srgb, var(--color-gold) 42%, transparent);
+  background: color-mix(in srgb, var(--color-gold) 14%, var(--color-surface));
+  color: color-mix(in srgb, var(--color-primary) 62%, var(--color-gold));
+}

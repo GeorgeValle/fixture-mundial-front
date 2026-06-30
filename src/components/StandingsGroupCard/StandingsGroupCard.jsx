@@ -8,7 +8,12 @@ const watermarkVariants = [
   'variantCrowdFour',
 ]
 
-function StandingsGroupCard({ standing, variant = 'featured', variantIndex = 0 }) {
+function StandingsGroupCard({
+  standing,
+  variant = 'featured',
+  variantIndex = 0,
+  groupStandingBadgeContext = {},
+}) {
   const groupName = standing?.group ?? 'Grupo'
   const teams = standing?.teams ?? []
 
@@ -33,7 +38,7 @@ function StandingsGroupCard({ standing, variant = 'featured', variantIndex = 0 }
       </div>
 
       {teams.length > 0 ? (
-        <StandingsTable teams={teams} />
+        <StandingsTable teams={teams} groupStandingBadgeContext={groupStandingBadgeContext} />
       ) : (
         <p className={styles.emptyText}>Este grupo todavía no tiene posiciones disponibles.</p>
       )}
