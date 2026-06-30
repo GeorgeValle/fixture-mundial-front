@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { configureStore } from '@reduxjs/toolkit'
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
@@ -166,6 +166,10 @@ function renderGroupStandings({ includeModal = false } = {}) {
       </MemoryRouter>
     </Provider>,
   )
+}
+
+function getRenderedTeamRow(teamName) {
+  return screen.getByText(teamName).closest('tr')
 }
 
 function mockStandingsResponse(data) {
@@ -587,109 +591,42 @@ describe('GroupStandings', () => {
     expect(within(southAfricaRow).queryByText('Clasificado a 16avos')).not.toBeInTheDocument()
   })
 
-  it('marks third-place teams as qualified when they appear in real knockout matches', async () => {
-    mockStandingsResponse([
-      {
-        group: 'A',
-        teams: [
-          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
-          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
-          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
-        ],
-      },
-    ])
+  it('marks third-place teams as qualified when they are inside the reliable top-eight third-place ranking', async () => {
+    mockStandingsResponse(createThirdPlaceStandingsGroups({ isClosed: true }))
+
+    renderGroupStandings()
+
+    expect(await screen.findByText('Tercero A')).toBeInTheDocument()
+
+    expect(within(getRenderedTeamRow('Tercero A')).getByText('Clasificado a 16avos')).toBeInTheDocument()
+  })
+
+  it('ignores matches context for third-place badges when reliable standings ranking is available', async () => {
+    mockStandingsResponse(createThirdPlaceStandingsGroups({ isClosed: true }))
     mockMatchesResponse(createRoundOf32Matches({
       73: {
         _id: 'match-73',
         matchNumber: 73,
-        homeTeam: { _id: 'A-Canadá', name: 'Canadá', group: 'A' },
+        homeTeam: { _id: 'I-Tercero I', name: 'Tercero I', group: 'I' },
         awayTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
       },
     }))
 
     renderGroupStandings()
 
-    const table = await screen.findByRole('table')
-    const rows = within(table).getAllByRole('row')
-    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+    expect(await screen.findByText('Tercero I')).toBeInTheDocument()
 
-    await waitFor(() => {
-      expect(within(canadaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
-    })
+    expect(within(getRenderedTeamRow('Tercero I')).getByText('Eliminado en grupos')).toBeInTheDocument()
   })
 
-  it('updates third-place badges when auxiliary matches later provide reliable context', async () => {
-    const matchesDeferred = createDeferred()
-
-    mockStandingsResponse([
-      {
-        group: 'A',
-        teams: [
-          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
-          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
-          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
-        ],
-      },
-    ])
-    server.use(
-      http.get('*/api/matches', async () => {
-        await matchesDeferred.promise
-        return HttpResponse.json({
-          status: 'success',
-          data: createRoundOf32Matches({
-            73: {
-              _id: 'match-73',
-              matchNumber: 73,
-              homeTeam: { _id: 'A-Canadá', name: 'Canadá', group: 'A' },
-              awayTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
-            },
-          }),
-        })
-      }),
-    )
+  it('marks third-place teams as eliminated in groups when reliable third-place ranking excludes them', async () => {
+    mockStandingsResponse(createThirdPlaceStandingsGroups({ isClosed: true }))
 
     renderGroupStandings()
 
-    const table = await screen.findByRole('table')
-    const rows = within(table).getAllByRole('row')
-    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+    expect(await screen.findByText('Tercero I')).toBeInTheDocument()
 
-    expect(within(canadaRow).getByText('Pendiente')).toBeInTheDocument()
-
-    await act(async () => {
-      matchesDeferred.resolve()
-    })
-
-    await waitFor(() => {
-      expect(within(canadaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
-    })
-  })
-
-  it('marks third-place teams as eliminated in groups when loaded knockout context excludes them', async () => {
-    mockStandingsResponse([
-      {
-        group: 'A',
-        teams: [
-          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
-          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
-          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
-        ],
-      },
-    ])
-    mockMatchesResponse(createRoundOf32Matches())
-
-    renderGroupStandings()
-
-    const table = await screen.findByRole('table')
-    const rows = within(table).getAllByRole('row')
-    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
-
-    await waitFor(() => {
-      expect(within(canadaRow).getByText('Eliminado en grupos')).toBeInTheDocument()
-    })
+    expect(within(getRenderedTeamRow('Tercero I')).getByText('Eliminado en grupos')).toBeInTheDocument()
   })
 
   it('does not assume third-place elimination when knockout context fails to load', async () => {

@@ -8,15 +8,14 @@ import {
   setDelayedLoading,
   setGlobalLoading,
 } from '../../features/ui/uiSlice'
-import { getMatches } from '../../services/matches/matchesService'
 import { getStandings } from '../../services/standings/standingsService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
+import { buildQualifiedThirdPlaceTeamKeys } from '../../utils/groupStandingBadge'
 import {
-  buildKnockoutTeamKeys,
-  hasReliableRoundOf32Context,
-} from '../../utils/groupStandingBadge'
-import { buildThirdPlaceRanking } from '../../utils/thirdPlaceRanking'
+  buildThirdPlaceRanking,
+  isReliableThirdPlaceRanking,
+} from '../../utils/thirdPlaceRanking'
 import styles from './GroupStandings.module.css'
 
 const FRIENDLY_API_ERROR_MESSAGE =
@@ -43,8 +42,6 @@ function GroupStandings() {
   const dispatch = useDispatch()
   const [initialFavoriteGroup] = useState(getInitialFavoriteGroup)
   const [standings, setStandings] = useState([])
-  const [knockoutTeamKeys, setKnockoutTeamKeys] = useState(() => new Set())
-  const [hasReliableKnockoutContext, setHasReliableKnockoutContext] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorKind, setErrorKind] = useState(null)
   const [viewMode, setViewMode] = useState(() => getInitialViewMode(initialFavoriteGroup))
@@ -104,24 +101,6 @@ function GroupStandings() {
         }
       })
 
-    getMatches()
-      .then((matchesResult) => {
-        if (!isActive) {
-          return
-        }
-
-        setKnockoutTeamKeys(buildKnockoutTeamKeys(matchesResult))
-        setHasReliableKnockoutContext(hasReliableRoundOf32Context(matchesResult))
-      })
-      .catch(() => {
-        if (!isActive) {
-          return
-        }
-
-        setKnockoutTeamKeys(new Set())
-        setHasReliableKnockoutContext(false)
-      })
-
     return () => {
       isActive = false
       window.clearTimeout(delayedLoadingTimer)
@@ -140,9 +119,10 @@ function GroupStandings() {
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
   const thirdPlaceRanking = buildThirdPlaceRanking(standings)
+  const hasReliableThirdPlaceRanking = isReliableThirdPlaceRanking(standings)
   const groupStandingBadgeContext = {
-    knockoutTeamKeys,
-    hasReliableKnockoutContext,
+    qualifiedThirdPlaceTeamKeys: buildQualifiedThirdPlaceTeamKeys(thirdPlaceRanking),
+    hasReliableThirdPlaceRanking,
   }
   const totalGroups = standings.length
   const totalTeams = standings.reduce(
@@ -153,8 +133,6 @@ function GroupStandings() {
   function handleRetryStandings() {
     setIsLoading(true)
     setErrorKind(null)
-    setKnockoutTeamKeys(new Set())
-    setHasReliableKnockoutContext(false)
     setRetryCount((currentCount) => currentCount + 1)
   }
 

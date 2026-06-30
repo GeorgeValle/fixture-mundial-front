@@ -14,6 +14,8 @@ const ROUND_OF_32_MATCH_NUMBER_START = 73
 const ROUND_OF_32_MATCH_NUMBER_END = 88
 const ROUND_OF_32_MATCH_COUNT = 16
 const ROUND_OF_32_TEAM_SLOT_COUNT = ROUND_OF_32_MATCH_COUNT * 2
+const ROUND_OF_32_STAGE_ALIASES = new Set(['ROUND_OF_32', 'DIECISEISAVOS', '16AVOS'])
+const ROUND_OF_32_ROUND_KEY_ALIASES = new Set(['round-of-32', 'dieciseisavos', '16avos'])
 const PLACEHOLDER_TEAM_NAMES = new Set([
   'tbd',
   'por definir',
@@ -42,7 +44,7 @@ function getTeamFallbackKey(team) {
   return `team-name-group:${name}|${group}`
 }
 
-function getTeamKeys(team) {
+export function getTeamKeys(team) {
   const keys = []
 
   if (team?._id) {
@@ -87,17 +89,29 @@ function addTeamKeys(knockoutTeamKeys, team) {
 
 function isRealKnockoutMatch(match) {
   const matchNumber = Number(match?.matchNumber)
+  const stage = String(match?.stage ?? '').trim().toUpperCase()
+  const roundKey = String(match?.roundKey ?? '').trim().toLowerCase()
 
-  return Number.isInteger(matchNumber) && matchNumber >= ROUND_OF_32_MATCH_NUMBER_START
+  return (
+    (Number.isInteger(matchNumber) && matchNumber >= ROUND_OF_32_MATCH_NUMBER_START) ||
+    ROUND_OF_32_STAGE_ALIASES.has(stage) ||
+    stage.includes('DIECISEISAVOS') ||
+    ROUND_OF_32_ROUND_KEY_ALIASES.has(roundKey)
+  )
 }
 
 function isRoundOf32Match(match) {
   const matchNumber = Number(match?.matchNumber)
+  const stage = String(match?.stage ?? '').trim().toUpperCase()
+  const roundKey = String(match?.roundKey ?? '').trim().toLowerCase()
 
   return (
-    Number.isInteger(matchNumber) &&
-    matchNumber >= ROUND_OF_32_MATCH_NUMBER_START &&
-    matchNumber <= ROUND_OF_32_MATCH_NUMBER_END
+    (Number.isInteger(matchNumber) &&
+      matchNumber >= ROUND_OF_32_MATCH_NUMBER_START &&
+      matchNumber <= ROUND_OF_32_MATCH_NUMBER_END) ||
+    ROUND_OF_32_STAGE_ALIASES.has(stage) ||
+    stage.includes('DIECISEISAVOS') ||
+    ROUND_OF_32_ROUND_KEY_ALIASES.has(roundKey)
   )
 }
 
@@ -121,23 +135,43 @@ export function hasReliableRoundOf32Context(matches = []) {
   const safeMatches = Array.isArray(matches) ? matches : []
   const seededRoundOf32Slots = new Set()
 
-  for (const match of safeMatches) {
+  for (const [matchIndex, match] of safeMatches.entries()) {
     if (!isRoundOf32Match(match)) {
       continue
     }
 
     const matchNumber = Number(match?.matchNumber)
+    const matchKey = Number.isInteger(matchNumber)
+      ? matchNumber
+      : (match?._id ?? `round-of-32-${matchIndex}`)
 
     if (hasRealTeamIdentity(match?.homeTeam)) {
-      seededRoundOf32Slots.add(`${matchNumber}:home`)
+      seededRoundOf32Slots.add(`${matchKey}:home`)
     }
 
     if (hasRealTeamIdentity(match?.awayTeam)) {
-      seededRoundOf32Slots.add(`${matchNumber}:away`)
+      seededRoundOf32Slots.add(`${matchKey}:away`)
     }
   }
 
   return seededRoundOf32Slots.size === ROUND_OF_32_TEAM_SLOT_COUNT
+}
+
+export function buildQualifiedThirdPlaceTeamKeys(thirdPlaceRanking = []) {
+  const qualifiedThirdPlaceTeamKeys = new Set()
+  const safeRanking = Array.isArray(thirdPlaceRanking) ? thirdPlaceRanking : []
+
+  for (const row of safeRanking) {
+    if (!row?.isQualifiedThirdPlace) {
+      continue
+    }
+
+    for (const key of getTeamKeys(row?.team)) {
+      qualifiedThirdPlaceTeamKeys.add(key)
+    }
+  }
+
+  return qualifiedThirdPlaceTeamKeys
 }
 
 function isTeamInKnockoutContext(team, knockoutTeamKeys) {
@@ -158,7 +192,7 @@ function createBadge(variant) {
 export function getGroupStandingBadge(row, context = {}) {
   const position = Number(row?.team?.position)
   const isGroupComplete = context.isGroupComplete === true
-  const hasReliableKnockoutContext = context.hasReliableKnockoutContext === true
+  const hasReliableThirdPlaceRanking = context.hasReliableThirdPlaceRanking === true
 
   if (!Number.isInteger(position)) {
     return null
@@ -169,15 +203,15 @@ export function getGroupStandingBadge(row, context = {}) {
   }
 
   if (position === 3) {
-    if (
-      isGroupComplete &&
-      hasReliableKnockoutContext &&
-      isTeamInKnockoutContext(row?.team, context.knockoutTeamKeys)
-    ) {
+    if (!isGroupComplete || !hasReliableThirdPlaceRanking) {
+      return createBadge(GROUP_STANDING_BADGE_VARIANTS.pending)
+    }
+
+    if (isTeamInKnockoutContext(row?.team, context.qualifiedThirdPlaceTeamKeys)) {
       return createBadge(GROUP_STANDING_BADGE_VARIANTS.qualified)
     }
 
-    if (isGroupComplete && hasReliableKnockoutContext) {
+    if (context.qualifiedThirdPlaceTeamKeys instanceof Set) {
       return createBadge(GROUP_STANDING_BADGE_VARIANTS.eliminated)
     }
 

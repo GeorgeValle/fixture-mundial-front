@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  buildQualifiedThirdPlaceTeamKeys,
   buildKnockoutTeamKeys,
   getGroupStandingBadge,
   GROUP_STANDING_BADGE_VARIANTS,
@@ -46,6 +47,29 @@ function createRoundOf32Matches(seedOverrides = {}) {
   })
 }
 
+function createStageOnlyRoundOf32Matches(seedOverrides = {}) {
+  return Array.from({ length: 16 }, (_, index) => {
+    const matchKey = `match-${index + 1}`
+    const override = seedOverrides[matchKey] ?? {}
+
+    return {
+      _id: matchKey,
+      stage: 'ROUND_OF_32',
+      homeTeam: {
+        _id: `stage-team-${index + 1}-home`,
+        name: `Stage Equipo ${index + 1} Local`,
+        group: 'Z',
+      },
+      awayTeam: {
+        _id: `stage-team-${index + 1}-away`,
+        name: `Stage Equipo ${index + 1} Visitante`,
+        group: 'Z',
+      },
+      ...override,
+    }
+  })
+}
+
 describe('groupStandingBadge', () => {
   it('does not show a confirmed classification badge for first place when the group is incomplete', () => {
     expect(getGroupStandingBadge(createRow(1), { isGroupComplete: false })).toBeNull()
@@ -59,8 +83,6 @@ describe('groupStandingBadge', () => {
     expectBadge(
       createRow(1, { qualifiedTo: 'ELIMINATED' }),
       {
-        knockoutTeamKeys: new Set(),
-        hasReliableKnockoutContext: false,
         isGroupComplete: true,
       },
       {
@@ -74,8 +96,6 @@ describe('groupStandingBadge', () => {
     expectBadge(
       createRow(2, { qualifiedTo: 'ELIMINATED' }),
       {
-        knockoutTeamKeys: new Set(),
-        hasReliableKnockoutContext: false,
         isGroupComplete: true,
       },
       {
@@ -85,21 +105,19 @@ describe('groupStandingBadge', () => {
     )
   })
 
-  it('marks a third-place team as classified when it appears in real knockout matches', () => {
-    const matches = createRoundOf32Matches({
-      73: {
-        matchNumber: 73,
-        homeTeam: { _id: 'team-south-africa', name: 'Sudáfrica', group: 'A' },
-        awayTeam: { _id: 'team-mexico', name: 'México', group: 'A' },
+  it('marks a third-place team as classified when it is inside qualified third places', () => {
+    const qualifiedThirdPlaceTeamKeys = buildQualifiedThirdPlaceTeamKeys([
+      {
+        team: { _id: 'team-south-africa', name: 'Sudáfrica', group: 'A' },
+        isQualifiedThirdPlace: true,
       },
-    })
-    const knockoutTeamKeys = buildKnockoutTeamKeys(matches)
+    ])
 
     expectBadge(
       createRow(3),
       {
-        knockoutTeamKeys,
-        hasReliableKnockoutContext: hasReliableRoundOf32Context(matches),
+        qualifiedThirdPlaceTeamKeys,
+        hasReliableThirdPlaceRanking: true,
         isGroupComplete: true,
       },
       {
@@ -109,15 +127,12 @@ describe('groupStandingBadge', () => {
     )
   })
 
-  it('marks a third-place team as eliminated in groups when knockout context loaded without that team', () => {
-    const matches = createRoundOf32Matches()
-    const knockoutTeamKeys = buildKnockoutTeamKeys(matches)
-
+  it('marks a third-place team as eliminated in groups when reliable third-place ranking excludes it', () => {
     expectBadge(
       createRow(3),
       {
-        knockoutTeamKeys,
-        hasReliableKnockoutContext: hasReliableRoundOf32Context(matches),
+        qualifiedThirdPlaceTeamKeys: new Set(['team-id:other-team']),
+        hasReliableThirdPlaceRanking: true,
         isGroupComplete: true,
       },
       {
@@ -131,8 +146,8 @@ describe('groupStandingBadge', () => {
     expectBadge(
       createRow(3),
       {
-        knockoutTeamKeys: new Set(),
-        hasReliableKnockoutContext: false,
+        qualifiedThirdPlaceTeamKeys: new Set(),
+        hasReliableThirdPlaceRanking: false,
         isGroupComplete: true,
       },
       {
@@ -146,8 +161,6 @@ describe('groupStandingBadge', () => {
     expectBadge(
       createRow(4),
       {
-        knockoutTeamKeys: new Set(),
-        hasReliableKnockoutContext: false,
         isGroupComplete: true,
       },
       {
@@ -160,8 +173,8 @@ describe('groupStandingBadge', () => {
   it('does not invent a confirmed badge when team position is null', () => {
     expect(
       getGroupStandingBadge(createRow(null), {
-        knockoutTeamKeys: new Set(),
-        hasReliableKnockoutContext: true,
+        qualifiedThirdPlaceTeamKeys: new Set(),
+        hasReliableThirdPlaceRanking: true,
         isGroupComplete: true,
       }),
     ).toBeNull()
@@ -171,8 +184,6 @@ describe('groupStandingBadge', () => {
     expectBadge(
       createRow(2, { qualifiedTo: 'ROUND_OF_16' }),
       {
-        knockoutTeamKeys: new Set(),
-        hasReliableKnockoutContext: true,
         isGroupComplete: true,
       },
       {
@@ -182,15 +193,13 @@ describe('groupStandingBadge', () => {
     )
   })
 
-  it('can match knockout teams by normalized name and group fallback when ids differ', () => {
-    const matches = createRoundOf32Matches({
-      73: {
-        matchNumber: '73',
-        homeTeam: { name: 'Sudafrica', group: 'A' },
-        awayTeam: { _id: 'team-mexico', name: 'México', group: 'A' },
+  it('can match qualified third-place teams by normalized name and group fallback when ids differ', () => {
+    const qualifiedThirdPlaceTeamKeys = buildQualifiedThirdPlaceTeamKeys([
+      {
+        team: { name: 'Sudafrica', group: 'A' },
+        isQualifiedThirdPlace: true,
       },
-    })
-    const knockoutTeamKeys = buildKnockoutTeamKeys(matches)
+    ])
 
     expect(getTeamKey({ name: 'Sudáfrica', group: 'A' })).toBe(
       'team-name-group:sudafrica|a',
@@ -198,8 +207,8 @@ describe('groupStandingBadge', () => {
     expectBadge(
       createRow(3, { _id: undefined }),
       {
-        knockoutTeamKeys,
-        hasReliableKnockoutContext: hasReliableRoundOf32Context(matches),
+        qualifiedThirdPlaceTeamKeys,
+        hasReliableThirdPlaceRanking: true,
         isGroupComplete: true,
       },
       {
@@ -223,7 +232,7 @@ describe('groupStandingBadge', () => {
       createRow(3),
       {
         knockoutTeamKeys: buildKnockoutTeamKeys(matches),
-        hasReliableKnockoutContext: hasReliableRoundOf32Context(matches),
+        hasReliableThirdPlaceRanking: false,
         isGroupComplete: true,
       },
       {
@@ -247,7 +256,7 @@ describe('groupStandingBadge', () => {
       createRow(3),
       {
         knockoutTeamKeys: buildKnockoutTeamKeys(matches),
-        hasReliableKnockoutContext: hasReliableRoundOf32Context(matches),
+        hasReliableThirdPlaceRanking: false,
         isGroupComplete: true,
       },
       {
@@ -255,5 +264,35 @@ describe('groupStandingBadge', () => {
         variant: GROUP_STANDING_BADGE_VARIANTS.pending,
       },
     )
+  })
+
+  it('includes stage-only round-of-32 teams in optional knockout key fallback helpers', () => {
+    const knockoutTeamKeys = buildKnockoutTeamKeys([
+      {
+        stage: 'ROUND_OF_32',
+        homeTeam: { _id: 'team-south-africa', name: 'Sudáfrica', group: 'A' },
+        awayTeam: { _id: 'team-mexico', name: 'México', group: 'A' },
+      },
+    ])
+
+    expect(knockoutTeamKeys.has('team-id:team-south-africa')).toBe(true)
+    expect(knockoutTeamKeys.has('team-id:team-mexico')).toBe(true)
+  })
+
+  it('includes roundKey-only round-of-32 teams in optional knockout key fallback helpers', () => {
+    const knockoutTeamKeys = buildKnockoutTeamKeys([
+      {
+        roundKey: 'round-of-32',
+        homeTeam: { _id: 'team-south-africa', name: 'Sudáfrica', group: 'A' },
+        awayTeam: { _id: 'team-mexico', name: 'México', group: 'A' },
+      },
+    ])
+
+    expect(knockoutTeamKeys.has('team-id:team-south-africa')).toBe(true)
+    expect(knockoutTeamKeys.has('team-id:team-mexico')).toBe(true)
+  })
+
+  it('treats fully seeded stage-only round-of-32 matches as reliable optional context', () => {
+    expect(hasReliableRoundOf32Context(createStageOnlyRoundOf32Matches())).toBe(true)
   })
 })

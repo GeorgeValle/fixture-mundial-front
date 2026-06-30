@@ -129,18 +129,17 @@ Cuando hay standings:
 - Los botones de modo usan `aria-pressed`.
 - Los headers de cards tienen acentos visuales y watermarks decorativos.
 - Los badges de clasificación de cada grupo muestran el resultado histórico de la fase de grupos, no el estado actual del torneo.
-- Si no se puede cargar el contexto de eliminatorias, los equipos terceros usan un fallback prudente `Pendiente` en lugar de asumir eliminación.
-- La carga de posiciones depende solo de `GET /api/standings`; `GET /api/matches` es contexto auxiliar para refinar badges y no debe bloquear el render principal.
+- Los badges de terceros usan la misma base que la tabla de mejores terceros: el ranking derivado desde `GET /api/standings`.
+- La carga de posiciones depende solo de `GET /api/standings`; `GET /api/matches` no es necesario para decidir los badges históricos.
 
 ## Reglas de negocio
 
 - No inventar posiciones registradas.
 - No usar `team.qualifiedTo` como fuente principal para badges históricos de grupo, porque puede representar el estado actual del torneo después de eliminatorias.
 - Los equipos en posición 1 y 2 muestran `Clasificado a 16avos` solo cuando el grupo está completo (`teams.length === 4` y todos los rows tienen `pj === 3`).
-- Los equipos en posición 3 muestran `Clasificado a 16avos` solo si el grupo está completo, el contexto de 16avos es confiable y aparecen en partidos reales de eliminatorias como `homeTeam` o `awayTeam`.
-- El contexto de 16avos es confiable solo cuando los partidos `matchNumber` 73 a 88 están completamente sembrados con equipos reales en ambos slots.
-- Si el contexto de 16avos no es confiable, los terceros quedan `Pendiente`; no se los marca como eliminados por una respuesta parcial de `/api/matches`.
-- Si `/api/matches` tarda o falla, `/posiciones` sigue renderizando las standings y no convierte ese problema auxiliar en error global.
+- Los equipos en posición 3 muestran `Clasificado a 16avos` solo si el ranking confiable de mejores terceros los ubica dentro del top 8.
+- El ranking de mejores terceros es confiable solo cuando existen los 12 grupos completos, cada grupo tiene 4 equipos, todos tienen `pj === 3` y hay un tercero oficial con `team.position === 3` por grupo.
+- Si el ranking de mejores terceros no es confiable, los terceros quedan `Pendiente`; no se los marca como eliminados por contexto de bracket o partidos incompletos.
 - Los equipos en posición 4 muestran `Eliminado en grupos` solo cuando el grupo está completo.
 - Si `team.position` es `null`, la UI puede mostrar posición visual por orden de fila, pero no tratarla como dato confirmado.
 - Las columnas visibles son: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.

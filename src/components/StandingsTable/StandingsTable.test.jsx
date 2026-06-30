@@ -69,10 +69,10 @@ describe('StandingsTable', () => {
     expect(within(getTeamRow()).queryByText('Clasificado a octavos')).not.toBeInTheDocument()
   })
 
-  it('shows the eliminated in groups badge when a third-place team is missing from loaded knockout context', () => {
+  it('shows the eliminated in groups badge when a third-place team is outside reliable ranking', () => {
     renderStandingsTable(createStandingRow(3), {
-      knockoutTeamKeys: new Set(),
-      hasReliableKnockoutContext: true,
+      qualifiedThirdPlaceTeamKeys: new Set(['team-id:other-team']),
+      hasReliableThirdPlaceRanking: true,
     })
 
     const badge = within(getTeamRow()).getByText('Eliminado en grupos')
@@ -81,10 +81,10 @@ describe('StandingsTable', () => {
     expect(badge).toHaveClass(styles.eliminatedBadge)
   })
 
-  it('shows a pending badge for a third-place team when knockout context is not available', () => {
+  it('shows a pending badge for a third-place team when reliable ranking is not available', () => {
     renderStandingsTable(createStandingRow(3), {
-      knockoutTeamKeys: new Set(),
-      hasReliableKnockoutContext: false,
+      qualifiedThirdPlaceTeamKeys: new Set(),
+      hasReliableThirdPlaceRanking: false,
     })
 
     const badge = within(getTeamRow()).getByText('Pendiente')
