@@ -75,29 +75,20 @@ function GroupStandings() {
       )
     }, DELAYED_LOADING_THRESHOLD_MS)
 
-    Promise.allSettled([getStandings(), getMatches()])
-      .then(([standingsResult, matchesResult]) => {
+    getStandings()
+      .then((standingsResult) => {
         if (!isActive) {
           return
         }
 
-        if (standingsResult.status === 'rejected') {
-          const error = standingsResult.reason
-
-          setErrorKind(error?.source === 'standingsService' ? 'invalid' : 'api')
+        setStandings(standingsResult)
+      })
+      .catch((error) => {
+        if (!isActive) {
           return
         }
 
-        setStandings(standingsResult.value)
-
-        if (matchesResult.status === 'fulfilled') {
-          setKnockoutTeamKeys(buildKnockoutTeamKeys(matchesResult.value))
-          setHasReliableKnockoutContext(hasReliableRoundOf32Context(matchesResult.value))
-          return
-        }
-
-        setKnockoutTeamKeys(new Set())
-        setHasReliableKnockoutContext(false)
+        setErrorKind(error?.source === 'standingsService' ? 'invalid' : 'api')
       })
       .finally(() => {
         if (!isActive) {
@@ -111,6 +102,24 @@ function GroupStandings() {
         if (didShowDelayedFeedback) {
           dispatch(setDelayedLoading(false))
         }
+      })
+
+    getMatches()
+      .then((matchesResult) => {
+        if (!isActive) {
+          return
+        }
+
+        setKnockoutTeamKeys(buildKnockoutTeamKeys(matchesResult))
+        setHasReliableKnockoutContext(hasReliableRoundOf32Context(matchesResult))
+      })
+      .catch(() => {
+        if (!isActive) {
+          return
+        }
+
+        setKnockoutTeamKeys(new Set())
+        setHasReliableKnockoutContext(false)
       })
 
     return () => {
@@ -144,6 +153,8 @@ function GroupStandings() {
   function handleRetryStandings() {
     setIsLoading(true)
     setErrorKind(null)
+    setKnockoutTeamKeys(new Set())
+    setHasReliableKnockoutContext(false)
     setRetryCount((currentCount) => currentCount + 1)
   }
 

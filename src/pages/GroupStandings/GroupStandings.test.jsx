@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
 import { configureStore } from '@reduxjs/toolkit'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import FeedbackModal from '../../components/FeedbackModal/FeedbackModal'
@@ -144,6 +144,17 @@ function createRoundOf32Matches(seedOverrides = {}) {
   })
 }
 
+function createDeferred() {
+  let resolve
+  let reject
+  const promise = new Promise((promiseResolve, promiseReject) => {
+    resolve = promiseResolve
+    reject = promiseReject
+  })
+
+  return { promise, resolve, reject }
+}
+
 function renderGroupStandings({ includeModal = false } = {}) {
   const store = configureStore({ reducer: { ui: uiReducer } })
 
@@ -204,6 +215,42 @@ describe('GroupStandings', () => {
       screen.getByRole('heading', { name: /estamos preparando las tablas de grupos/i }),
     ).toBeInTheDocument()
     expect(screen.getByRole('status', { name: /cargando posiciones de grupos/i })).toBeInTheDocument()
+  })
+
+  it('renders standings without waiting for the auxiliary matches context', async () => {
+    const matchesDeferred = createDeferred()
+
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+    server.use(
+      http.get('*/api/matches', async () => {
+        await matchesDeferred.promise
+        return HttpResponse.json({ status: 'success', data: [] })
+      }),
+    )
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+
+    expect(screen.queryByRole('status', { name: /cargando posiciones de grupos/i })).not.toBeInTheDocument()
+    expect(within(canadaRow).getByText('Pendiente')).toBeInTheDocument()
+    expect(within(canadaRow).queryByText('Eliminado en grupos')).not.toBeInTheDocument()
+
+    await act(async () => {
+      matchesDeferred.resolve()
+    })
   })
 
   it('opens the feedback modal when standings loading takes more than seven seconds', async () => {
@@ -567,7 +614,57 @@ describe('GroupStandings', () => {
     const rows = within(table).getAllByRole('row')
     const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
 
-    expect(within(canadaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(within(canadaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
+    })
+  })
+
+  it('updates third-place badges when auxiliary matches later provide reliable context', async () => {
+    const matchesDeferred = createDeferred()
+
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+    server.use(
+      http.get('*/api/matches', async () => {
+        await matchesDeferred.promise
+        return HttpResponse.json({
+          status: 'success',
+          data: createRoundOf32Matches({
+            73: {
+              _id: 'match-73',
+              matchNumber: 73,
+              homeTeam: { _id: 'A-Canadá', name: 'Canadá', group: 'A' },
+              awayTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
+            },
+          }),
+        })
+      }),
+    )
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+
+    expect(within(canadaRow).getByText('Pendiente')).toBeInTheDocument()
+
+    await act(async () => {
+      matchesDeferred.resolve()
+    })
+
+    await waitFor(() => {
+      expect(within(canadaRow).getByText('Clasificado a 16avos')).toBeInTheDocument()
+    })
   })
 
   it('marks third-place teams as eliminated in groups when loaded knockout context excludes them', async () => {
@@ -590,7 +687,9 @@ describe('GroupStandings', () => {
     const rows = within(table).getAllByRole('row')
     const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
 
-    expect(within(canadaRow).getByText('Eliminado en grupos')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(within(canadaRow).getByText('Eliminado en grupos')).toBeInTheDocument()
+    })
   })
 
   it('does not assume third-place elimination when knockout context fails to load', async () => {
@@ -617,6 +716,7 @@ describe('GroupStandings', () => {
     const rows = within(table).getAllByRole('row')
     const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
 
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(within(canadaRow).getByText('Pendiente')).toBeInTheDocument()
     expect(within(canadaRow).queryByText('Eliminado en grupos')).not.toBeInTheDocument()
   })

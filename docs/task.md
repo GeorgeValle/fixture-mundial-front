@@ -9,9 +9,9 @@
 - Estado actual: Bloque 14 fue activado con recálculo manual confirmado (`POST /api/standings/:group`) y validado como seguimiento operativo de admin.
 - Siguiente bloque sugerido tras aprobación/finalización: pendiente de definir tras validación manual del Bloque 18.
 - Objetivo: operar una consola admin específica para eliminatorias que carga resultados con `PUT /api/matches/:id`, confía en el Bracket Engine backend y verifica que `/eliminatorias` no exponga controles admin.
-- Objetivo follow-up actual: `/posiciones` debe mostrar clasificación histórica desde fase de grupos sin confirmar top-2 en grupos incompletos ni eliminar terceros con contexto parcial de 16avos.
+- Objetivo follow-up actual: `/posiciones` debe mostrar clasificación histórica desde fase de grupos sin confirmar top-2 en grupos incompletos, sin eliminar terceros con contexto parcial de 16avos y sin bloquear standings por el contexto auxiliar de matches.
 - Estado de validación manual: Bloque 18 pasó validación automática (`TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run lint`, `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run test`; 39 archivos de test, 381 tests, y `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run build`). Queda pendiente validación manual de usuario.
-- Estado de validación del follow-up `/posiciones`: runtime WSL verificado con Node/pnpm Linux en `/home/yorch/.nvm/versions/node/v24.14.0/bin`; pasaron `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm test` (41 archivos, 434 tests), `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run lint` y `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run build`.
+- Estado de validación del follow-up `/posiciones`: runtime WSL verificado con Node/pnpm Linux en `/home/yorch/.nvm/versions/node/v24.14.0/bin`; pasaron `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm test` (41 archivos, 436 tests), `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run lint` y `TMPDIR=/tmp TEMP=/tmp TMP=/tmp pnpm run build`.
 
 ## Reglas críticas de ejecución
 
@@ -69,6 +69,7 @@
 - [x] Follow-up: separar badges históricos de grupo de `team.qualifiedTo`.
 - [x] Follow-up: inferir mejores terceros clasificados por presencia en partidos reales de eliminatorias (`matchNumber >= 73`) sin recalcular standings.
 - [x] Follow-up PR #31 P2: no confirmar posiciones 1/2 hasta grupo completo y no eliminar terceros sin contexto confiable de 16avos.
+- [x] Follow-up PR #31 P2: no bloquear el render principal de `/posiciones` esperando el contexto auxiliar de `/api/matches`.
 
 ### Bloque 6 — Knockout Stage
 

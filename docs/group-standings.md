@@ -130,6 +130,7 @@ Cuando hay standings:
 - Los headers de cards tienen acentos visuales y watermarks decorativos.
 - Los badges de clasificación de cada grupo muestran el resultado histórico de la fase de grupos, no el estado actual del torneo.
 - Si no se puede cargar el contexto de eliminatorias, los equipos terceros usan un fallback prudente `Pendiente` en lugar de asumir eliminación.
+- La carga de posiciones depende solo de `GET /api/standings`; `GET /api/matches` es contexto auxiliar para refinar badges y no debe bloquear el render principal.
 
 ## Reglas de negocio
 
@@ -139,6 +140,7 @@ Cuando hay standings:
 - Los equipos en posición 3 muestran `Clasificado a 16avos` solo si el grupo está completo, el contexto de 16avos es confiable y aparecen en partidos reales de eliminatorias como `homeTeam` o `awayTeam`.
 - El contexto de 16avos es confiable solo cuando los partidos `matchNumber` 73 a 88 están completamente sembrados con equipos reales en ambos slots.
 - Si el contexto de 16avos no es confiable, los terceros quedan `Pendiente`; no se los marca como eliminados por una respuesta parcial de `/api/matches`.
+- Si `/api/matches` tarda o falla, `/posiciones` sigue renderizando las standings y no convierte ese problema auxiliar en error global.
 - Los equipos en posición 4 muestran `Eliminado en grupos` solo cuando el grupo está completo.
 - Si `team.position` es `null`, la UI puede mostrar posición visual por orden de fila, pero no tratarla como dato confirmado.
 - Las columnas visibles son: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.
