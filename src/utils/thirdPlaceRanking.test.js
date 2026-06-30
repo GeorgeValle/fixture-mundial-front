@@ -5,6 +5,7 @@ import {
   getFifaRanking,
   getGroupFairPlayPoints,
   getNumberOrNull,
+  isReliableThirdPlaceRanking,
   THIRD_PLACE_RANKING_STATUS,
 } from './thirdPlaceRanking'
 
@@ -36,7 +37,10 @@ function createStanding(group, thirdStats = {}, thirdTeamOverrides = {}) {
     teams: [
       createStandingRow(`${group} primero`, group, { pts: 7 }, { position: 1 }),
       createStandingRow(`${group} segundo`, group, { pts: 5 }, { position: 2 }),
-      createStandingRow(`${group} tercero`, group, thirdStats, thirdTeamOverrides),
+      createStandingRow(`${group} tercero`, group, thirdStats, {
+        position: 3,
+        ...thirdTeamOverrides,
+      }),
       createStandingRow(`${group} cuarto`, group, { pts: 0 }, { position: 4 }),
     ],
   }
@@ -53,6 +57,18 @@ describe('thirdPlaceRanking', () => {
     expect(areAllGroupsClosed(closedStandings.slice(0, 11))).toBe(false)
     expect(areAllGroupsClosed([{ group: 'A', teams: closedStandings[0].teams.slice(0, 3) }])).toBe(false)
     expect(areAllGroupsClosed(incompleteStandings)).toBe(false)
+  })
+
+  it('detects reliable third-place ranking only when official third places exist in closed groups', () => {
+    const reliableStandings = Array.from({ length: 12 }, (_, index) => createStanding(String.fromCharCode(65 + index)))
+    const missingOfficialThirdPlace = Array.from({ length: 12 }, (_, index) =>
+      createStanding(String.fromCharCode(65 + index)),
+    )
+    missingOfficialThirdPlace[0].teams[2].team.position = null
+
+    expect(isReliableThirdPlaceRanking(reliableStandings)).toBe(true)
+    expect(isReliableThirdPlaceRanking(missingOfficialThirdPlace)).toBe(false)
+    expect(isReliableThirdPlaceRanking(reliableStandings.slice(0, 11))).toBe(false)
   })
 
   it('normalizes numeric tiebreak values safely', () => {

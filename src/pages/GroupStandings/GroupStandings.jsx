@@ -11,7 +11,11 @@ import {
 import { getStandings } from '../../services/standings/standingsService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
-import { buildThirdPlaceRanking } from '../../utils/thirdPlaceRanking'
+import { buildQualifiedThirdPlaceTeamKeys } from '../../utils/groupStandingBadge'
+import {
+  buildThirdPlaceRanking,
+  isReliableThirdPlaceRanking,
+} from '../../utils/thirdPlaceRanking'
 import styles from './GroupStandings.module.css'
 
 const FRIENDLY_API_ERROR_MESSAGE =
@@ -69,12 +73,12 @@ function GroupStandings() {
     }, DELAYED_LOADING_THRESHOLD_MS)
 
     getStandings()
-      .then((nextStandings) => {
+      .then((standingsResult) => {
         if (!isActive) {
           return
         }
 
-        setStandings(nextStandings)
+        setStandings(standingsResult)
       })
       .catch((error) => {
         if (!isActive) {
@@ -115,6 +119,11 @@ function GroupStandings() {
   const activeSelectedGroup = selectedStanding?.group ?? ''
   const visibleStandings = isFocusMode && selectedStanding ? [selectedStanding] : standings
   const thirdPlaceRanking = buildThirdPlaceRanking(standings)
+  const hasReliableThirdPlaceRanking = isReliableThirdPlaceRanking(standings)
+  const groupStandingBadgeContext = {
+    qualifiedThirdPlaceTeamKeys: buildQualifiedThirdPlaceTeamKeys(thirdPlaceRanking),
+    hasReliableThirdPlaceRanking,
+  }
   const totalGroups = standings.length
   const totalTeams = standings.reduce(
     (count, standing) => count + (standing?.teams?.length ?? 0),
@@ -274,6 +283,7 @@ function GroupStandings() {
                     standing={standing}
                     variant={isFocusMode ? 'featured' : 'compact'}
                     variantIndex={originalIndex >= 0 ? originalIndex % 4 : index % 4}
+                    groupStandingBadgeContext={groupStandingBadgeContext}
                   />
                 )
               })}

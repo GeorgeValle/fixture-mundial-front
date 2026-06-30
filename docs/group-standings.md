@@ -24,18 +24,21 @@ Servicio:
 
 ```text
 src/services/standings/standingsService.js
+src/services/matches/matchesService.js
 ```
 
 Endpoint público:
 
 ```text
 GET /api/standings
+GET /api/matches
 ```
 
 Schema:
 
 ```text
 src/schemas/standingsSchema.js
+src/schemas/matchSchema.js
 ```
 
 ## Contrato público de datos
@@ -125,12 +128,19 @@ Cuando hay standings:
 - El selector de grupo de `Vista foco` se construye desde los grupos devueltos por el backend.
 - Los botones de modo usan `aria-pressed`.
 - Los headers de cards tienen acentos visuales y watermarks decorativos.
-- Los badges de clasificación solo deben mostrarse si el backend trae datos útiles.
+- Los badges de clasificación de cada grupo muestran el resultado histórico de la fase de grupos, no el estado actual del torneo.
+- Los badges de terceros usan la misma base que la tabla de mejores terceros: el ranking derivado desde `GET /api/standings`.
+- La carga de posiciones depende solo de `GET /api/standings`; `GET /api/matches` no es necesario para decidir los badges históricos.
 
 ## Reglas de negocio
 
 - No inventar posiciones registradas.
-- No inventar etiquetas de clasificación si `team.qualifiedTo` está vacío o `null`.
+- No usar `team.qualifiedTo` como fuente principal para badges históricos de grupo, porque puede representar el estado actual del torneo después de eliminatorias.
+- Los equipos en posición 1 y 2 muestran `Clasificado a 16avos` solo cuando el grupo está completo (`teams.length === 4` y todos los rows tienen `pj === 3`).
+- Los equipos en posición 3 muestran `Clasificado a 16avos` solo si el ranking confiable de mejores terceros los ubica dentro del top 8.
+- El ranking de mejores terceros es confiable solo cuando existen los 12 grupos completos, cada grupo tiene 4 equipos, todos tienen `pj === 3` y hay un tercero oficial con `team.position === 3` por grupo.
+- Si el ranking de mejores terceros no es confiable, los terceros quedan `Pendiente`; no se los marca como eliminados por contexto de bracket o partidos incompletos.
+- Los equipos en posición 4 muestran `Eliminado en grupos` solo cuando el grupo está completo.
 - Si `team.position` es `null`, la UI puede mostrar posición visual por orden de fila, pero no tratarla como dato confirmado.
 - Las columnas visibles son: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.
 

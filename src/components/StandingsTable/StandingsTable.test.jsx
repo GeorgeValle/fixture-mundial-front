@@ -1,16 +1,18 @@
 import { describe, expect, it } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import StandingsTable from './StandingsTable'
 import styles from './StandingsTable.module.css'
 
-function createStandingRow(qualifiedTo) {
+function createStandingRow(position, teamOverrides = {}) {
   return {
     team: {
-      _id: `team-${qualifiedTo ?? 'none'}`,
+      _id: `team-${position ?? 'none'}`,
       name: 'México',
-      position: 1,
-      qualifiedTo,
+      position,
+      qualifiedTo: null,
       shieldUrl: null,
+      group: 'A',
+      ...teamOverrides,
     },
     pj: 3,
     pg: 2,
@@ -23,36 +25,109 @@ function createStandingRow(qualifiedTo) {
   }
 }
 
-function renderStandingsTable(qualifiedTo) {
-  render(<StandingsTable teams={[createStandingRow(qualifiedTo)]} />)
+function createCompleteGroupRows(row) {
+  const rowsByPosition = new Map([[row?.team?.position, row]])
+
+  return [1, 2, 3, 4].map((position) => {
+    const existingRow = rowsByPosition.get(position)
+
+    if (existingRow) {
+      return {
+        ...existingRow,
+        pj: 3,
+      }
+    }
+
+    return createStandingRow(position, {
+      _id: `team-filler-${position}`,
+      name: `Equipo ${position}`,
+    })
+  })
+}
+
+function renderStandingsTable(row, groupStandingBadgeContext = {}, { isGroupComplete = true } = {}) {
+  const teams = isGroupComplete ? createCompleteGroupRows(row) : [row]
+
+  render(<StandingsTable teams={teams} groupStandingBadgeContext={groupStandingBadgeContext} />)
+}
+
+function getTeamRow(teamName = 'México') {
+  return screen.getByText(teamName).closest('tr')
 }
 
 describe('StandingsTable', () => {
-  it('shows the round of 32 qualification badge', () => {
-    renderStandingsTable('ROUND_OF_32')
+  it('shows the historical group qualification badge for first place', () => {
+    renderStandingsTable(createStandingRow(1, { qualifiedTo: 'ELIMINATED' }))
 
-    expect(screen.getByText('Clasificado a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow()).getByText('Clasificado a 16avos')).toBeInTheDocument()
   })
 
-  it('shows the eliminated qualification badge', () => {
-    renderStandingsTable('ELIMINATED')
+  it('shows the historical group qualification badge for second place', () => {
+    renderStandingsTable(createStandingRow(2, { qualifiedTo: 'ROUND_OF_16' }))
 
-    const badge = screen.getByText('Eliminado')
+    expect(within(getTeamRow()).getByText('Clasificado a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow()).queryByText('Clasificado a octavos')).not.toBeInTheDocument()
+  })
+
+  it('shows the eliminated in groups badge when a third-place team is outside reliable ranking', () => {
+    renderStandingsTable(createStandingRow(3), {
+      qualifiedThirdPlaceTeamKeys: new Set(['team-id:other-team']),
+      hasReliableThirdPlaceRanking: true,
+    })
+
+    const badge = within(getTeamRow()).getByText('Eliminado en grupos')
 
     expect(badge).toBeInTheDocument()
     expect(badge).toHaveClass(styles.eliminatedBadge)
   })
 
-  it('does not fall back to Clasificado for unknown qualification values', () => {
-    renderStandingsTable('UNKNOWN_STATUS')
+  it('shows a pending badge for a third-place team when reliable ranking is not available', () => {
+    renderStandingsTable(createStandingRow(3), {
+      qualifiedThirdPlaceTeamKeys: new Set(),
+      hasReliableThirdPlaceRanking: false,
+    })
 
-    expect(screen.queryByText(/clasificado/i)).not.toBeInTheDocument()
+    const badge = within(getTeamRow()).getByText('Pendiente')
+
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveClass(styles.pendingBadge)
+    expect(within(getTeamRow()).queryByText('Eliminado en grupos')).not.toBeInTheDocument()
   })
 
-  it('does not invent a qualification badge when qualifiedTo is null', () => {
-    renderStandingsTable(null)
+  it('shows the eliminated in groups badge for fourth place', () => {
+    renderStandingsTable(createStandingRow(4))
+
+    const badge = within(getTeamRow()).getByText('Eliminado en grupos')
+
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveClass(styles.eliminatedBadge)
+  })
+
+  it('does not use team.qualifiedTo directly for unknown qualification values', () => {
+    renderStandingsTable(createStandingRow(1, { qualifiedTo: 'UNKNOWN_STATUS' }))
+
+    expect(within(getTeamRow()).getByText('Clasificado a 16avos')).toBeInTheDocument()
+    expect(within(getTeamRow()).queryByText('UNKNOWN_STATUS')).not.toBeInTheDocument()
+  })
+
+  it('does not invent a qualification badge when team.position is null', () => {
+    renderStandingsTable(
+      createStandingRow(null, { qualifiedTo: 'ROUND_OF_32' }),
+      {},
+      { isGroupComplete: false },
+    )
 
     expect(screen.queryByText(/clasificado/i)).not.toBeInTheDocument()
-    expect(screen.queryByText('Eliminado')).not.toBeInTheDocument()
+    expect(screen.queryByText('Eliminado en grupos')).not.toBeInTheDocument()
+    expect(screen.queryByText('Pendiente')).not.toBeInTheDocument()
+  })
+
+  it('does not show confirmed qualification badges when the group is incomplete', () => {
+    renderStandingsTable(createStandingRow(1, { qualifiedTo: 'ELIMINATED' }), {}, {
+      isGroupComplete: false,
+    })
+
+    expect(screen.queryByText('Clasificado a 16avos')).not.toBeInTheDocument()
+    expect(screen.queryByText('Eliminado en grupos')).not.toBeInTheDocument()
   })
 })

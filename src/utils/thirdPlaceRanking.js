@@ -49,6 +49,22 @@ export function areAllGroupsClosed(standings = []) {
   )
 }
 
+export function isReliableThirdPlaceRanking(standings = []) {
+  const safeStandings = Array.isArray(standings) ? standings : []
+
+  return (
+    areAllGroupsClosed(safeStandings) &&
+    safeStandings.every((standing) => {
+      const teams = Array.isArray(standing?.teams) ? standing.teams : []
+      const officialThirdPlaceRow = teams.find(
+        (row) => Number(row?.team?.position) === THIRD_PLACE_POSITION,
+      )
+
+      return Boolean(officialThirdPlaceRow)
+    })
+  )
+}
+
 function getThirdPlaceRankingStatus({ isInTopEight, isFinalThirdPlaceRanking }) {
   if (isFinalThirdPlaceRanking) {
     return isInTopEight ? THIRD_PLACE_RANKING_STATUS.qualified : THIRD_PLACE_RANKING_STATUS.notQualified
@@ -137,7 +153,7 @@ function compareThirdPlaceRows(firstRow, secondRow) {
 
 export function buildThirdPlaceRanking(standings = []) {
   const safeStandings = Array.isArray(standings) ? standings : []
-  const isFinalThirdPlaceRanking = areAllGroupsClosed(safeStandings)
+  const isFinalThirdPlaceRanking = isReliableThirdPlaceRanking(safeStandings)
   const seenTeamKeys = new Set()
   const thirdPlaceRows = []
 

@@ -1,17 +1,7 @@
+import { getGroupStandingBadge } from '../../utils/groupStandingBadge'
 import styles from './StandingsTable.module.css'
 
 const columns = ['Pos', 'Equipo', 'PJ', 'PG', 'PE', 'PP', 'GF', 'GC', 'DIF', 'PTS']
-
-const qualificationLabels = {
-  ROUND_OF_32: 'Clasificado a 16avos',
-  ROUND_OF_16: 'Clasificado a octavos',
-  QUARTER_FINALS: 'Clasificado a cuartos',
-  SEMI_FINALS: 'Clasificado a semifinales',
-  THIRD_PLACE_MATCH: 'Tercer puesto',
-  FINAL: 'Clasificado a la final',
-  KNOCKOUT: 'Clasificado a eliminatorias',
-  ELIMINATED: 'Eliminado',
-}
 
 function getVisualPosition(row, index) {
   return row?.team?.position ?? index + 1
@@ -21,23 +11,28 @@ function getTeamName(row) {
   return row?.team?.name || 'Equipo por confirmar'
 }
 
-function getQualificationLabel(row) {
-  if (row?.team?.position != null && row?.team?.qualifiedTo) {
-    return qualificationLabels[row.team.qualifiedTo] ?? null
+function getQualificationBadgeClassName(badge) {
+  if (badge?.variant === 'eliminated') {
+    return `${styles.qualificationBadge} ${styles.eliminatedBadge}`
   }
 
-  return null
-}
-
-function getQualificationBadgeClassName(row) {
-  if (row?.team?.qualifiedTo === 'ELIMINATED') {
-    return `${styles.qualificationBadge} ${styles.eliminatedBadge}`
+  if (badge?.variant === 'pending') {
+    return `${styles.qualificationBadge} ${styles.pendingBadge}`
   }
 
   return styles.qualificationBadge
 }
 
-function StandingsTable({ teams = [] }) {
+function isGroupComplete(teams) {
+  return teams.length === 4 && teams.every((row) => Number(row?.pj) === 3)
+}
+
+function StandingsTable({ teams = [], groupStandingBadgeContext = {} }) {
+  const groupBadgeContext = {
+    ...groupStandingBadgeContext,
+    isGroupComplete: isGroupComplete(teams),
+  }
+
   return (
     <div className={styles.tableScroll}>
       <table className={styles.table}>
@@ -53,7 +48,7 @@ function StandingsTable({ teams = [] }) {
         <tbody>
           {teams.map((row, index) => {
             const teamName = getTeamName(row)
-            const qualificationLabel = getQualificationLabel(row)
+            const qualificationBadge = getGroupStandingBadge(row, groupBadgeContext)
 
             return (
               <tr key={row?.team?._id ?? `${teamName}-${index}`}>
@@ -73,9 +68,9 @@ function StandingsTable({ teams = [] }) {
                     )}
                     <span className={styles.teamText}>
                       <span className={styles.teamName}>{teamName}</span>
-                      {qualificationLabel && (
-                        <span className={getQualificationBadgeClassName(row)}>
-                          {qualificationLabel}
+                      {qualificationBadge && (
+                        <span className={getQualificationBadgeClassName(qualificationBadge)}>
+                          {qualificationBadge.label}
                         </span>
                       )}
                     </span>
