@@ -121,6 +121,29 @@ function createCutoffTieStandingsGroups({ isClosed = true } = {}) {
   }))
 }
 
+function createRoundOf32Matches(seedOverrides = {}) {
+  return Array.from({ length: 16 }, (_, index) => {
+    const matchNumber = 73 + index
+    const override = seedOverrides[matchNumber] ?? {}
+
+    return {
+      _id: `match-${matchNumber}`,
+      matchNumber,
+      homeTeam: {
+        _id: `team-${matchNumber}-home`,
+        name: `Equipo ${matchNumber} Local`,
+        group: 'Z',
+      },
+      awayTeam: {
+        _id: `team-${matchNumber}-away`,
+        name: `Equipo ${matchNumber} Visitante`,
+        group: 'Z',
+      },
+      ...override,
+    }
+  })
+}
+
 function renderGroupStandings({ includeModal = false } = {}) {
   const store = configureStore({ reducer: { ui: uiReducer } })
 
@@ -465,15 +488,15 @@ describe('GroupStandings', () => {
       {
         group: 'A',
         teams: [
-          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
           createStandingRow(
             'Sudáfrica',
             'A',
-            { pts: 6 },
+            { pj: 3, pts: 6 },
             { position: 2, qualifiedTo: 'ELIMINATED' },
           ),
-          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
         ],
       },
     ])
@@ -488,26 +511,55 @@ describe('GroupStandings', () => {
     expect(within(southAfricaRow).queryByText('Eliminado')).not.toBeInTheDocument()
   })
 
+  it('does not show confirmed qualification for first and second place while the group is incomplete', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pj: 2, pts: 6 }, { position: 1 }),
+          createStandingRow(
+            'Sudáfrica',
+            'A',
+            { pj: 2, pts: 4 },
+            { position: 2, qualifiedTo: 'ELIMINATED' },
+          ),
+          createStandingRow('Canadá', 'A', { pj: 2, pts: 3 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 2, pts: 1 }, { position: 4 }),
+        ],
+      },
+    ])
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const mexicoRow = rows.find((row) => within(row).queryByText('México'))
+    const southAfricaRow = rows.find((row) => within(row).queryByText('Sudáfrica'))
+
+    expect(within(mexicoRow).queryByText('Clasificado a 16avos')).not.toBeInTheDocument()
+    expect(within(southAfricaRow).queryByText('Clasificado a 16avos')).not.toBeInTheDocument()
+  })
+
   it('marks third-place teams as qualified when they appear in real knockout matches', async () => {
     mockStandingsResponse([
       {
         group: 'A',
         teams: [
-          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
-          createStandingRow('Sudáfrica', 'A', { pts: 6 }, { position: 2 }),
-          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
         ],
       },
     ])
-    mockMatchesResponse([
-      {
+    mockMatchesResponse(createRoundOf32Matches({
+      73: {
         _id: 'match-73',
         matchNumber: 73,
         homeTeam: { _id: 'A-Canadá', name: 'Canadá', group: 'A' },
         awayTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
       },
-    ])
+    }))
 
     renderGroupStandings()
 
@@ -523,21 +575,14 @@ describe('GroupStandings', () => {
       {
         group: 'A',
         teams: [
-          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
-          createStandingRow('Sudáfrica', 'A', { pts: 6 }, { position: 2 }),
-          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
         ],
       },
     ])
-    mockMatchesResponse([
-      {
-        _id: 'match-73',
-        matchNumber: 73,
-        homeTeam: { _id: 'B-Equipo B1', name: 'Equipo B1', group: 'B' },
-        awayTeam: { _id: 'C-Equipo C1', name: 'Equipo C1', group: 'C' },
-      },
-    ])
+    mockMatchesResponse(createRoundOf32Matches())
 
     renderGroupStandings()
 
@@ -553,10 +598,10 @@ describe('GroupStandings', () => {
       {
         group: 'A',
         teams: [
-          createStandingRow('México', 'A', { pts: 7 }, { position: 1 }),
-          createStandingRow('Sudáfrica', 'A', { pts: 6 }, { position: 2 }),
-          createStandingRow('Canadá', 'A', { pts: 4 }, { position: 3 }),
-          createStandingRow('Qatar', 'A', { pts: 0 }, { position: 4 }),
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
         ],
       },
     ])
@@ -565,6 +610,43 @@ describe('GroupStandings', () => {
         HttpResponse.json({ message: 'Matches unavailable' }, { status: 500 }),
       ),
     )
+
+    renderGroupStandings()
+
+    const table = await screen.findByRole('table')
+    const rows = within(table).getAllByRole('row')
+    const canadaRow = rows.find((row) => within(row).queryByText('Canadá'))
+
+    expect(within(canadaRow).getByText('Pendiente')).toBeInTheDocument()
+    expect(within(canadaRow).queryByText('Eliminado en grupos')).not.toBeInTheDocument()
+  })
+
+  it('keeps third-place teams pending when matches return only group fixtures or unseeded knockouts', async () => {
+    mockStandingsResponse([
+      {
+        group: 'A',
+        teams: [
+          createStandingRow('México', 'A', { pj: 3, pts: 7 }, { position: 1 }),
+          createStandingRow('Sudáfrica', 'A', { pj: 3, pts: 6 }, { position: 2 }),
+          createStandingRow('Canadá', 'A', { pj: 3, pts: 4 }, { position: 3 }),
+          createStandingRow('Qatar', 'A', { pj: 3, pts: 0 }, { position: 4 }),
+        ],
+      },
+    ])
+    mockMatchesResponse([
+      {
+        _id: 'match-1',
+        matchNumber: 1,
+        homeTeam: { _id: 'A-México', name: 'México', group: 'A' },
+        awayTeam: { _id: 'A-Sudáfrica', name: 'Sudáfrica', group: 'A' },
+      },
+      {
+        _id: 'match-73',
+        matchNumber: 73,
+        homeTeam: { name: 'TBD', group: 'A' },
+        awayTeam: null,
+      },
+    ])
 
     renderGroupStandings()
 

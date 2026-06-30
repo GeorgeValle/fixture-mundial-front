@@ -23,7 +23,16 @@ function getQualificationBadgeClassName(badge) {
   return styles.qualificationBadge
 }
 
+function isGroupComplete(teams) {
+  return teams.length === 4 && teams.every((row) => Number(row?.pj) === 3)
+}
+
 function StandingsTable({ teams = [], groupStandingBadgeContext = {} }) {
+  const groupBadgeContext = {
+    ...groupStandingBadgeContext,
+    isGroupComplete: isGroupComplete(teams),
+  }
+
   return (
     <div className={styles.tableScroll}>
       <table className={styles.table}>
@@ -39,7 +48,7 @@ function StandingsTable({ teams = [], groupStandingBadgeContext = {} }) {
         <tbody>
           {teams.map((row, index) => {
             const teamName = getTeamName(row)
-            const qualificationBadge = getGroupStandingBadge(row, groupStandingBadgeContext)
+            const qualificationBadge = getGroupStandingBadge(row, groupBadgeContext)
 
             return (
               <tr key={row?.team?._id ?? `${teamName}-${index}`}>

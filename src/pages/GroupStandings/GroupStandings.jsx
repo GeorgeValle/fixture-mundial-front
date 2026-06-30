@@ -12,7 +12,10 @@ import { getMatches } from '../../services/matches/matchesService'
 import { getStandings } from '../../services/standings/standingsService'
 import { loadFavoriteGroup } from '../../services/preferences/favoriteGroupStorageService'
 import { DELAYED_LOADING_THRESHOLD_MS } from '../../utils/delayedLoading'
-import { buildKnockoutTeamKeys } from '../../utils/groupStandingBadge'
+import {
+  buildKnockoutTeamKeys,
+  hasReliableRoundOf32Context,
+} from '../../utils/groupStandingBadge'
 import { buildThirdPlaceRanking } from '../../utils/thirdPlaceRanking'
 import styles from './GroupStandings.module.css'
 
@@ -41,7 +44,7 @@ function GroupStandings() {
   const [initialFavoriteGroup] = useState(getInitialFavoriteGroup)
   const [standings, setStandings] = useState([])
   const [knockoutTeamKeys, setKnockoutTeamKeys] = useState(() => new Set())
-  const [hasKnockoutContext, setHasKnockoutContext] = useState(false)
+  const [hasReliableKnockoutContext, setHasReliableKnockoutContext] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorKind, setErrorKind] = useState(null)
   const [viewMode, setViewMode] = useState(() => getInitialViewMode(initialFavoriteGroup))
@@ -89,12 +92,12 @@ function GroupStandings() {
 
         if (matchesResult.status === 'fulfilled') {
           setKnockoutTeamKeys(buildKnockoutTeamKeys(matchesResult.value))
-          setHasKnockoutContext(true)
+          setHasReliableKnockoutContext(hasReliableRoundOf32Context(matchesResult.value))
           return
         }
 
         setKnockoutTeamKeys(new Set())
-        setHasKnockoutContext(false)
+        setHasReliableKnockoutContext(false)
       })
       .finally(() => {
         if (!isActive) {
@@ -130,7 +133,7 @@ function GroupStandings() {
   const thirdPlaceRanking = buildThirdPlaceRanking(standings)
   const groupStandingBadgeContext = {
     knockoutTeamKeys,
-    hasKnockoutContext,
+    hasReliableKnockoutContext,
   }
   const totalGroups = standings.length
   const totalTeams = standings.reduce(

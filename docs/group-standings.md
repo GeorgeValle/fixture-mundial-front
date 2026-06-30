@@ -135,9 +135,11 @@ Cuando hay standings:
 
 - No inventar posiciones registradas.
 - No usar `team.qualifiedTo` como fuente principal para badges históricos de grupo, porque puede representar el estado actual del torneo después de eliminatorias.
-- Los equipos en posición 1 y 2 muestran `Clasificado a 16avos`.
-- Los equipos en posición 3 muestran `Clasificado a 16avos` solo si aparecen en partidos reales de eliminatorias (`matchNumber >= 73`) como `homeTeam` o `awayTeam`; si el contexto de eliminatorias cargó y no aparecen, muestran `Eliminado en grupos`.
-- Los equipos en posición 4 muestran `Eliminado en grupos`.
+- Los equipos en posición 1 y 2 muestran `Clasificado a 16avos` solo cuando el grupo está completo (`teams.length === 4` y todos los rows tienen `pj === 3`).
+- Los equipos en posición 3 muestran `Clasificado a 16avos` solo si el grupo está completo, el contexto de 16avos es confiable y aparecen en partidos reales de eliminatorias como `homeTeam` o `awayTeam`.
+- El contexto de 16avos es confiable solo cuando los partidos `matchNumber` 73 a 88 están completamente sembrados con equipos reales en ambos slots.
+- Si el contexto de 16avos no es confiable, los terceros quedan `Pendiente`; no se los marca como eliminados por una respuesta parcial de `/api/matches`.
+- Los equipos en posición 4 muestran `Eliminado en grupos` solo cuando el grupo está completo.
 - Si `team.position` es `null`, la UI puede mostrar posición visual por orden de fila, pero no tratarla como dato confirmado.
 - Las columnas visibles son: Pos, Equipo, PJ, PG, PE, PP, GF, GC, DIF, PTS.
 
