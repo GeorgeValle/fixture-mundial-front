@@ -65,12 +65,26 @@
 }
 
 .bracketGrid {
+  --bracket-column-gap: var(--space-5);
+  --bracket-connector-strong: color-mix(in srgb, var(--color-primary) 24%, transparent);
+  --bracket-field-height: 71.5rem;
+  --bracket-slot-gap: var(--space-2);
+  --bracket-slot-height: calc(var(--space-12) + var(--space-4));
+  --bracket-round32-connector-height: calc(var(--bracket-slot-height) + var(--bracket-slot-gap));
+  --bracket-round16-connector-height: calc(
+    var(--bracket-slot-height) + var(--bracket-slot-height) + var(--bracket-slot-gap) + var(--bracket-slot-gap)
+  );
+  --bracket-quarter-connector-height: calc(
+    var(--bracket-slot-height) + var(--bracket-slot-height) + var(--bracket-slot-height) + var(--bracket-slot-height) +
+      var(--bracket-slot-gap) + var(--bracket-slot-gap) + var(--bracket-slot-gap) + var(--bracket-slot-gap)
+  );
+
   display: grid;
   grid-template-columns: repeat(4, 12.25rem) 13rem;
   align-items: start;
   width: max-content;
   min-width: 65rem;
-  gap: var(--space-4);
+  gap: var(--bracket-column-gap);
 }
 
 .roundColumn {
@@ -90,9 +104,10 @@
 
 .roundMatches {
   display: grid;
-  grid-template-rows: repeat(16, minmax(3rem, auto));
-  gap: var(--space-1);
-  min-height: 56rem;
+  align-content: start;
+  grid-template-rows: repeat(16, minmax(var(--bracket-slot-height), auto));
+  gap: var(--bracket-slot-gap);
+  min-height: var(--bracket-field-height);
 }
 
 .matchNode {
@@ -111,11 +126,41 @@
   position: absolute;
   top: 50%;
   left: 100%;
-  width: var(--space-4);
+  width: var(--bracket-column-gap);
   height: 1px;
   pointer-events: none;
   background: color-mix(in srgb, var(--color-primary) 22%, transparent);
   content: '';
+}
+
+.roundColumn:nth-of-type(2) .matchNode::before,
+.roundColumn:nth-of-type(3) .matchNode::before,
+.roundColumn:nth-of-type(4) .matchNode::before {
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--bracket-column-gap));
+  width: var(--bracket-column-gap);
+  pointer-events: none;
+  background: linear-gradient(var(--bracket-connector-strong), var(--bracket-connector-strong)) center / 100% 1px
+    no-repeat;
+  border-top: 1px solid var(--bracket-connector-strong);
+  border-bottom: 1px solid var(--bracket-connector-strong);
+  border-left: 1px solid var(--bracket-connector-strong);
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  content: '';
+  transform: translateY(-50%);
+}
+
+.roundColumn:nth-of-type(2) .matchNode::before {
+  height: var(--bracket-round32-connector-height);
+}
+
+.roundColumn:nth-of-type(3) .matchNode::before {
+  height: var(--bracket-round16-connector-height);
+}
+
+.roundColumn:nth-of-type(4) .matchNode::before {
+  height: var(--bracket-quarter-connector-height);
 }
 
 .teamRow {
@@ -226,28 +271,28 @@
   position: relative;
   display: grid;
   align-content: center;
-  min-height: 56rem;
+  min-height: var(--bracket-field-height);
 }
 
 .finalConvergence::before,
 .finalConvergence::after {
   position: absolute;
-  left: calc(-1 * var(--space-4));
+  left: calc(-1 * var(--bracket-column-gap));
   pointer-events: none;
   content: '';
 }
 
 .finalConvergence::before {
   top: 50%;
-  width: var(--space-4);
+  width: var(--bracket-column-gap);
   height: 1px;
   background: color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
 .finalConvergence::after {
-  top: 31%;
-  width: var(--space-4);
-  height: 38%;
+  top: 25%;
+  width: var(--bracket-column-gap);
+  height: 50%;
   border-top: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
   border-left: 1px solid color-mix(in srgb, var(--color-primary) 24%, transparent);
@@ -322,8 +367,9 @@
   }
 
   .bracketGrid {
+    --bracket-column-gap: var(--space-4);
+
     grid-template-columns: repeat(4, 11.5rem) 12.25rem;
-    gap: var(--space-3);
   }
 
   .matchNode {
