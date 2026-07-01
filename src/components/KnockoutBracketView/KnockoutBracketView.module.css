@@ -65,11 +65,15 @@
 }
 
 .bracketGrid {
-  --bracket-column-gap: var(--space-4);
+  --bracket-column-gap: var(--space-5);
   --bracket-connector-strong: color-mix(in srgb, var(--color-primary) 24%, transparent);
-  --bracket-field-height: 63.5rem;
+  --bracket-field-height: 71.5rem;
   --bracket-slot-gap: var(--space-2);
-  --bracket-slot-height: calc(var(--space-12) + var(--space-2));
+  --bracket-slot-height: calc(var(--space-12) + var(--space-4));
+  --bracket-round32-connector-height: calc(var(--bracket-slot-height) + var(--bracket-slot-gap));
+  --bracket-round16-connector-height: calc(
+    var(--bracket-slot-height) + var(--bracket-slot-height) + var(--bracket-slot-gap) + var(--bracket-slot-gap)
+  );
   --bracket-quarter-connector-height: calc(
     var(--bracket-slot-height) + var(--bracket-slot-height) + var(--bracket-slot-height) + var(--bracket-slot-height) +
       var(--bracket-slot-gap) + var(--bracket-slot-gap) + var(--bracket-slot-gap) + var(--bracket-slot-gap)
@@ -100,6 +104,7 @@
 
 .roundMatches {
   display: grid;
+  align-content: start;
   grid-template-rows: repeat(16, minmax(var(--bracket-slot-height), auto));
   gap: var(--bracket-slot-gap);
   min-height: var(--bracket-field-height);
@@ -128,12 +133,13 @@
   content: '';
 }
 
+.roundColumn:nth-of-type(2) .matchNode::before,
+.roundColumn:nth-of-type(3) .matchNode::before,
 .roundColumn:nth-of-type(4) .matchNode::before {
   position: absolute;
   top: 50%;
   left: calc(-1 * var(--bracket-column-gap));
   width: var(--bracket-column-gap);
-  height: var(--bracket-quarter-connector-height);
   pointer-events: none;
   background: linear-gradient(var(--bracket-connector-strong), var(--bracket-connector-strong)) center / 100% 1px
     no-repeat;
@@ -143,6 +149,18 @@
   border-radius: var(--radius-md) 0 0 var(--radius-md);
   content: '';
   transform: translateY(-50%);
+}
+
+.roundColumn:nth-of-type(2) .matchNode::before {
+  height: var(--bracket-round32-connector-height);
+}
+
+.roundColumn:nth-of-type(3) .matchNode::before {
+  height: var(--bracket-round16-connector-height);
+}
+
+.roundColumn:nth-of-type(4) .matchNode::before {
+  height: var(--bracket-quarter-connector-height);
 }
 
 .teamRow {
@@ -349,7 +367,7 @@
   }
 
   .bracketGrid {
-    --bracket-column-gap: var(--space-3);
+    --bracket-column-gap: var(--space-4);
 
     grid-template-columns: repeat(4, 11.5rem) 12.25rem;
   }
